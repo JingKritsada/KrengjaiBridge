@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17685f">
+  <title>ห้องควบคุมเดโม — เกรงใจบริดจ์</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%2317685f%27/%3E%3Cpath d=%27M6 24V10m20 14V10M6 16c5 0 5-9 10-9s5 9 10 9M6 24h20M12 13v11m8-11v11%27 fill=%27none%27 stroke=%27white%27 stroke-width=%271.5%27/%3E%3C/svg%3E">
+  <script>window.appAssetBase=(location.port==='8099'||(location.pathname.endsWith('.html')&&!location.pathname.startsWith('/static/')))?new URL('./',location.href).href:new URL('/static/',location.origin).href;</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" id="app-styles"><script>document.querySelector('#app-styles').href=window.appAssetBase+'css/app.css';</script><script type="module">import(window.appAssetBase+'js/demo.js');</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">ข้ามไปยังเนื้อหา</a><header id="site-header"></header>
+  <main id="main" class="workspace demo-workspace">
+    <div class="page-heading"><div><h1>ห้องควบคุมเดโม</h1><p>มองเห็นทุกขั้นตอน จากสัญญาณเล็ก ๆ สู่การเปลี่ยนแปลงของทีม</p></div><a class="button secondary small" data-page="manager" href="/manager">เปิดแดชบอร์ดหัวหน้า <span aria-hidden="true">↗</span></a></div>
+    <div class="demo-grid">
+      <aside class="scenario-column">
+        <section class="panel scenario-panel"><div class="section-heading"><h2>เริ่มจากสถานการณ์</h2></div><p class="subtle">สร้างสัญญาณให้ AI เริ่มช่วยทีม</p><div class="scenario-buttons">
+          <button data-scenario="pr_stale"><span class="scenario-symbol">PR</span><span><strong>PR รอรีวิวนาน</strong><small>PR #123 · เกิน 48 ชั่วโมง</small></span><span aria-hidden="true">→</span></button>
+          <button data-scenario="ticket_blocked"><span class="scenario-symbol">!</span><span><strong>งานติดขัด</strong><small>ติดสถานะเดิมเกิน 2 วัน</small></span><span aria-hidden="true">→</span></button>
+          <button data-scenario="friday_urgent"><span class="scenario-symbol">17:00</span><span><strong>งานด่วนวันศุกร์</strong><small>งานใหม่หลังเลิกงาน</small></span><span aria-hidden="true">→</span></button>
+          <button data-scenario="late_night"><span class="scenario-symbol">22:00</span><span><strong>ทำงานดึกต่อเนื่อง</strong><small>ส่งถึงเจ้าตัวเท่านั้น</small></span><span aria-hidden="true">→</span></button>
+          <button data-scenario="sprint_end"><span class="scenario-symbol">14</span><span><strong>เช็กอินท้ายสปรินต์</strong><small>ชวนสะท้อนสิ่งที่ติดขัด</small></span><span aria-hidden="true">→</span></button>
+        </div></section>
+        <section class="panel story-panel"><h2>พาเรื่องราวไปต่อ</h2><p class="subtle">ส่งความเห็น → รวมเสียง → ติดตามผล</p><button id="teammates" class="button secondary full">เพื่อนร่วมทีมส่งความเห็นคล้ายกัน</button><p class="control-hint">เพิ่มเสียงจำลองจากเพื่อนร่วมทีม 2 คน</p><button id="advance" class="button secondary full">ข้ามเวลา 2 สัปดาห์</button><p class="control-hint">เปรียบเทียบตัวชี้วัดก่อน–หลัง</p><a class="text-link" data-page="manager" href="/manager">ดูผลที่แดชบอร์ดหัวหน้า →</a></section>
+        <button id="reset" class="reset-button"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 7a9 9 0 1 0 1 8M20 3v5h-5"/></svg>ล้างข้อมูลเดโมและเริ่มใหม่</button>
+        <p class="control-hint reset-hint">ล้างสัญญาณ ข้อความ และความเห็นในเดโม</p>
+      </aside>
+      <section class="panel live-pipeline"><div class="section-heading"><h2>Privacy Pipeline สด</h2><span class="badge neutral">6 ขั้นตอน</span></div><p class="subtle">เห็นวิธีปกป้องตัวตน ก่อนยืนยันส่งจริง</p>
+        <form id="feedback-form"><div class="feedback-author"><label for="member-select">ผู้ส่งความเห็น</label><select id="member-select" name="member_id" required><option value="">กำลังโหลดสมาชิก…</option></select></div><label for="feedback-text">สิ่งที่อยากบอกทีม</label><textarea id="feedback-text" name="text" rows="3" maxlength="6000" required>หนูไม่กล้าบอกพี่หัวหน้าค่ะ ว่าสั่งงานเย็นวันศุกร์ทำให้หนูต้องยกเลิกนัดตลอด</textarea><div id="removed-markers" class="removed-markers" hidden></div><div class="preview-actions"><span class="control-hint">ต้นฉบับไม่ถูกบันทึก</span><button id="preview" class="button primary small" type="submit">ทดสอบการปกป้องตัวตน <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg></button></div></form>
+        <div id="pipeline-status" class="pipeline-status" role="status">พร้อมทดสอบ · ความเห็นจะยังไม่ถูกส่ง</div>
+        <ol id="pipeline-steps" class="pipeline-steps" aria-label="ขั้นตอนปกป้องตัวตน"></ol>
+        <div id="attacker-rounds" class="attacker-rounds" hidden></div>
+        <div id="feedback-preview" hidden></div>
+        <div id="confirm-actions" class="confirm-actions" hidden><p id="confirm-note" class="subtle">ตรวจข้อความที่ปรับแล้ว ก่อนส่งแบบนิรนาม</p><div><button id="confirm" class="button primary small">ยืนยันส่งความเห็น</button><button id="cancel" class="button secondary small">ยกเลิก</button></div></div>
+        <div id="gate" class="gate"><div class="gate-top"><span><strong>ประตูนิรนาม</strong><small id="gate-label">ต้องมีเสียงร่วมอย่างน้อย 3 คน</small></span><strong id="gate-count">0/3</strong></div><div class="gate-track"><span id="gate-progress"></span></div><p id="gate-note">หัวหน้ายังไม่เห็นความเห็นนี้</p></div>
+      </section>
+      <aside class="panel inbox-panel"><div class="section-heading"><h2>กล่องข้อความ</h2><span class="badge neutral">ส่วนตัว</span></div><p class="subtle">บทสนทนาระหว่าง AI กับสมาชิกแต่ละคน</p><div id="member-tabs" class="member-tabs" role="tablist" aria-label="เลือกกล่องข้อความสมาชิก"></div><div class="inbox-identity"><span id="inbox-avatar" class="avatar">—</span><div><strong id="inbox-name">ยังไม่ได้เลือกสมาชิก</strong><small id="inbox-channel">กล่องข้อความบนเว็บ</small></div><span id="line-badge" class="badge line-badge" hidden>LINE</span></div><div id="inbox" class="chat-messages" role="tabpanel" aria-label="ข้อความส่วนตัว"><div class="chat-empty">ข้อความส่วนตัวจะปรากฏที่นี่<br>ลองเริ่มจากสถานการณ์ทางซ้าย</div></div><div class="inbox-footer"><span class="live-dot"></span>อัปเดตทุก 3 วินาที · เฉพาะสมาชิกที่เลือก</div></aside>
+    </div>
+    <section class="panel signals-panel"><div class="section-heading"><h2>สัญญาณที่ตรวจพบ</h2><span class="badge amber">มุมมองเดโมเท่านั้น</span></div><p class="subtle">ข้อมูลรายบุคคลในส่วนนี้ไม่แสดงบนแดชบอร์ดหัวหน้า</p><div class="table-scroll"><table><thead><tr><th>สัญญาณ</th><th>อ้างอิง</th><th>สมาชิกที่เกี่ยวข้อง</th><th>ผลตรวจบริบท</th><th>สถานะ</th></tr></thead><tbody id="signals"><tr><td colspan="5" class="table-empty">ยังไม่มีสัญญาณ · เลือกสถานการณ์เพื่อเริ่มเดโม</td></tr></tbody></table></div></section>
+    <footer class="workspace-footer"><span>พื้นที่สำหรับผู้สาธิต · ข้อมูลส่วนบุคคลแยกจากมุมมองหัวหน้า</span><span id="demo-team">ทีมเดโม</span></footer>
+  </main>
+</body>
+</html>

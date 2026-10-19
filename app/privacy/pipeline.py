@@ -20,10 +20,20 @@ async def run_pipeline(
         result.reason_blocked = "ข้อมูลไม่เพียงพอสำหรับการตรวจสอบความเป็นส่วนตัว"
         return result
     try:
+        source_markers = leak_markers(text)
         cleaned = await remove_identifiers(text, roster)
-        result.steps.append(PipelineStep(step=1, name="ลบข้อมูลระบุตัวตน", output=cleaned))
+        dropped = [m for m in source_markers if m not in leak_markers(cleaned)]
+        result.steps.append(PipelineStep(
+            step=1, name="ลบข้อมูลระบุตัวตน", output=cleaned,
+            notes=["ลบชื่อ วันที่ และรายละเอียดเฉพาะตัว"]
+            + ([f"ตัดคำบ่งชี้เพศ/อาวุโส: {', '.join(dropped)}"] if dropped else []),
+        ))
+        before = leak_markers(cleaned)
         cleaned = neutralize(cleaned)
-        result.steps.append(PipelineStep(step=2, name="ปรับภาษาให้เป็นกลาง", output=cleaned))
+        result.steps.append(PipelineStep(
+            step=2, name="ปรับภาษาให้เป็นกลาง", output=cleaned,
+            notes=[f"ตรวจด้วยพจนานุกรมคำลงท้าย/สรรพนาม: ตัดเพิ่ม {len(before)} คำ, เหลือ {len(leak_markers(cleaned))} คำ"],
+        ))
         rewritten, guesses, safe = await rewrite_with_attacker(
             cleaned, author_id, roster, max_rounds=rounds,
         )
@@ -43,7 +53,8 @@ async def run_pipeline(
         if any(leak_markers(value) for value in [rewritten, *structured.model_dump().values(), label]):
             raise ValueError("Remaining privacy markers")
         result.steps.append(PipelineStep(
-            step=4, name="จัดโครงสร้าง", output=structured.model_dump_json(),
+            step=4, name="จัดโครงสร้าง",
+            output=f"สถานการณ์: {structured.situation}\nผลกระทบ: {structured.impact}\nสิ่งที่ขอ: {structured.request}",
         ))
         result.steps.append(PipelineStep(
             step=5, name="ประตูความเป็นส่วนตัว", output="รอประตู k",

@@ -94,13 +94,15 @@ def generate_history(seed=42, *, now=None):
 generate_mock_data = generate_history
 
 
-def evaluate_engine(seed=42):
-    """Replay every six hours; score unique episodes after deterministic context checks.
+def evaluate_engine(seed=42, *, tick_minutes=15):
+    """Replay at configurable intervals; use tick_minutes=360 for the old six-hour replay.
 
     No LLM or network calls are made; truth is injected independently of the rules.
     Repeated observations of the same episode count once, including false alerts.
     """
     from statistics import median
+    if tick_minutes <= 0:
+        raise ValueError("tick_minutes must be positive")
     data = generate_history(seed)
     first_seen = {}
     cursor = aware(data["events"][0].timestamp)
@@ -109,7 +111,7 @@ def evaluate_engine(seed=42):
         for signal in detect(observed, data["roster"], now=cursor):
             if context_check(signal, observed)[0]:
                 first_seen.setdefault((signal.kind, signal.affected_hash, signal.ref), cursor)
-        cursor += timedelta(hours=6)
+        cursor += timedelta(minutes=tick_minutes)
     expected = {(g["kind"], g["affected_hash"], g["ref"]): datetime.fromisoformat(g["detectable_at"])
                 for g in data["ground_truth"]}
     matched = set(first_seen) & set(expected)

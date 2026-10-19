@@ -438,4 +438,4 @@ td { border-top: 1px solid #edf0e8; padding: 12px 10px; vertical-align: top; }
 .reply-details { margin-top: 14px; }
 .reply-details summary { color: var(--teal); font-size: 11px; cursor: pointer; padding: 5px 0; }
 .reply-details .reply-form { margin-top: 10px; }
-@media (min-width: 1001px) { .manager-aside { padding-top: 36px; } .demo-grid > .live-pipeline { max-height: calc(100vh - 218px); overflow-y: auto; scrollbar-width: thin; scroll-padding: 20px; } }
+@media (min-width: 1001px) { .manager-aside { padding-top: 36px; } }

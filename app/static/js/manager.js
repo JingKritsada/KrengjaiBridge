@@ -1,6 +1,12 @@
 import { api, post } from './api.js';
 import { shell, escapeHTML as e, list, number, percent, icon, showError, connected, busy, toast, structuredHTML } from './ui.js';
 
+const METRIC_LABELS = {
+  friday_after17_assignments_4w: 'งานหลัง 17:00 วันศุกร์ (ครั้ง / 4 สัปดาห์)',
+  pr_wait_hours_median: 'เวลารอ PR review (ชม. ค่ากลาง)',
+  blocked_ticket_days_avg: 'งานติดขัดเฉลี่ย (วัน)',
+};
+
 shell('manager');
 const charts = new Map();
 let lastThemes = '';
@@ -20,7 +26,7 @@ function renderMetrics(metrics = {}) {
 function followupHTML(followup) {
   if (!followup) return '';
   const ready = followup.after !== null && followup.after !== undefined;
-  return `<div class="followup"><div class="followup-title">${icon('chart')}<strong>ติดตามผลหลัง 2 สัปดาห์</strong>${ready ? `<span class="badge ${followup.improved ? '' : 'neutral'}">${followup.improved ? 'ดีขึ้นแล้ว' : 'ติดตามต่อ'}</span>` : '<span class="badge neutral">รอติดตามผล</span>'}</div><div class="followup-comparison"><span>${e(followup.metric_name || 'ตัวชี้วัดของทีม')}</span><div><span><small>ก่อน</small><b>${number(followup.before, 1)}</b></span>${icon('arrow')}<span><small>หลัง</small><b class="${followup.improved ? 'teal' : ''}">${ready ? number(followup.after, 1) : '—'}</b></span></div></div></div>`;
+  return `<div class="followup"><div class="followup-title">${icon('chart')}<strong>ติดตามผลหลัง 2 สัปดาห์</strong>${ready ? `<span class="badge ${followup.improved ? '' : 'neutral'}">${followup.improved ? 'ดีขึ้นแล้ว' : 'ติดตามต่อ'}</span>` : '<span class="badge neutral">รอติดตามผล</span>'}</div><div class="followup-comparison"><span>${e(METRIC_LABELS[followup.metric_name] || followup.metric_name || 'ตัวชี้วัดของทีม')}</span><div><span><small>ก่อน</small><b>${number(followup.before, 1)}</b></span>${icon('arrow')}<span><small>หลัง</small><b class="${followup.improved ? 'teal' : ''}">${ready ? number(followup.after, 1) : '—'}</b></span></div></div></div>`;
 }
 
 function themeHTML(theme) {

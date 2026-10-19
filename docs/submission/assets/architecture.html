@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1d2742;--muted:#5b6785;--line:#c9d3ea;--hw:#c7000b;--blue:#3157d5;--teal:#1f6f5c;--violet:#6b4fd8;--bg:#ffffff}
+*{box-sizing:border-box;margin:0}
+body{width:1600px;background:var(--bg);font-family:Inter,"Noto Sans Thai",sans-serif;color:var(--ink);padding:36px 44px}
+h1{font-size:26px;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:15px;margin-top:4px}
+.grid{display:grid;grid-template-columns:250px 1fr 300px;gap:28px;margin-top:26px}
+.col h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.box{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;margin-bottom:12px}
+.box b{display:block;font-size:15px}
+.box span{font-size:12.5px;color:var(--muted);line-height:1.45;display:block;margin-top:3px}
+.cloud{border:2px dashed var(--hw);border-radius:18px;padding:16px 18px 18px;position:relative}
+.cloud .tag{position:absolute;top:-13px;left:18px;background:#fff;padding:0 8px;color:var(--hw);font-weight:700;font-size:14px}
+.vpc{border:1.5px solid #f0b4b8;border-radius:14px;padding:12px;margin-top:8px}
+.vpc .t{font-size:12px;color:var(--hw);font-weight:600;margin-bottom:8px}
+.row{display:grid;gap:12px}
+.svc{border-radius:12px;padding:11px 13px;color:#fff}
+.svc b{font-size:15px;display:block}
+.svc span{font-size:12px;opacity:.92;line-height:1.45;display:block;margin-top:3px}
+.svc.a{background:#2f4fbf}.svc.b{background:#5a3fc4}.svc.c{background:#1f6f5c}.svc.d{background:#8a5a12}.svc.e{background:#374057}
+.chip{display:inline-block;font-size:11px;border-radius:5px;padding:1px 6px;margin-top:6px;background:rgba(255,255,255,.18)}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+.steps div{background:rgba(255,255,255,.16);border-radius:7px;padding:6px 5px;font-size:11px;text-align:center;line-height:1.3}
+.arrow{color:var(--muted);font-size:12px;text-align:center;margin:4px 0}
+.legend{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
+.lock{color:var(--teal);font-weight:600}
+</style></head><body>
+<h1>Kreng-jai Bridge — architecture on Huawei Cloud</h1>
+<div class="sub">One-way data flow: SDLC metadata in → private outreach → anonymous, attacker-tested themes → manager loop. Original feedback text is never stored.</div>
+<div class="grid">
+  <div class="col">
+    <h2>Sources (metadata only)</h2>
+    <div class="box"><b>Git hosting</b><span>PR opened / review requested / reviewed / labels (WIP)</span></div>
+    <div class="box"><b>Ticket system</b><span>status changes, Blocked, reopened, sprint end</span></div>
+    <div class="box"><b>Calendar</b><span>leave only (to avoid false alarms)</span></div>
+    <h2 style="margin-top:22px">People</h2>
+    <div class="box"><b>Team member · LINE</b><span>private 1:1 chat with the agent, quick-reply buttons, Flex preview before sending</span></div>
+    <div class="box"><b>Manager · Web dashboard</b><span>themes as ranges (“3–5 people”), AI proposal, reply via anonymous token, follow-up metrics</span></div>
+  </div>
+  <div class="cloud"><div class="tag">Huawei Cloud · CN-Hong Kong (ap-southeast-1)</div>
+    <div class="vpc"><div class="t">VPC vpc-kjb · subnet 192.168.0.0/24 · security group sg-kjb (80/443 public, 22 admin IP only) · EIP</div>
+      <div class="row">
+        <div class="svc e"><b>ECS ecs-kjb · Caddy (HTTPS) → FastAPI app (Docker)</b><span>LINE webhook (signature-verified) · REST API · web UI · agent loop every 30 s</span></div>
+        <div class="row" style="grid-template-columns:1fr 1fr">
+          <div class="svc a"><b>Trigger Engine</b><span>rules (PR &gt; 48 h, Blocked &gt; 2 d, urgent work after 17:00 Fri ×3, late nights) + LLM judge for context (WIP, on leave) · identities hashed at ingest</span></div>
+          <div class="svc c"><b>Outreach Agent</b><span>asks the affected person privately; on “yes” sends a neutral reminder that cites team policy, never the requester · ≤ 3 nudges / person / week</span></div>
+        </div>
+        <div class="svc b"><b>Privacy Pipeline</b><span>runs on every feedback before anyone sees it</span>
+          <div class="steps"><div>1 remove identifiers<br>(PyThaiNLP + LLM)</div><div>2 neutralize Thai particles &amp; pronouns</div><div>3 rewrite ⇄ attacker guesses author</div><div>4 situation · impact · request</div><div>5 k-anonymity gate (k=3) + random delay</div><div>6 theme clustering</div></div></div>
+        <div class="svc d"><b>Manager Loop</b><span>weekly theme summary · AI-drafted proposal · reply delivered through encrypted token · 2-week follow-up compares SDLC metric before/after</span></div>
+        <div class="row" style="grid-template-columns:1fr 1fr">
+          <div class="svc e"><b>PostgreSQL</b><span>themes, rewritten text, metrics, hashed events · target: RDS for PostgreSQL</span></div>
+          <div class="svc e"><b>Redis</b><span>k-gate queues, drafts (TTL 1 h), rate limits · target: DCS for Redis</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>AI models</h2>
+    <div class="box"><b>LLM (OpenAI-compatible)</b><span>Qwen3.5 (course endpoint) today; ModelArts Studio MaaS DeepSeek-V4.1-Flash by changing 3 env vars</span></div>
+    <div class="box"><b>Roles of the LLM</b><span>identifier removal · neutral rewrite · <b style="display:inline;font-size:12.5px">attacker</b> that tries to name the author · structuring · theme · proposal · context judge</span></div>
+    <h2 style="margin-top:22px">Build &amp; operate</h2>
+    <div class="box"><b>Provisioning skill</b><span>agent skill + Huawei Cloud SDK script: plan / apply / env for VPC, ECS, RDS, DCS (idempotent)</span></div>
+    <div class="box"><b>Deploy</b><span>rsync + docker compose on ECS, automatic TLS (Caddy)</span></div>
+    <div class="legend"><span class="lock">Privacy by design:</span> metadata only · opt-in · individual signals go to the person only · originals deleted after processing · reply tokens encrypted (Fernet; DEW/KMS next)</div>
+  </div>
+</div>
+</body></html>

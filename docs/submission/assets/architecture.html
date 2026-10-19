@@ -45,7 +45,7 @@ h1{font-size:26px;font-weight:700;letter-spacing:-.01em}
       <div class="row">
         <div class="svc e"><b>ECS ecs-kjb · Caddy (HTTPS) → FastAPI app (Docker)</b><span>LINE webhook (signature-verified) · REST API · web UI · agent loop every 30 s</span></div>
         <div class="row" style="grid-template-columns:1fr 1fr">
-          <div class="svc a"><b>Trigger Engine</b><span>rules (PR &gt; 48 h, Blocked &gt; 2 d, urgent work after 17:00 Fri ×3, late nights) + LLM judge for context (WIP, on leave) · identities hashed at ingest</span></div>
+          <div class="svc a"><b>Trigger Engine</b><span>rules (PR &gt; 48 h, Blocked &gt; 2 d, urgent work after 17:00 Fri ×3, late nights) + context checks (WIP, on leave) · identities hashed at ingest</span></div>
           <div class="svc c"><b>Outreach Agent</b><span>asks the affected person privately; on “yes” sends a neutral reminder that cites team policy, never the requester · ≤ 3 nudges / person / week</span></div>
         </div>
         <div class="svc b"><b>Privacy Pipeline</b><span>runs on every feedback before anyone sees it</span>
@@ -61,7 +61,7 @@ h1{font-size:26px;font-weight:700;letter-spacing:-.01em}
   <div class="col">
     <h2>AI models</h2>
     <div class="box"><b>LLM with failover</b><span>1) Qwen3.5 course endpoint → 2) Qwen3.5 9B on a team GPU (LM Studio over Tailscale) → 3) offline rules. ModelArts Studio MaaS DeepSeek-V4.1-Flash by config</span></div>
-    <div class="box"><b>Roles of the LLM</b><span>identifier removal · neutral rewrite · <b style="display:inline;font-size:12.5px">attacker</b> that tries to name the author · structuring · theme · proposal · context judge</span></div>
+    <div class="box"><b>Roles of the LLM</b><span>identifier removal · neutral rewrite · <b style="display:inline;font-size:12.5px">attacker</b> that tries to name the author · structuring · theme · proposal</span></div>
     <h2 style="margin-top:22px">Build &amp; operate</h2>
     <div class="box"><b>Provisioning skill</b><span>agent skill + Huawei Cloud SDK script: plan / apply / env for VPC, ECS, RDS, DCS (idempotent)</span></div>
     <div class="box"><b>Deploy</b><span>rsync + docker compose on ECS, automatic TLS (Caddy)</span></div>

@@ -28,7 +28,7 @@ def context_check(signal, events):
 
 async def judge_signal(signal, events):
     ok, reason = context_check(signal, events)
-    if ok and get_settings().llm_api_key:
+    if ok and get_settings().llm_judge_enabled and get_settings().llm_api_key:
         try:
             # The rules above already decided; the LLM may only refine it within a short budget.
             answer = await asyncio.wait_for(llm.chat_json([

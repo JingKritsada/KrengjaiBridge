@@ -15,7 +15,7 @@ Huawei ICT Competition 2026 · Innovation Track · Topic 1 (AI applications powe
 
 ## How it works
 1. **Observe**: rules over hashed SDLC events (PR waiting > 48 h for a more senior reviewer, ticket Blocked > 2 days,
-   urgent work after 17:00 on Fridays ×3 in 4 weeks, late-night commits) plus an LLM context judge (WIP, on leave).
+   urgent work after 17:00 on Fridays ×3 in 4 weeks, late-night commits) plus context checks (WIP, reviewer on leave); an LLM judge can be switched on (`LLM_JUDGE_ENABLED`).
 2. **Ask**: a private LINE message with buttons; at most 3 per person per week; "not useful" and "mute" always available.
 3. **Act**: a neutral reminder that never names the requester, or anonymous feedback through the privacy pipeline:
    identifier removal → Thai particle/pronoun neutralization → rewrite ⇄ LLM attacker → situation/impact/request →

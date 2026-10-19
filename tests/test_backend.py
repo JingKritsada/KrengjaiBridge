@@ -58,8 +58,6 @@ def test_full_http_story(backend_client, pipeline_mock, monkeypatch, llm_down):
     signal = next(s for s in result["signals"] if s["kind"] == "pr_stale")
     outreach = next(o for o in result["outreach"] if o["kind"] == "pr_stale")
     assert signal["judge_ok"]
-    if llm_down:
-        assert c.get("/api/health").json()["llm_available"] is False
     post(c, f"/api/outreach/{outreach['id']}/respond", {"action": f"nudge:accept:{signal['id']}"})
     reviewer_inbox = c.get("/api/outreach", params={"member_id": "m-somchai"}).json()
     reminder = next(o for o in reviewer_inbox if o["kind"] == "reminder")
@@ -69,6 +67,7 @@ def test_full_http_story(backend_client, pipeline_mock, monkeypatch, llm_down):
     assert draft["result"]["ok"] and draft["result"]["structured"]
     if llm_down:
         assert any("โหมดสำรอง" in note for step in draft["result"]["steps"] for note in step["notes"])
+        assert c.get("/api/health").json()["llm_available"] is False
     gate = confirm(c, draft)["gate"]
     assert gate["count"] == 1 and not gate["released"]
     assert c.get("/api/manager/summary").json()["themes"] == []

@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     # A failed backend is skipped for this long; quota/auth errors (401/403/422...) use the long value.
     llm_cooldown_s: float = 60.0
     llm_cooldown_long_s: float = 600.0
-    # The SDLC context judge is optional on top of rules; never let it hold up a request for long.
+    # Optional LLM refinement of the deterministic SDLC context checks. Off by default: small
+    # fallback models vetoed valid signals with made-up reasons, and the evaluation measured rules only.
+    llm_judge_enabled: bool = False
     llm_judge_timeout_s: float = 8.0
 
     # SQLite locally, RDS for PostgreSQL in the cloud.

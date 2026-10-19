@@ -52,6 +52,16 @@ function resetSteps() {
   document.querySelector('.preview-actions').hidden = false;
 }
 
+// A blocked run returns no draft and no cancel button: give the editor back so the author can rewrite and test again.
+function unlockEditor() {
+  document.querySelector('#removed-markers').hidden = true;
+  document.querySelector('#feedback-text').hidden = false;
+  document.querySelector('#feedback-text').readOnly = false;
+  document.querySelector('#member-select').disabled = false;
+  document.querySelector('.preview-actions').hidden = false;
+  document.querySelector('#preview').disabled = false;
+}
+
 function setPipelineStatus(text, className = '', state = 'idle') {
   const status = document.querySelector('#pipeline-status');
   status.textContent = text;
@@ -208,7 +218,8 @@ document.querySelector('#feedback-form').addEventListener('submit', event => {
       document.querySelector('#confirm-actions').hidden = !draftID;
       document.querySelector('#confirm').disabled = !result.ok;
       document.querySelector('#confirm-note').hidden = !!result.ok;
-      document.querySelector('#confirm-note').textContent = result.reason_blocked || 'ยังมีร่องรอยที่เดาตัวตนได้ กรุณายกเลิกแล้วปรับข้อความ';
+      document.querySelector('#confirm-note').textContent = result.reason_blocked || 'ยังมีร่องรอยที่เดาตัวตนได้ ปรับข้อความแล้วทดสอบอีกครั้ง';
+      if (!draftID) unlockEditor();
     } catch (error) {
       if (draftID) await post('/api/feedback/cancel', { draft_id: draftID }).catch(() => {});
       draftID = null;

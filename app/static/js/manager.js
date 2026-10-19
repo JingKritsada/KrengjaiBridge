@@ -47,7 +47,7 @@ function followupHTML(followup) {
   if (followup.after === null || followup.after === undefined) {
     return `<div class="followup pending">${icon('calendar-clock', 'sm')}<span>ติดตามผลหลัง 2 สัปดาห์ · รอวัดผลอีกครั้ง</span></div>`;
   }
-  return `<div class="followup outcome"><div><strong class="followup-title">ติดตามผลหลัง 2 สัปดาห์</strong><span class="followup-metric">${e(METRIC_LABELS[followup.metric_name] || followup.metric_name || 'ตัวชี้วัดของทีม')}</span></div><div class="followup-comparison"><span><span class="sr-only">ก่อน </span>${number(followup.before, 1)}</span>${icon('arrow-right')}<span class="after"><span class="sr-only">หลัง </span>${number(followup.after, 1)}</span></div></div>`;
+  return `<div class="followup outcome${followup.improved ? ' improved' : ''}"><div><strong class="followup-title">ติดตามผลหลัง 2 สัปดาห์</strong><span class="followup-metric">${e(METRIC_LABELS[followup.metric_name] || followup.metric_name || 'ตัวชี้วัดของทีม')}${followup.improved ? '' : ' · ยังไม่ดีขึ้น ติดตามต่อ'}</span></div><div class="followup-comparison"><span><span class="sr-only">ก่อน </span>${number(followup.before, 1)}</span>${icon('arrow-right')}<span class="after"><span class="sr-only">หลัง </span>${number(followup.after, 1)}</span></div></div>`;
 }
 
 function replyFormHTML(theme) {

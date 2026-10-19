@@ -17,6 +17,7 @@ from app.api import (check_draft_recipient, confirm_feedback, get_member, previe
 from app.config import get_settings
 from app.db import Member, Outreach
 from app.outreach.channel import deliver
+from app.privacy.neutralize import leak_markers
 from app.triggers.engine import respond
 
 router = APIRouter()
@@ -51,17 +52,32 @@ def text_message(text, buttons=None):
     return TextMessage(text=text[:5000], quick_reply=quick_reply(buttons) if buttons else None)
 
 
-def preview_message(draft_id, result):
+# Flex has no shadows, so the card stays flat but uses the web palette (DESIGN.md section 11).
+INK, INK_3, DANGER, ACCENT, ACCENT_INK = "#142022", "#566264", "#A8231B", "#0B6A60", "#0A5A52"
+
+
+def preview_message(draft_id, result, markers=()):
+    """Preview card for a LINE draft. `markers` are the removed words (leak_markers of the incoming text); never stored."""
     structured = result.get("structured") or {}
-    rows = [{"type": "text", "text": "ตรวจสอบความเห็นก่อนส่ง", "weight": "bold", "size": "lg"}]
+    rows = [{"type": "text", "text": "ตรวจสอบก่อนส่งแบบนิรนาม", "weight": "bold", "size": "lg", "color": INK, "wrap": True}]
+    if markers:
+        spans = []
+        for i, marker in enumerate(markers):
+            if i:
+                spans.append({"type": "span", "text": " · ", "color": INK_3})
+            spans.append({"type": "span", "text": marker, "decoration": "line-through", "color": DANGER})
+        rows += [{"type": "text", "text": "ร่องรอยที่ตัดออก", "size": "xs", "color": INK_3, "margin": "md"},
+                 {"type": "text", "text": " · ".join(markers), "contents": spans, "size": "sm", "wrap": True}]
+    rows.append({"type": "separator", "margin": "md"})
     for key, label in (("situation", "สถานการณ์"), ("impact", "ผลกระทบ"), ("request", "สิ่งที่ขอ")):
-        rows += [{"type": "text", "text": label, "weight": "bold", "margin": "md"},
-                 {"type": "text", "text": structured.get(key) or "—", "wrap": True}]
-    rows.append({"type": "text", "text": f"ทดสอบผู้โจมตี {len(result.get('attacker_rounds', []))} รอบ", "size": "sm", "margin": "md"})
+        rows += [{"type": "text", "text": label, "size": "xs", "color": INK_3, "margin": "md"},
+                 {"type": "text", "text": structured.get(key) or "—", "size": "sm", "color": INK, "wrap": True}]
+    rounds = len(result.get("attacker_rounds", []))
+    rows.append({"type": "text", "text": f"ทดสอบเดาตัวตน {rounds} รอบ · ระบุตัวตนไม่ได้", "size": "xs", "color": ACCENT_INK, "margin": "md", "wrap": True})
+    buttons = [{"type": "button", "style": "primary", "color": ACCENT, "action": {"type": "postback", "label": "ยืนยันส่ง", "data": f"fb:confirm:{draft_id}", "displayText": "ยืนยันส่ง"}},
+               {"type": "button", "style": "secondary", "action": {"type": "postback", "label": "ยกเลิก", "data": f"fb:cancel:{draft_id}", "displayText": "ยกเลิก"}}]
     bubble = {"type": "bubble", "body": {"type": "box", "layout": "vertical", "contents": rows},
-              "footer": {"type": "box", "layout": "vertical", "contents": [
-                  {"type": "button", "style": style, "action": {"type": "postback", "label": label, "data": f"fb:{action}:{draft_id}", "displayText": label}}
-                  for style, label, action in (("primary", "ยืนยันส่ง", "confirm"), ("secondary", "ยกเลิก", "cancel"))]}}
+              "footer": {"type": "box", "layout": "vertical", "spacing": "sm", "contents": buttons}}
     return FlexMessage(alt_text="ตรวจสอบความเห็นแบบไม่ระบุตัวตนก่อนส่ง", contents=FlexContainer.from_json(json.dumps(bubble, ensure_ascii=False)))
 
 
@@ -221,7 +237,7 @@ async def handle_event(session, redis, event):
             result = await preview_feedback(session, redis, member, text)
             if result["draft_id"]:
                 redis.set(f"kjb:line-draft:{user_id}", result["draft_id"], ex=3600)
-                await reply_message(event.reply_token, preview_message(result["draft_id"], result["result"]))
+                await reply_message(event.reply_token, preview_message(result["draft_id"], result["result"], leak_markers(text)))
             else:
                 await reply_message(event.reply_token, text_message("ยังไม่ผ่านการตรวจความเป็นส่วนตัว กรุณาปรับข้อความแล้วลองใหม่"))
 

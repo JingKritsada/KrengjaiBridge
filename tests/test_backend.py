@@ -244,6 +244,8 @@ def test_line_signature_follow_link_preview_confirm_and_push(backend_client, bac
     assert line_event(c, secret, [text_event]).status_code == 200
     flex = replies[-1].messages[0]
     assert flex.type == "flex"
+    struck = [span["text"] for item in flex.contents.to_dict()["body"]["contents"] for span in item.get("contents", []) if span.get("decoration") == "line-through"]
+    assert {"หนู", "ค่ะ"} <= set(struck)  # markers from the incoming text, shown struck through
     action = flex.contents.footer.contents[0].action.data
     assert action.startswith("fb:confirm:")
     assert line_event(c, secret, [{**base, "type": "postback", "postback": {"data": action}}]).status_code == 200
@@ -251,6 +253,21 @@ def test_line_signature_follow_link_preview_confirm_and_push(backend_client, bac
     line_outreach = next(o for o in result["outreach"] if o["kind"] == "pr_stale")
     assert line_outreach["channel"] == "line" and pushes[-1].to == "Umint"
     assert pushes[-1].messages[0].quick_reply
+
+
+def test_line_preview_card_shape():
+    from app.outreach.line_bot import preview_message
+    result = {"structured": {"situation": "งานด่วนเย็นวันศุกร์", "impact": "ยกเลิกนัด", "request": "ตัดรอบ 15:00"}, "attacker_rounds": [{}, {}]}
+    card = preview_message("d-1", result, ["หนู", "ค่ะ"]).contents.to_dict()
+    body = card["body"]["contents"]
+    assert body[0]["text"] == "ตรวจสอบก่อนส่งแบบนิรนาม" and body[0]["weight"] == "bold"
+    spans = [span for item in body for span in item.get("contents", [])]
+    assert [s["text"] for s in spans if s.get("decoration") == "line-through"] == ["หนู", "ค่ะ"]
+    assert all(s["color"] == "#A8231B" for s in spans if s.get("decoration") == "line-through")
+    assert any(item.get("text") == "ทดสอบเดาตัวตน 2 รอบ · ระบุตัวตนไม่ได้" for item in body)
+    assert [b["action"]["data"] for b in card["footer"]["contents"]] == ["fb:confirm:d-1", "fb:cancel:d-1"]
+    plain = preview_message("d-2", result).contents.to_dict()["body"]["contents"]
+    assert not any(item.get("contents") for item in plain)  # no markers, no struck row
 
 
 def test_line_push_failure_falls_back_to_web(backend_client, backend_settings, monkeypatch):

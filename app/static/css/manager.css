@@ -35,12 +35,13 @@
 .manager-reply p { font-size: var(--t-md); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .reply-details summary { min-height: 32px; padding: 5px 0; color: var(--accent); font-size: var(--t-sm); cursor: pointer; }
 .reply-details .reply-form { margin-top: 10px; }
-.followup.outcome { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 16px 18px; border-radius: var(--r-well); background: var(--accent-soft); }
+.followup.outcome { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 16px 18px; border-radius: var(--r-well); background: var(--surface-2); }
+.followup.outcome.improved { background: var(--accent-soft); }
 .followup-title { display: block; font-size: var(--t-md); }
 .followup-metric { display: block; font-size: var(--t-sm); color: var(--ink-2); }
 .followup-comparison { display: flex; align-items: center; gap: 14px; font-size: var(--t-4xl); font-weight: 500; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .followup-comparison .icon { width: 28px; height: 28px; color: var(--ink-3); }
-.followup-comparison .after { color: var(--accent); }
+.followup.improved .followup-comparison .after { color: var(--accent); }
 .followup.pending { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: var(--t-sm); color: var(--ink-3); }
 .manager-aside { display: grid; gap: 16px; }
 #metrics-period { margin-left: auto; }

@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "app/static/index.html"
+        ],
+        "createdAt": "2026-10-19T11:29:50.044Z",
+        "reason": "Agent review: homepage CSS sets a 38-56px hero heading against 14-17px body copy; desktop and mobile screenshots confirm a strong size hierarchy. Stylesheet is loaded dynamically."
+      },
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "app/static/manager.html"
+        ],
+        "createdAt": "2026-10-19T11:29:50.178Z",
+        "reason": "Agent review: dashboard CSS sets a 26-29px page title, 20-21px theme headings, 14-16px section headings and 12-13px body copy; desktop and mobile screenshots confirm hierarchy. Stylesheet is loaded dynamically."
+      },
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "app/static/demo.html"
+        ],
+        "createdAt": "2026-10-19T11:29:50.291Z",
+        "reason": "Agent review: demo CSS sets a 26-29px page title against 12-13px body copy, exceeding the 1.25x threshold; desktop and mobile screenshots confirm hierarchy. Stylesheet is loaded dynamically."
+      }
+    ]
+  }
+}

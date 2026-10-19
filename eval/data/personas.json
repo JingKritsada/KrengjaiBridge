@@ -1,0 +1,202 @@
+[
+  {
+    "persona_id": "p01",
+    "display_name": "มะลิ",
+    "gender": "female",
+    "seniority": "junior",
+    "pronoun": "หนู",
+    "particles": "ค่ะ/นะคะ",
+    "style": "short, tentative; one 🙏; signature ฝากดูนิดนึง; English PR and review",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p02",
+    "display_name": "แพรว",
+    "gender": "female",
+    "seniority": "mid",
+    "pronoun": "เรา",
+    "particles": "คะ",
+    "style": "two medium sentences, no emoji; signature ขอถามตรงนี้; English terms lowercase",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p03",
+    "display_name": "วิภา",
+    "gender": "female",
+    "seniority": "senior",
+    "pronoun": "ดิฉัน",
+    "particles": "ค่ะ",
+    "style": "long formal sentences, no emoji or abbreviations; signature จึงขอเสนอว่า",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p04",
+    "display_name": "จิรา",
+    "gender": "female",
+    "seniority": "lead",
+    "pronoun": "พี่",
+    "particles": "จ้ะ",
+    "style": "warm mentoring tone, short paragraphs; signature ลองปรับกันดู; occasional 🙂",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p05",
+    "display_name": "อิง",
+    "gender": "female",
+    "seniority": "junior",
+    "pronoun": "หนู",
+    "particles": "ค่า",
+    "style": "casual short fragments, repeated !, 😅; typo จิง; signature แอบติดตรงนี้",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p06",
+    "display_name": "นิดา",
+    "gender": "female",
+    "seniority": "mid",
+    "pronoun": "เรา",
+    "particles": "นะคะ",
+    "style": "English-heavy API deploy scope; medium sentences; signature ขอ sync หน่อย; no emoji",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p07",
+    "display_name": "กมล",
+    "gender": "female",
+    "seniority": "senior",
+    "pronoun": "ดิฉัน",
+    "particles": "เจ้าค่ะ",
+    "style": "careful two-part formal observation and suggestion; signature ขออนุญาตสะท้อน; no emoji",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p08",
+    "display_name": "ชญา",
+    "gender": "female",
+    "seniority": "lead",
+    "pronoun": "พี่",
+    "particles": "ค่ะ",
+    "style": "concise numbered 1) 2) clauses; signature สรุปประเด็น; no emoji; Thai tech words",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p09",
+    "display_name": "พิม",
+    "gender": "female",
+    "seniority": "junior",
+    "pronoun": "เค้า",
+    "particles": "จ้า",
+    "style": "informal with ... and 🥲; typo มั้ย; signature ช่วยทีน้า; brief English words",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p10",
+    "display_name": "ริน",
+    "gender": "female",
+    "seniority": "mid",
+    "pronoun": "ฉัน",
+    "particles": "ค่ะ",
+    "style": "medium sentences separated by semicolons; signature อยากให้ลอง; no emoji; English ticket",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p11",
+    "display_name": "ธนา",
+    "gender": "male",
+    "seniority": "senior",
+    "pronoun": "ผม",
+    "particles": "ครับ",
+    "style": "long reasoned technical sentences; signature ในมุมระบบ; English bottleneck and process; no emoji",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p12",
+    "display_name": "ปกรณ์",
+    "gender": "male",
+    "seniority": "lead",
+    "pronoun": "พี่",
+    "particles": "ครับผม",
+    "style": "direct coaching tone with two short sentences; signature เอาตามนี้ดีไหม; no emoji",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p13",
+    "display_name": "นนท์",
+    "gender": "male",
+    "seniority": "junior",
+    "pronoun": "ผม",
+    "particles": "คับ",
+    "style": "short chat fragments, typo แปป, 😅; signature ติดนิดนึงฮะ; English PR",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p14",
+    "display_name": "ภูมิ",
+    "gender": "male",
+    "seniority": "mid",
+    "pronoun": "เรา",
+    "particles": "ฮะ",
+    "style": "casual medium sentences, dash-separated clauses; signature ขอเคลียร์หน่อย; no emoji",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p15",
+    "display_name": "อัคร",
+    "gender": "male",
+    "seniority": "senior",
+    "pronoun": "กระผม",
+    "particles": "ขอรับ",
+    "style": "very formal long Thai prose; signature เห็นควรพิจารณา; no emoji, few English words",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p16",
+    "display_name": "วริน",
+    "gender": "male",
+    "seniority": "lead",
+    "pronoun": "ผม",
+    "particles": "นะครับ",
+    "style": "structured bullets with *; signature ขอปิดประเด็น; English owner action; no emoji",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p17",
+    "display_name": "เต้",
+    "gender": "male",
+    "seniority": "junior",
+    "pronoun": "ผม",
+    "particles": "ค้าบ",
+    "style": "informal short sentences, 😭, typo มะ; signature ขอแรงหน่อย; English review",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p18",
+    "display_name": "ก้อง",
+    "gender": "male",
+    "seniority": "mid",
+    "pronoun": "เรา",
+    "particles": "งับ",
+    "style": "lowercase English-heavy dev chat, two short lines; signature quick check; occasional 👀",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p19",
+    "display_name": "ศรุต",
+    "gender": "male",
+    "seniority": "senior",
+    "pronoun": "ผม",
+    "particles": "ครับ",
+    "style": "precise long sentences with parentheses; signature ประเด็นหลักคือ; Thai explanations, no emoji",
+    "synthetic": true
+  },
+  {
+    "persona_id": "p20",
+    "display_name": "อนันต์",
+    "gender": "male",
+    "seniority": "lead",
+    "pronoun": "พี่",
+    "particles": "นะคับ",
+    "style": "brief calm Thai clauses separated by /; signature มาช่วยกันจัดระบบ; 🙂 at end",
+    "synthetic": true
+  }
+]

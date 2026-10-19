@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17685f">
+  <title>แดชบอร์ดหัวหน้า — เกรงใจบริดจ์</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%2317685f%27/%3E%3Cpath d=%27M6 24V10m20 14V10M6 16c5 0 5-9 10-9s5 9 10 9M6 24h20M12 13v11m8-11v11%27 fill=%27none%27 stroke=%27white%27 stroke-width=%271.5%27/%3E%3C/svg%3E">
+  <script>window.appAssetBase=(location.port==='8099'||(location.pathname.endsWith('.html')&&!location.pathname.startsWith('/static/')))?new URL('./',location.href).href:new URL('/static/',location.origin).href;</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" id="app-styles"><script>document.querySelector('#app-styles').href=window.appAssetBase+'css/app.css';</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+  <script type="module">import(window.appAssetBase+'js/manager.js');</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">ข้ามไปยังเนื้อหา</a><header id="site-header"></header>
+  <main id="main" class="workspace">
+    <div class="page-heading"><div><h1>แดชบอร์ดหัวหน้า</h1><p>ฟังเสียงของทีม แล้วเปลี่ยนเป็นการลงมือทำ</p></div><div class="page-context"><span id="week-label">ภาพรวมประจำสัปดาห์</span><small id="refresh-status"><span class="live-dot"></span>อัปเดตอัตโนมัติทุก 5 วินาที</small></div></div>
+    <div class="privacy-note"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg>ไม่แสดงข้อมูลรายบุคคล · แสดงจำนวนเป็นช่วง <span>เผยแพร่เมื่อมีเสียงร่วมอย่างน้อย 3 คน</span></div>
+    <section id="metrics" class="metrics-row" aria-label="ตัวชี้วัดการทำงานของทีม"></section>
+    <div class="manager-grid">
+      <section class="theme-section"><div class="section-heading"><h2>ประเด็นที่ทีมอยากให้ช่วย <span id="theme-count" class="count-badge">0</span></h2><span class="muted">เสียงที่ผ่านประตูนิรนาม</span></div><div id="themes"><div class="empty-state"><h3>กำลังโหลดเสียงของทีม…</h3></div></div></section>
+      <aside class="manager-aside">
+        <section class="panel chart-panel"><div class="section-heading"><h2>แนวโน้มการทำงาน</h2><span class="badge neutral">รายสัปดาห์</span></div><div class="chart-heading"><h3>เวลารอรีวิว PR</h3><span>ชั่วโมง · ยิ่งน้อยยิ่งดี</span></div><div class="chart-wrap"><canvas id="pr-chart" role="img" aria-label="กราฟเวลารอรีวิว PR รายสัปดาห์"></canvas><p class="chart-empty" id="pr-chart-empty" hidden>ยังไม่มีข้อมูลแนวโน้ม</p></div><div class="chart-heading second-chart"><h3>งานเข้าหลัง 17:00 วันศุกร์</h3><span>ครั้ง · ยิ่งน้อยยิ่งดี</span></div><div class="chart-wrap compact"><canvas id="friday-chart" role="img" aria-label="กราฟจำนวนงานที่เข้าหลัง 17 นาฬิกาวันศุกร์"></canvas><p class="chart-empty" id="friday-chart-empty" hidden>ยังไม่มีข้อมูลแนวโน้ม</p></div></section>
+        <section class="panel pipeline-stats"><div class="section-heading"><h2>ประตูนิรนามทำงานอย่างไร</h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/></svg></div><div id="pipeline-stats" class="stats-grid"></div><p class="subtle">ความเห็นที่ยังเดาตัวตนได้ จะไม่ถูกเผยแพร่</p></section>
+      </aside>
+    </div>
+    <footer class="workspace-footer"><span>จากเสียงของทีม สู่การเปลี่ยนแปลงที่วัดผลได้</span><a data-page="demo" href="/demo">ไปห้องควบคุมเดโม →</a></footer>
+  </main>
+</body>
+</html>

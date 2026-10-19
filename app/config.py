@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = "qwen3.5"
     llm_timeout_s: float = 60.0
+    # "openai" (LiteLLM, MaaS), "ollama" (native /api/chat), or "auto": ollama when the URL uses port 11434.
+    llm_api_style: str = "auto"
 
     # SQLite locally, RDS for PostgreSQL in the cloud.
     database_url: str = "sqlite:///./data/runtime/app.db"

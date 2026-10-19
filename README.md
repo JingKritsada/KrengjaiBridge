@@ -40,6 +40,13 @@ Open http://localhost:8000/demo.
   only changes `DATABASE_URL` and `REDIS_URL`.
 - LLM: any OpenAI-compatible endpoint (`LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`); ModelArts Studio MaaS
   (`https://api-ap-southeast-1.modelarts-maas.com/v2`, `deepseek-v4.1-flash`) once an API key is available.
+- Self-hosted: Ollama on a team GPU reached over Tailscale (`LLM_API_STYLE=ollama`): [docs/OLLAMA_TAILSCALE.md](docs/OLLAMA_TAILSCALE.md) (Thai).
+- LINE OA setup: [docs/submission/LINE_SETUP.md](docs/submission/LINE_SETUP.md) (Thai).
+
+## Demo video
+`uv run scripts/record_demo.py` records the web walkthrough with captions (first run: `uv run --with playwright playwright install chromium`).
+Full guide incl. recording LINE and editing: [docs/RECORDING.md](docs/RECORDING.md) (Thai).
+Submission files are rebuilt with `uv run docs/submission/build_submission.py`.
 
 ## Privacy rules enforced in code
 Metadata only · opt-in · original feedback never persisted · identities hashed at ingest · reply tokens encrypted ·
@@ -47,4 +54,4 @@ individual signals (late nights) go to the person only · manager sees themes on
 
 ## Evaluation (synthetic, 20 personas × 12 Thai messages)
 See [eval/results/REPORT.md](eval/results/REPORT.md) for numbers, method and limitations. Re-run with
-`uv run python eval/run_all.py` (LLM responses are cached under `eval/cache/`).
+`uv run python eval/run_all.py` (LLM responses are cached under `eval/cache/`, which is not committed). A full uncached run makes ~700 LLM calls: check your key budget first.

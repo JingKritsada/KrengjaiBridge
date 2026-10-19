@@ -17,7 +17,7 @@ def nudge_buttons(signal_id, kind):
         {"label": "ช่วยเตือนให้หน่อย", "action": f"nudge:accept:{signal_id}"},
         {"label": "ยังไม่ต้อง", "action": f"nudge:decline:{signal_id}"},
         {"label": "ไม่มีประโยชน์", "action": f"nudge:useless:{signal_id}"},
-        {"label": "ปิดการแจ้งเตือนประเภทนี้", "action": f"mute:{kind}"},
+        {"label": "ปิดแจ้งเตือนแบบนี้", "action": f"mute:{kind}"},
     ]
 
 

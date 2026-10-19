@@ -33,19 +33,28 @@ async def chat(
 ) -> str:
     """Return the assistant text. Thinking is disabled so answers come back fast."""
     s = get_settings()
-    body: dict[str, Any] = {
-        "model": s.llm_model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        # Qwen3.x on vLLM/LiteLLM: skip the reasoning phase.
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
-    headers = {"Authorization": f"Bearer {s.llm_api_key}"}
+    base = s.llm_base_url.rstrip("/")
+    ollama = s.llm_api_style == "ollama" or (s.llm_api_style == "auto" and ":11434" in base)
+    if ollama:
+        # Native Ollama API: the only reliable way to switch Qwen3.x thinking off.
+        url = f"{base.removesuffix('/v1')}/api/chat"
+        body: dict[str, Any] = {"model": s.llm_model, "messages": messages, "stream": False, "think": False,
+                                "options": {"temperature": temperature, "num_predict": max_tokens}}
+    else:
+        url = f"{base}/chat/completions"
+        body = {
+            "model": s.llm_model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            # Qwen3.x on vLLM/LiteLLM: skip the reasoning phase.
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
+    headers = {"Authorization": f"Bearer {s.llm_api_key}"} if s.llm_api_key else {}
     async with httpx.AsyncClient(timeout=s.llm_timeout_s) as client:
         for attempt in range(3):
             try:
-                r = await client.post(f"{s.llm_base_url}/chat/completions", json=body, headers=headers)
+                r = await client.post(url, json=body, headers=headers)
             except httpx.TransportError as e:
                 if attempt == 2:
                     raise LLMError(str(e)) from e
@@ -54,7 +63,9 @@ async def chat(
                 continue
             if r.status_code != 200:
                 raise LLMError(f"{r.status_code}: {r.text[:300]}")
-            content = r.json()["choices"][0]["message"].get("content") or ""
+            data = r.json()
+            message = data["message"] if ollama else data["choices"][0]["message"]
+            content = message.get("content") or ""
             return content.strip()
     raise LLMError("unreachable")
 

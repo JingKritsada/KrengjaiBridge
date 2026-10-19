@@ -264,3 +264,38 @@ def test_line_push_failure_falls_back_to_web(backend_client, backend_settings, m
         session.commit()
     result = post(c, "/api/demo/scenario/pr_stale")
     assert all(o["channel"] == "web" for o in result["outreach"])
+
+
+def test_line_typed_text_works_without_quick_replies(backend_client, backend_settings, monkeypatch):
+    # LINE for PC/Mac has no quick replies: typed names, button labels and ยืนยัน must work.
+    c = backend_client
+    backend_settings.line_channel_secret = "test-channel-secret"
+    backend_settings.line_channel_access_token = "test-access-token"
+    replies, pushes = [], []
+    from linebot.v3.messaging import MessagingApi
+    monkeypatch.setattr(MessagingApi, "reply_message", lambda self, payload: replies.append(payload))
+    monkeypatch.setattr(MessagingApi, "push_message", lambda self, payload: pushes.append(payload))
+    secret = backend_settings.line_channel_secret
+    base = {"replyToken": "reply-token", "timestamp": 1720000000000, "source": {"type": "user", "userId": "Upc"}, "mode": "active"}
+
+    def say(text):
+        event = {**base, "type": "message", "message": {"id": uuid.uuid4().hex, "type": "text", "quoteToken": "q", "text": text}}
+        assert line_event(c, secret, [event]).status_code == 200
+        return replies[-1].messages[0]
+
+    assert "เชื่อมต่อเป็น มิ้น" in say(" มิ้น ").text
+    with c.app.state.session_factory() as session:
+        assert session.get(Member, "m-mint").line_user_id == "Upc"
+
+    assert "รายละเอียดเพิ่ม" in say("งานเยอะ").text  # too short to be feedback; no pipeline call
+
+    post(c, "/api/demo/scenario/pr_stale")
+    assert "ไม่มีชื่อคุณ" in say("ช่วยเตือนให้หน่อย").text
+    nudge = next(o for o in c.get("/api/outreach?member_id=m-mint").json() if o["kind"] == "pr_stale")
+    assert nudge["response"].startswith("nudge:accept:")
+    assert any(o["kind"] != "pr_stale" for o in c.get("/api/outreach?member_id=m-somchai").json())
+
+    flex = say("หนูไม่สะดวกรับงานศุกร์เย็นค่ะ เพราะต้องยกเลิกนัดบ่อยมาก")
+    assert flex.type == "flex"
+    assert "ยืนยันแล้ว" in say("ยืนยัน").text
+    assert "ไม่มีฉบับร่าง" in say("ยืนยัน").text

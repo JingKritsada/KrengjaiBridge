@@ -152,10 +152,10 @@ def build_form(template, source, data):
     member_row = table.rows[4]
     add_doc_text(member_row.cells[1], fields["Instructor (1 person)"])
     student_source = fields["Students (max 3)"]
-    names = re.search(r"— (.*?) \(from", student_source)
-    student_names = names[1].split(", ") if names else []
+    student_names = [name.strip() for name in student_source.split(",") if name.strip()]
     for i in range(3):
-        add_doc_text(member_row.cells[i + 2], f"[[TODO: confirm — {student_names[i]}; add English name]]"
+        # Thai names are confirmed by the team; the English spelling is left for them to add.
+        add_doc_text(member_row.cells[i + 2], f"{student_names[i]}\n\n[[TODO: English name]]"
                      if i < len(student_names) else "[[TODO: student name]]")
     intro = rows["Entry Introduction"].cells[1]
     remove_empty(intro)

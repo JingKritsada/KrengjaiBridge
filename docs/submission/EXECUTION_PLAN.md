@@ -6,7 +6,7 @@
 - โค้ดอยู่ใน `kreng-jai-bridge/` (git local) มี test ผ่านทั้งหมด
 - Huawei Cloud (CN-Hong Kong, enterprise project HC-2026a-02):
   - `vpc-kjb` / `subnet-kjb`
-  - `sg-kjb`: เปิด 80/443 ให้ทุกคน, เปิด 22 เฉพาะ IP 118.175.206.35
+  - `sg-kjb`: เปิด 80/443 ให้ทุกคน, เปิด 22 เฉพาะ IP ของเครื่องผู้ดูแล
   - ECS `ecs-kjb` (c9.large.2, pay-per-use ~0.10 USD/ชม.) + EIP 119.13.81.32
 - App รันบน ECS ด้วย Docker (FastAPI + PostgreSQL + Redis) มี HTTPS อัตโนมัติ (Caddy)
 - LINE webhook URL ตั้งให้แล้ว และ test ได้ 200 OK
@@ -14,6 +14,8 @@
 - ไฟล์ลับ (ห้าม commit, ห้ามส่งต่อ): `.env`, `.env.line`, `.env.cloud` (รหัส root ECS), `.env.server`, `deploy/.env`
 
 ## 1. LINE (10 นาที) — ทำก่อน เพราะต้องใช้ตอนอัดวิดีโอ
+คู่มือละเอียดพร้อมตารางแก้ปัญหา: [LINE_SETUP.md](LINE_SETUP.md) (สรุปสั้นด้านล่าง)
+
 1. เปิด https://developers.line.biz/console/ แล้วเลือก channel **Kreng-jai Bridge** → แท็บ **Messaging API**
 2. หัวข้อ **Webhook settings**
    - ตรวจว่า Webhook URL = `https://119-13-81-32.sslip.io/line/webhook`
@@ -36,6 +38,14 @@
 - ลิงก์วิดีโอ (หลังอัดเสร็จ) และลิงก์ repo (ถ้าจะเปิดเผย)
 
 ## 3. อัดวิดีโอ demo (45–60 นาที รวมตัดต่อ) — ยาว 3–4 นาที
+ส่วนหน้าเว็บอัดอัตโนมัติได้ (มีคำบรรยาย EN/TH):
+```bash
+cd kreng-jai-bridge
+uv run --with playwright playwright install chromium   # ครั้งแรกครั้งเดียว
+uv run scripts/record_demo.py --size 1920x1080 --out demo.mp4
+```
+แก้คำบรรยายได้ที่ `CAPTIONS` ใน `scripts/record_demo.py` ส่วน LINE บนมือถือให้อัดหน้าจอแยกแล้วนำมาตัดต่อรวม
+
 เตรียมก่อนอัด:
 - Desktop 1440×900 หรือ 1920×1080
 - เปิด 2 แท็บ: `/demo` และ `/manager`

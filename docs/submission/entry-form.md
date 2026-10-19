@@ -7,7 +7,7 @@ Metric placeholders `{{...}}` are filled from `eval/results/results.json`.
 - University Name: Chulalongkorn University
 - Team Name: [[TODO: team name]]
 - Instructor (1 person): [[TODO: instructor name]]
-- Students (max 3): [[TODO: confirm — กฤษฎา ลิ้มศรีประพันธ์, ชิติพัฒน์ ภู่ทอง, ภาณุพงษ์ สภานนท์ (from HC-2026a-02 roster); add English names]]
+- Students (max 3): กฤษฎา ลิ้มศรีประพันธ์, ชิติพัฒน์ ภู่ทอง, ภาณุพงษ์ สภานนท์
 - Team Leader Tel: [[TODO]]
 - Team Leader Email: [[TODO]]
 - Team Group Photo: [[TODO: ~2 MB photo]]
@@ -89,4 +89,4 @@ Expected impact (to validate in a pilot): shorter PR wait and blocked time, high
 - Live web demo: https://119-13-81-32.sslip.io (dashboard `/manager`, presenter console `/demo`)
 - LINE Official Account: @075bvvrs (Kreng-jai Bridge)
 - Video: [[TODO: link after recording]]
-- Source code: [[TODO: repository link]]
+- Source code: https://github.com/JingKritsada/KrengjaiBridge

@@ -19,24 +19,34 @@
 .rail-controls .text-button { padding: 0; font-size: var(--t-sm); }
 .inbox-panel > .section-heading { gap: 4px 10px; }
 .inbox-panel > .section-heading .meta { display: inline-flex; align-items: center; gap: 6px; }
-.inbox-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.avatar { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 50%; box-shadow: var(--neu-raised-sm); font-size: 15px; font-weight: 600; color: var(--ink-2); }
-.inbox-identity > div { min-width: 0; }
-.inbox-identity strong { display: block; font-size: var(--t-md); line-height: 1.3; }
-.inbox-identity small { display: block; font-size: var(--t-xs); color: var(--ink-3); overflow-wrap: anywhere; }
-.line-badge { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: var(--t-xs); color: var(--line-ink); }
-.chat-messages { flex: 1 1 0px; height: 0; min-height: 280px; overflow-y: auto; padding: 16px; scrollbar-gutter: stable; }
-/* Recording: the newest message (scrolled to the bottom) ends above the 136 px caption band. */
-body.rec .chat-messages { padding-bottom: 120px; }
-.chat-entry + .chat-entry { margin-top: 20px; }
-.chat-agent { display: block; margin-bottom: 8px; font-size: var(--t-xs); color: var(--ink-3); }
-.chat-bubble { padding: 12px 14px; background: var(--paper); border-radius: 4px 14px 14px 14px; box-shadow: var(--neu-raised-sm); font-size: var(--t-md); line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
-.quick-replies { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.quick-replies button { min-height: 34px; padding: 6px 12px; border-radius: 10px; box-shadow: var(--neu-raised-sm); background: var(--paper); color: var(--ink-2); font-size: var(--t-sm); line-height: 1.5; }
-.quick-replies button.answered { box-shadow: var(--neu-inset-sm); color: var(--accent-ink); opacity: 1; }
-.quick-replies .icon { margin-right: 4px; }
-.chat-response { margin-top: 8px; font-size: var(--t-xs); color: var(--accent-ink); }
-.chat-empty { padding: 16px 0; font-size: var(--t-sm); color: var(--ink-3); }
+/* LINE look (DESIGN.md section 8, "Inbox chat"); sizes from an iPhone LINE screenshot at 1 pt = 1 px. */
+.line-chat { flex: 1 1 0px; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: var(--r-well); background: var(--line-chat-bg); }
+.line-chat-head { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; background: var(--line-bubble-in); }
+.line-chat-head strong { font-size: 17px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.line-chat-channel { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: var(--t-xs); color: var(--ink-3); white-space: nowrap; }
+.line-chat-channel.on-line { color: var(--line-ink); }
+.chat-messages { flex: 1 1 0px; min-height: 120px; overflow-y: auto; padding: 10px 12px 12px; scrollbar-width: thin; }
+.chat-date { display: flex; justify-content: center; max-width: none; margin-bottom: 12px; }
+.chat-date span { padding: 2px 10px; border-radius: 12px; background: var(--line-chat-chip); color: var(--line-bubble-in); font-size: var(--t-xs); font-weight: 500; line-height: 1.5; }
+.chat-entry + .chat-entry { margin-top: 14px; }
+.chat-row { display: flex; align-items: flex-start; gap: 12px; }
+.chat-row.out { justify-content: flex-end; align-items: flex-end; gap: 6px; margin-top: 8px; padding-left: 15%; padding-right: 7px; }
+.chat-avatar { display: grid; place-items: center; flex: 0 0 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; }
+.chat-avatar svg { width: 22px; height: 14px; }
+.chat-line { display: flex; align-items: flex-end; gap: 6px; min-width: 0; max-width: 88%; }
+.chat-bubble { position: relative; min-width: 0; padding: 8px 13px; border-radius: 18px; background: var(--line-bubble-in); color: var(--ink); font-size: var(--t-md); line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+/* One shape: the tail fills the bubble's top corner and curves out to a point, as in LINE. */
+.chat-row.in .chat-bubble::before, .chat-row.out .chat-bubble::after { content: ''; position: absolute; top: 0; width: 20px; height: 16px; background: inherit; }
+.chat-row.in .chat-bubble::before { left: -7px; clip-path: path('M0 0H20V16H7C7 9 4.5 3 0 0Z'); }
+.chat-row.out .chat-bubble { background: var(--line-bubble-out); }
+.chat-row.out .chat-bubble::after { right: -7px; clip-path: path('M20 0H0V16H13C13 9 15.5 3 20 0Z'); }
+.chat-time, .chat-read { flex: 0 0 auto; font-size: var(--t-xs); line-height: 1.3; color: var(--line-chat-meta); }
+.quick-reply-bar { flex: 0 0 auto; display: flex; gap: 10px; overflow-x: auto; padding: 8px 10px 12px; scrollbar-width: none; }
+.quick-reply-bar button { flex: 0 0 auto; min-height: 36px; padding: 0 16px; border-radius: 18px; background: var(--line-quick-reply); color: var(--line-bubble-in); font-size: 15px; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+.quick-reply-bar button:hover:not(:disabled) { background: var(--ink); }
+.chat-empty { padding: 16px 0; font-size: var(--t-sm); color: var(--ink); }
+/* Recording: the newest message and the quick-reply bar end above the 136 px caption band. */
+body.rec .line-chat { padding-bottom: 120px; }
 .demo-grid > .live-pipeline { padding: 12px; gap: 8px; }
 .live-pipeline > .section-heading { gap: 4px 10px; }
 .live-pipeline > .section-heading > .mono { margin-left: auto; }

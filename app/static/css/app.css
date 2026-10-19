@@ -41,7 +41,8 @@ del { color: var(--danger); background: var(--danger-soft); text-decoration-thic
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); white-space: nowrap; }
 .brand:hover { text-decoration: none; }
 .brand-mark { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--accent); color: #fff; box-shadow: var(--neu-raised-sm); }
-.brand-mark svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+svg.mark { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.brand-mark svg { width: 24px; height: 16px; }
 .brand-name { font-size: var(--t-lg); font-weight: 600; line-height: var(--lh-head); }
 .brand-sub { font-size: var(--t-xs); color: var(--ink-3); }
 .site-nav { display: flex; align-self: stretch; gap: 28px; }

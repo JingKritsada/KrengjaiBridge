@@ -131,11 +131,27 @@ async function loadTeam() {
 function renderTabs() {
   document.querySelector('#member-tabs').innerHTML = members.map(m => `<button id="tab-${e(m.member_id)}" role="tab" aria-selected="${m.member_id === selectedMember}" aria-controls="inbox" data-member="${e(m.member_id)}" tabindex="${m.member_id === selectedMember ? 0 : -1}">${e(m.display_name)}${m.line_linked ? '<span class="dot line" aria-label="เชื่อม LINE แล้ว"></span>' : ''}</button>`).join('');
   const member = members.find(m => m.member_id === selectedMember);
-  document.querySelector('#inbox-name').textContent = member?.display_name || 'ยังไม่มีสมาชิก';
-  document.querySelector('#inbox-avatar').textContent = member?.display_name?.slice(0, 1) || '—';
-  document.querySelector('#line-badge').hidden = !member?.line_linked;
-  document.querySelector('#inbox-channel').textContent = member?.role || 'กล่องข้อความบนเว็บ';
+  const channel = document.querySelector('#inbox-channel');
+  channel.innerHTML = !member ? 'ยังไม่ได้เลือกสมาชิก' : member.line_linked ? `<span class="dot line"></span>LINE · ${e(member.display_name)}` : `เว็บ · ${e(member.display_name)}`;
+  channel.classList.toggle('on-line', !!member?.line_linked);
   if (member) document.querySelector('#inbox').setAttribute('aria-labelledby', `tab-${member.member_id}`);
+}
+
+// LINE look: the OA's message on the left with avatar and time; quick replies sit in LINE's pill bar at the bottom,
+// for the latest message only. A tapped reply comes back as the member's own green bubble on the right (LINE posts
+// the button's display text the same way) and the bar empties.
+const chatTime = value => value ? new Date(value).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
+const oaAvatar = `<span class="chat-avatar" aria-hidden="true">${document.querySelector('.brand-mark svg').outerHTML}</span>`;
+function chatEntryHTML(message) {
+  const answer = message.response ? list(message.buttons).find(b => b.action === message.response)?.label || 'ตอบกลับแล้ว' : '';
+  return `<article class="chat-entry" aria-label="เกรงใจบริดจ์ · ${e(kindLabel(message.kind))}"><div class="chat-row in">${oaAvatar}<div class="chat-line"><div class="chat-bubble">${e(message.text || 'ยังไม่มีข้อความ')}</div><time class="chat-time">${chatTime(message.created_at)}</time></div></div>${answer ? `<div class="chat-row out"><span class="chat-read">อ่านแล้ว</span><div class="chat-bubble">${e(answer)}</div></div>` : ''}</article>`;
+}
+function renderQuickReplies(messages) {
+  const latest = messages.at(-1);
+  const buttons = latest && !latest.response ? list(latest.buttons) : [];
+  const bar = document.querySelector('#quick-replies');
+  bar.hidden = !buttons.length;
+  bar.innerHTML = buttons.map(button => `<button data-outreach="${e(latest.id)}" data-action="${e(button.action)}">${e(button.label || 'ตอบกลับ')}</button>`).join('');
 }
 
 async function loadInbox() {
@@ -149,7 +165,8 @@ async function loadInbox() {
     if (serialized === inboxVersion) return;
     inboxVersion = serialized;
     const inbox = document.querySelector('#inbox');
-    inbox.innerHTML = data.length ? data.map(message => `<article class="chat-entry"><span class="chat-agent">เกรงใจบริดจ์ · ${e(kindLabel(message.kind))}</span><div class="chat-bubble">${e(message.text || 'ยังไม่มีข้อความ')}</div><div class="quick-replies">${list(message.buttons).map(button => `<button class="${message.response === button.action ? 'answered' : ''}" data-outreach="${e(message.id)}" data-action="${e(button.action)}" ${message.response ? 'disabled' : ''}>${message.response === button.action ? icon('check', 'sm') : ''}${e(button.label || 'ตอบกลับ')}</button>`).join('')}</div>${message.response ? `<p class="chat-response">ตอบกลับแล้ว</p>` : ''}</article>`).join('') : '<div class="chat-empty">ยังไม่มีข้อความส่วนตัว · ลองเริ่มจากสถานการณ์ทางซ้าย</div>';
+    inbox.innerHTML = data.length ? `<p class="chat-date"><span>วันนี้</span></p>${data.map(chatEntryHTML).join('')}` : '<div class="chat-empty">ยังไม่มีข้อความส่วนตัว · ลองเริ่มจากสถานการณ์ทางซ้าย</div>';
+    renderQuickReplies(data);
     inbox.scrollTop = inbox.scrollHeight;
   } catch (error) { showError(error); }
   finally {
@@ -307,7 +324,7 @@ document.querySelector('#member-tabs').addEventListener('keydown', event => {
   document.querySelector('#member-tabs [aria-selected="true"]').focus();
   loadInbox();
 });
-document.querySelector('#inbox').addEventListener('click', event => {
+document.querySelector('.line-chat').addEventListener('click', event => {
   const button = event.target.closest('[data-outreach]');
   if (!button) return;
   busy(button, async () => {

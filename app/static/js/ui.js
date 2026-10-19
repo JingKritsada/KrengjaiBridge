@@ -10,7 +10,6 @@ export const isRec = new URLSearchParams(location.search).get('rec') === '1';
 
 // Lucide icons (ISC licence), 24 px grid. Injected once as a <symbol> sprite by shell(); stroke styles come from .icon in app.css.
 const symbols = {
-  'bridge': '<path d="M3 18h18M5 18V9M19 18V9M5 11c3 0 4.5-4 7-4s4 4 7 4M9 18v-5M15 18v-5"/>',
   'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
   'arrow-up-right': '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
   'check': '<path d="M20 6 9 17l-5-5"/>',

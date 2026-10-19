@@ -31,6 +31,14 @@
   --warn: #7f5300;  --warn-soft: #f3e6c8;   /* 5.40:1 */
   --danger: #a8231b; --danger-soft: #f4dcd9;/* 5.51:1 */
   --line: #06c755;  --line-ink: #04723a;    /* LINE dot only; label text 5.12:1 */
+  /* LINE chat skin, demo inbox only. Sampled from an iPhone LINE screenshot (2026-10-20); meta and chip are
+     LINE's hue darkened to pass 4.5:1 at 13 px (LINE's own: time #46556c, chip #7791b8, both 3.2:1). */
+  --line-chat-bg: #8cabd8;                  /* sampled */
+  --line-bubble-in: #ffffff;                /* OA bubbles, header, white text */
+  --line-bubble-out: #85e249;               /* the member's own messages (not in the sample; estimate); --ink on it 10.3:1 */
+  --line-chat-meta: #2f3a4b;                /* time, อ่านแล้ว; 4.9:1 on --line-chat-bg */
+  --line-chat-chip: #5f7493;                /* date chip; white text 4.7:1 */
+  --line-quick-reply: #384663;              /* sampled quick-reply pill; white text 9.5:1 */
 
   /* type */
   --font-ui: "IBM Plex Sans Thai", system-ui, sans-serif;

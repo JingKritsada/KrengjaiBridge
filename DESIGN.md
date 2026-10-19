@@ -65,6 +65,14 @@ Pages use tokens by name (`var(--ink-2)`), never raw hex, except `#fff` on the a
   --warn: #7f5300;  --warn-soft: #f3e6c8;   /* 5.40:1 */
   --danger: #a8231b; --danger-soft: #f4dcd9;/* 5.51:1 */
   --line: #06c755;  --line-ink: #04723a;    /* LINE dot only; label text 5.12:1 */
+  /* LINE chat skin, demo inbox only. Sampled from an iPhone LINE screenshot (2026-10-20); meta and chip are
+     LINE's hue darkened to pass 4.5:1 at 13 px (LINE's own: time #46556c, chip #7791b8, both 3.2:1). */
+  --line-chat-bg: #8cabd8;                  /* sampled */
+  --line-bubble-in: #ffffff;                /* OA bubbles, header, white text */
+  --line-bubble-out: #85e249;               /* the member's own messages (not in the sample; estimate); --ink on it 10.3:1 */
+  --line-chat-meta: #2f3a4b;                /* time, อ่านแล้ว; 4.9:1 on --line-chat-bg */
+  --line-chat-chip: #5f7493;                /* date chip; white text 4.7:1 */
+  --line-quick-reply: #384663;              /* sampled quick-reply pill; white text 9.5:1 */
 
   /* type */
   --font-ui: "IBM Plex Sans Thai", system-ui, sans-serif;
@@ -118,8 +126,8 @@ Google Fonts link (replace the current one on all 3 pages):
 | Level | Token | Used for |
 |---|---|---|
 | raised | `--neu-raised` | panels, theme card, journey card |
-| raised-sm | `--neu-raised-sm` | secondary buttons, chips with counts, tabs (selected), scenario icon tiles, avatars, chat bubbles |
-| inset | `--neu-inset` | text inputs, textarea, chat well, gate bar, AI proposal block, selected scenario row, tab track |
+| raised-sm | `--neu-raised-sm` | secondary buttons, chips with counts, tabs (selected), scenario icon tiles, avatars |
+| inset | `--neu-inset` | text inputs, textarea, gate bar, AI proposal block, selected scenario row, tab track, source block after a run |
 | inset-sm | `--neu-inset-sm` | pressed / selected buttons and quick replies, empty gate slots, status pill, attacker rows |
 | float | `--neu-float` | toast, menus |
 | primary | solid `--accent` + `--neu-accent` | the one primary button per view |
@@ -164,7 +172,7 @@ Remove every unicode glyph used as an icon (`→ ↗ ✓ ✗`). Remove text "ico
 | skip time / reset / metrics / open in new view | `fast-forward` / `rotate-ccw` / `chart-line` / `arrow-up-right` |
 | arrow in buttons / close | `arrow-right` / `x` |
 | observe / ask / act / close the loop (home) | `eye` / `message-square` / `send` / `refresh-cw` |
-| brand mark (custom, white on `--accent`, stroke 2) | `M3 18h18 M5 18V9 M19 18V9 M5 11c3 0 4.5-4 7-4s4 4 7 4 M9 18v-5 M15 18v-5` |
+| brand mark (the LINE OA profile bridge, white on `--accent`) | small version for 16–40 px, `viewBox="72 140 496 320"`: towers + deck stroke 40, cable 28, 3 centre hangers and the wave 20 (wave at 55 % opacity); the favicon drops the hangers and the wave. Full artwork: `docs/submission/assets/line-profile/source.html`; `app/static/img/apple-touch-icon.png` is the 640 px profile image at 180 px |
 
 No sparkle / magic-wand icons for AI. Label AI output with the model name in mono (`qwen3.5`).
 
@@ -184,11 +192,20 @@ Animate `transform`, `opacity` and `box-shadow` only.
 ## 8. Components
 
 - **Header** (static HTML in each page, not injected): height 64, `--paper`, `box-shadow: 0 10px 18px -12px var(--neu-lo)`.
-  Brand mark 32 px tile (radius 8) + "เกรงใจบริดจ์" 18/600 + "Kreng-jai Bridge" 13 `--ink-3`. Nav links 15 px `--ink-2`;
+  Brand mark 32 px tile (radius 8, bridge 24 × 16) + "เกรงใจบริดจ์" 18/600 + "Kreng-jai Bridge" 13 `--ink-3`. Nav links 15 px `--ink-2`;
   current = `--ink` 600 + 2 px `--accent` bar at the bottom. Right: status pill (inset-sm, 13 px): dot + "ระบบพร้อม · qwen3.5 · LINE เปิด", or the mock badge.
 - **Buttons**: radius 12, 16 px/500, height 44 (small 36, 14 px). Primary solid accent; secondary raised-sm; demo-only raised-sm + dashed border. Press = inset-sm.
 - **Chips**: radius 8, height 28, 14/500. `ok` accent-soft/accent-ink, `wait` warn-soft/warn, `danger` danger-soft/danger (flat); count chip raised-sm with `users` icon.
-- **Inputs**: radius 12, inset, 1 px `--rule-strong`, 16 px text, padding 10 × 12.
+- **Inputs**: radius 12, inset, 1 px `--rule-strong`, 16 px text, padding 10 × 12. Never put an inset input inside another inset well (one well per region).
+- **Inbox chat (LINE look)**: the one flat, LINE-skinned block, so the web inbox reads like Mint's phone next to the LINE takes.
+  Sizes come from an iPhone LINE screenshot at 1 pt = 1 px. Block radius 14, `--line-chat-bg`, no shadow, fills the panel below the tabs.
+  Header bar 44 px, white: "Kreng-jai Bridge" 17/600 (the OA name as LINE shows it) and, on the right, the channel 13 px
+  (`LINE · มิ้น` in `--line-ink` with the LINE dot, or `เว็บ · <name>`). "วันนี้" date chip `--line-chat-chip`, 13/500 white.
+  OA message: 32 px round avatar (brand mark on `--accent`), no sender name (LINE shows none in a 1:1 chat), `--line-bubble-in` bubble
+  radius 18, padding 8 × 13, 16/1.55, with a tail that fills the top corner and curves out 7 px to a point, so bubble and tail read as one shape;
+  time 13 px `--line-chat-meta` beside the bubble bottom. Quick replies: LINE's bottom bar, for the latest message only, one row that scrolls
+  sideways; pills 36 px high, radius 18, `--line-quick-reply`, white 15/600, 10 px apart. A tapped reply empties the bar and appears as the
+  member's own `--line-bubble-out` bubble on the right with "อ่านแล้ว" (LINE posts the button's display text the same way).
 - **Tabs (member tabs)**: inset track (radius 14, padding 5, gap 4), 3 × 2 grid, tab 34 px high, 14 px; selected raised-sm + `--accent-ink` 600; LINE-linked member shows a 6 px `--line` dot.
 - **Toast**: top-right, 16 px below the header, float shadow, 15 px, max 420 px wide. Never at the bottom (captions live there).
 - **Empty states**: one line of help, said once, inside the empty area.
@@ -211,7 +228,7 @@ Columns follow the story: **rail (scenarios, time controls) → inbox → privac
 - Page title row: H1 28 + "ทีม Backend (Demo) · ข้อมูลจำลอง" 14 `--ink-3` + secondary "เปิดแดชบอร์ดหัวหน้า".
 - **Rail**: 5 scenario rows (36 px raised-sm icon tile + name 15/500 + meta 13). Selected row = inset + accent icon, and a trail line
   showing the signal state ("ส่งถึงมิ้น · ตอบรับแล้ว") — this replaces the signals table on camera. Bottom: `#advance` (demo-only button), hint, `#reset` as a 14 px text button.
-- **Inbox**: title "กล่องข้อความส่วนตัว" + "เห็นเฉพาะเจ้าตัว" (lock), member tabs, identity row, chat well (inset, `--surface-2`) with raised-sm bubbles (16/1.6) and quick replies (raised-sm; answered one = inset-sm + accent).
+- **Inbox**: title "กล่องข้อความส่วนตัว" + "เห็นเฉพาะเจ้าตัว" (lock), member tabs, identity row, chat in the LINE look (section 8, "Inbox chat").
 - **Pipeline** ("ปกป้องตัวตนก่อนส่ง", mono meta "privacy pipeline · 6 ขั้น"), top to bottom:
   1. **Gate bar** (inset, always first, always above the caption band). One state machine:
      `idle` "พร้อมทดสอบ · ความเห็นจะยังไม่ถูกส่ง" → `running` "กำลังทดสอบ… ขั้น N/6" → `ready` shows `#confirm` / `#cancel` →

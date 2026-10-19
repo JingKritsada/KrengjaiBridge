@@ -59,6 +59,8 @@ def seed_demo(session, *, now=None):
 
 
 def reset_demo(session, redis):
+    # Keep LINE links so presenters do not have to re-link phones after every reset.
+    links = {m.id: m.line_user_id for m in session.scalars(select(Member)) if m.line_user_id}
     for table in reversed(Base.metadata.sorted_tables):
         session.execute(delete(table))
     session.commit()
@@ -68,6 +70,9 @@ def reset_demo(session, redis):
         if keys:
             redis.delete(*keys)
     seed_demo(session)
+    for member in session.scalars(select(Member).where(Member.id.in_(links))):
+        member.line_user_id, member.opted_in = links[member.id], True
+    session.commit()
 
 
 async def scenario(session, redis, name):

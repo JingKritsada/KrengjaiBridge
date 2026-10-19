@@ -60,7 +60,7 @@ h1{font-size:26px;font-weight:700;letter-spacing:-.01em}
   </div>
   <div class="col">
     <h2>AI models</h2>
-    <div class="box"><b>LLM (OpenAI-compatible)</b><span>Qwen3.5 (course endpoint) today; ModelArts Studio MaaS DeepSeek-V4.1-Flash by changing 3 env vars</span></div>
+    <div class="box"><b>LLM with failover</b><span>1) Qwen3.5 course endpoint → 2) Qwen3.5 9B on a team GPU (LM Studio over Tailscale) → 3) offline rules. ModelArts Studio MaaS DeepSeek-V4.1-Flash by config</span></div>
     <div class="box"><b>Roles of the LLM</b><span>identifier removal · neutral rewrite · <b style="display:inline;font-size:12.5px">attacker</b> that tries to name the author · structuring · theme · proposal · context judge</span></div>
     <h2 style="margin-top:22px">Build &amp; operate</h2>
     <div class="box"><b>Provisioning skill</b><span>agent skill + Huawei Cloud SDK script: plan / apply / env for VPC, ECS, RDS, DCS (idempotent)</span></div>

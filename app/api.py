@@ -143,7 +143,7 @@ def health(session=Depends(db_session), redis=Depends(redis_client)):
     from sqlalchemy import text
     db_ok = bool(session.execute(text("SELECT 1")).scalar())
     return {"ok": db_ok and bool(redis.ping()), "llm_model": get_settings().llm_model,
-            "llm_available": llm.is_available(),
+            "llm_available": llm.is_available(), "llm": llm.status(),
             "line_enabled": get_settings().line_enabled, "db": "ok", "redis": "ok"}
 
 

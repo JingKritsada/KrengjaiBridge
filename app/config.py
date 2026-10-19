@@ -14,8 +14,17 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = "qwen3.5"
     llm_timeout_s: float = 60.0
-    # "openai" (LiteLLM, MaaS), "ollama" (native /api/chat), or "auto": ollama when the URL uses port 11434.
+    # "openai" (LiteLLM, MaaS), "ollama" (native /api/chat), "lmstudio" (OpenAI-compatible with
+    # reasoning_effort=none), or "auto": ollama when the URL uses port 11434, else openai.
     llm_api_style: str = "auto"
+    # Optional secondary backend used when the primary fails (e.g. team GPU box over Tailscale).
+    llm_fallback_base_url: str = ""
+    llm_fallback_api_key: str = ""
+    llm_fallback_model: str = ""
+    llm_fallback_api_style: str = "auto"
+    # A failed backend is skipped for this long; quota/auth errors (401/403/422...) use the long value.
+    llm_cooldown_s: float = 60.0
+    llm_cooldown_long_s: float = 600.0
 
     # SQLite locally, RDS for PostgreSQL in the cloud.
     database_url: str = "sqlite:///./data/runtime/app.db"

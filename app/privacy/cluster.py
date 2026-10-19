@@ -66,9 +66,9 @@ async def assign_theme(text: str, existing_themes=()) -> tuple[str, str]:
                 "text": text, "themes": theme_choices(existing_themes),
             }, ensure_ascii=False)},
         ], temperature=0, max_tokens=200)
-    except llm.LLMError:
+        return validate_theme(result, existing_themes)
+    except llm.FALLBACK_ERRORS:
         return assign_theme_local(text, existing_themes)
-    return validate_theme(result, existing_themes)
 
 
 def _tokens(text: str) -> list[str]:

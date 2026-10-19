@@ -1,5 +1,7 @@
 # ใช้ LLM จากเครื่อง GPU ของเพื่อนในทีม (Ollama + Tailscale)
 
+> สเปกของเครื่องจริงที่ทีมใช้ (desktop-5tspfst, พอร์ต 8787, qwen3.5:4b) อยู่ใน [GPU_ENDPOINT_SPEC.md](GPU_ENDPOINT_SPEC.md) ไฟล์นี้เป็นคู่มือทั่วไป
+
 ใช้เมื่อ key LLM ของคอร์สหมดงบ หรืออยากรัน evaluation ซ้ำโดยไม่เสียเงิน
 
 ```

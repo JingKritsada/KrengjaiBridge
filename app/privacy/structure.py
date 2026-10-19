@@ -37,17 +37,18 @@ async def structure_and_theme(
                 "text": text, "themes": theme_choices(existing_themes),
             }, ensure_ascii=False)},
         ], temperature=0, max_tokens=750)
-    except llm.LLMError:
+        structured = StructuredFeedback.model_validate(result)
+        for field in type(structured).model_fields:
+            cleaned = neutralize(getattr(structured, field))
+            if not cleaned:
+                raise ValueError("Empty structured field")
+            setattr(structured, field, cleaned)
+        theme = validate_theme(result, existing_themes)
+    except llm.FALLBACK_ERRORS as error:
         if fallback_notes is not None:
-            fallback_notes.append("โหมดสำรอง: LLM ไม่พร้อมใช้งาน")
+            fallback_notes.append(llm.fallback_note(error))
         return structure_local(text), assign_theme_local(text, existing_themes)
-    structured = StructuredFeedback.model_validate(result)
-    for field in type(structured).model_fields:
-        cleaned = neutralize(getattr(structured, field))
-        if not cleaned:
-            raise ValueError("Empty structured field")
-        setattr(structured, field, cleaned)
-    return structured, validate_theme(result, existing_themes)
+    return structured, theme
 
 
 async def structure(text: str) -> StructuredFeedback:

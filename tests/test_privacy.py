@@ -213,11 +213,13 @@ def test_pipeline_attacker_exhaustion_blocks(monkeypatch):
     assert all(guess.identified for guess in result.attacker_rounds)
 
 
-def test_pipeline_invalid_model_response_blocks(monkeypatch):
+def test_pipeline_invalid_model_response_falls_back_per_step(monkeypatch):
+    # Small local models sometimes break JSON; each step falls back instead of failing the flow.
     fake_pipeline_llm(monkeypatch, malformed=True)
     result = asyncio.run(run_pipeline(DEMO_TEXT, "m-mint", demo_roster()))
-    assert not result.ok and result.reason_blocked
-    assert result.structured is None and result.final_text == ""
+    assert result.ok and result.structured and result.theme_slug == "friday-urgent-work"
+    assert not leak_markers(result.final_text)
+    assert any("ผลจาก LLM ใช้ไม่ได้" in note for step in result.steps for note in step.notes)
 
 
 def test_pipeline_llm_error_does_not_echo_source(monkeypatch):

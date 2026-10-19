@@ -121,11 +121,11 @@ async def remove_identifiers(
             )},
             {"role": "user", "content": cleaned},
         ], temperature=0, max_tokens=650)
-    except llm.LLMError:
+        output = result.get("text") if isinstance(result, dict) else None
+        if not isinstance(output, str) or not output.strip():
+            raise ValueError("Invalid identifier-removal response")
+    except llm.FALLBACK_ERRORS as error:
         if fallback_notes is not None:
-            fallback_notes.append("โหมดสำรอง: LLM ไม่พร้อมใช้งาน")
+            fallback_notes.append(llm.fallback_note(error))
         return cleaned
-    output = result.get("text") if isinstance(result, dict) else None
-    if not isinstance(output, str) or not output.strip():
-        raise ValueError("Invalid identifier-removal response")
     return scrub_roster(output.strip(), roster)

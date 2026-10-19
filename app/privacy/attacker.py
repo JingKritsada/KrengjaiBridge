@@ -68,15 +68,15 @@ async def guess_author(
                 "feedback": text, "roster": [member.model_dump() for member in roster],
             }, ensure_ascii=False)},
         ], temperature=0, max_tokens=550)
-    except llm.LLMError:
+        guess = AttackerGuess.model_validate({**result, "round": round, "identified": False})
+        if not math.isfinite(guess.confidence) or not 0 <= guess.confidence <= 1:
+            raise ValueError("Invalid attacker confidence")
+        if guess.guessed_member_id is not None and guess.guessed_member_id not in {m.member_id for m in roster}:
+            raise ValueError("Unknown attacker member")
+    except llm.FALLBACK_ERRORS as error:
         if fallback_notes is not None:
-            fallback_notes.append("โหมดสำรอง: LLM ไม่พร้อมใช้งาน")
+            fallback_notes.append(llm.fallback_note(error))
         return guess_author_local(text, roster, author_id=author_id, round=round)
-    guess = AttackerGuess.model_validate({**result, "round": round, "identified": False})
-    if not math.isfinite(guess.confidence) or not 0 <= guess.confidence <= 1:
-        raise ValueError("Invalid attacker confidence")
-    if guess.guessed_member_id is not None and guess.guessed_member_id not in {m.member_id for m in roster}:
-        raise ValueError("Unknown attacker member")
     guess.identified = (
         author_id is not None and guess.guessed_member_id == author_id
         and guess.confidence >= max(0.5, 2 / max(1, len(roster)))

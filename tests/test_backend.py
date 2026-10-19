@@ -41,7 +41,10 @@ def test_full_http_story(backend_client, pipeline_mock, monkeypatch, llm_down):
         from app.privacy import identifiers
 
         async def unavailable(*args, **kwargs):
-            raise llm.LLMError("422: Budget has been exceeded")
+            # What chat() does when every backend fails: all are cooled down.
+            for backend in llm.backends():
+                llm._cooldown_until[backend.name] = llm.monotonic() + 3600
+            raise llm.LLMError("all LLM backends failed: primary: HTTP 422")
 
         monkeypatch.setattr(llm, "chat", unavailable)
         monkeypatch.setattr(llm, "chat_json", unavailable)
@@ -88,16 +91,15 @@ def test_full_http_story(backend_client, pipeline_mock, monkeypatch, llm_down):
     assert c.get("/api/manager/metrics").json()["friday_after17_assignments_4w"] == 0
 
 
-def test_health_llm_availability_expires_without_network(backend_client, monkeypatch):
+def test_health_llm_availability_follows_cooldown_without_network(backend_client, monkeypatch):
     clock = [100.0]
     monkeypatch.setattr(llm, "monotonic", lambda: clock[0])
-    monkeypatch.setattr(llm, "_last_error_at", None)
+    monkeypatch.setattr(llm, "_cooldown_until", {})
     assert backend_client.get("/api/health").json()["llm_available"] is True
-    llm.LLMError("422: Budget has been exceeded")
-    assert backend_client.get("/api/health").json()["llm_available"] is False
-    clock[0] += 59
-    assert backend_client.get("/api/health").json()["llm_available"] is False
-    clock[0] += 1
+    llm._cooldown_until["primary"] = clock[0] + 60
+    health = backend_client.get("/api/health").json()
+    assert health["llm_available"] is False and health["llm"]["backends"][0]["cooldown_s"] == 60
+    clock[0] += 60
     assert backend_client.get("/api/health").json()["llm_available"] is True
 
 

@@ -53,8 +53,8 @@ async def rewrite_with_attacker(
             if not text:
                 raise ValueError("Empty neutral rewrite")
             guess = await guess_author(text, roster, author_id=author_id, round=round_number, fallback_notes=local_notes)
-        except llm.LLMError:
-            local_notes.append("โหมดสำรอง: LLM ไม่พร้อมใช้งาน")
+        except llm.FALLBACK_ERRORS as error:
+            local_notes.append(llm.fallback_note(error))
             text = neutralize(scrub_roster(text, roster))
             guess = guess_author_local(text, roster, author_id=author_id, round=round_number)
         rounds.append(guess)

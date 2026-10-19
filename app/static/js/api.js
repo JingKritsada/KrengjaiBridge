@@ -1,12 +1,13 @@
 export const isMock = new URLSearchParams(location.search).get('mock') === '1';
 
-export async function api(path, { method = 'GET', body } = {}) {
+// Reads are quick; POSTs may run the privacy pipeline on a slow fallback model (20-60 s).
+export async function api(path, { method = 'GET', body, timeout = method === 'GET' ? 15000 : 180000 } = {}) {
   if (isMock) {
     const { mockRequest } = await import('./mock.js');
     return mockRequest(path, method, body);
   }
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
+  const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const response = await fetch(path, {
       method,

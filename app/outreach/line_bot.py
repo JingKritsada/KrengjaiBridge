@@ -2,17 +2,18 @@
 import json
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import (ApiClient, Configuration, FlexContainer, FlexMessage,
                                   MessagingApi, PostbackAction, PushMessageRequest,
-                                  QuickReply, QuickReplyItem, ReplyMessageRequest, TextMessage)
+                                  QuickReply, QuickReplyItem, ReplyMessageRequest, ShowLoadingAnimationRequest,
+                                  TextMessage)
 from linebot.v3.webhook import WebhookParser
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 
-from app.api import (check_draft_recipient, confirm_feedback, db_session, get_member,
-                     preview_feedback, redis_client)
+from app.api import (check_draft_recipient, confirm_feedback, get_member, preview_feedback,
+                     redis_client)
 from app.config import get_settings
 from app.db import Member, Outreach
 from app.outreach.channel import deliver
@@ -83,6 +84,15 @@ async def push_text(user_id, text, buttons=None):
 
 async def reply_message(reply_token, message):
     await run_in_threadpool(_send_sync, "reply_message", ReplyMessageRequest(reply_token=reply_token, messages=[message]))
+
+
+async def show_loading(user_id, seconds=60):
+    """Typing dots in the user's chat while the privacy pipeline runs (can take 20-40 s on a local GPU)."""
+    try:
+        await run_in_threadpool(_send_sync, "show_loading_animation",
+                                ShowLoadingAnimationRequest(chat_id=user_id, loading_seconds=seconds))
+    except Exception:
+        pass
 
 
 async def linking_prompt(session, reply_token):
@@ -207,6 +217,7 @@ async def handle_event(session, redis, event):
             if len(text) > 10000:
                 await reply_message(event.reply_token, text_message("กรุณาส่งความเห็นไม่เกิน 10,000 ตัวอักษร"))
                 return
+            await show_loading(user_id)
             result = await preview_feedback(session, redis, member, text)
             if result["draft_id"]:
                 redis.set(f"kjb:line-draft:{user_id}", result["draft_id"], ex=3600)
@@ -215,8 +226,37 @@ async def handle_event(session, redis, event):
                 await reply_message(event.reply_token, text_message("ยังไม่ผ่านการตรวจความเป็นส่วนตัว กรุณาปรับข้อความแล้วลองใหม่"))
 
 
+APOLOGIES = {409: "ตัวละครนี้ผูกกับบัญชี LINE อื่นแล้ว ลองเลือกคนอื่น",
+             404: "ฉบับร่างหมดอายุหรือยืนยันไปแล้ว พิมพ์ความเห็นใหม่ได้เลย",
+             403: "ฉบับร่างนี้ไม่ใช่ของบัญชีนี้"}
+
+
+async def process_events(session_factory, redis, events):
+    """Handle webhook events after LINE already got its 200 (the pipeline may take tens of seconds)."""
+    for event in events:
+        event_id = getattr(event, "webhook_event_id", None)
+        if event_id:
+            if redis.exists(f"kjb:line-event:{event_id}"):
+                continue
+            redis.set(f"kjb:line-event:{event_id}", "1", ex=86400)
+        with session_factory() as session:
+            try:
+                await handle_event(session, redis, event)
+                session.commit()
+            except Exception as error:
+                # Never log SDK payloads or feedback text; tell the user something short instead.
+                session.rollback()
+                token = getattr(event, "reply_token", None)
+                if token:
+                    status = getattr(error, "status_code", None)
+                    try:
+                        await reply_message(token, text_message(APOLOGIES.get(status, "ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง")))
+                    except Exception:
+                        pass
+
+
 @router.post("/line/webhook")
-async def webhook(request: Request, session=Depends(db_session), redis=Depends(redis_client)):
+async def webhook(request: Request, background: BackgroundTasks, redis=Depends(redis_client)):
     settings = get_settings()
     if not settings.line_enabled:
         raise HTTPException(503, "LINE is disabled")
@@ -229,18 +269,5 @@ async def webhook(request: Request, session=Depends(db_session), redis=Depends(r
         raise HTTPException(403, "Invalid signature") from None
     except (ValueError, UnicodeError, KeyError, TypeError):
         raise HTTPException(400, "Invalid webhook") from None
-    for event in events:
-        event_id = getattr(event, "webhook_event_id", None)
-        if event_id and redis.exists(f"kjb:line-event:{event_id}"):
-            continue
-        try:
-            await handle_event(session, redis, event)
-            session.commit()
-        except HTTPException:
-            raise
-        except Exception:
-            # Never put SDK request payloads or original feedback in error responses.
-            raise HTTPException(502, "LINE service temporarily unavailable") from None
-        if event_id:
-            redis.set(f"kjb:line-event:{event_id}", "1", ex=86400)
+    background.add_task(process_events, request.app.state.session_factory, redis, events)
     return {"ok": True}

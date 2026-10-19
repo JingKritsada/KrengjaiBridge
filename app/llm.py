@@ -17,6 +17,7 @@ from app.config import get_settings
 
 _JSON_BLOCK = re.compile(r"\{.*\}|\[.*\]", re.S)
 _cooldown_until: dict[str, float] = {}
+_last_error: dict[str, str] = {}  # status code or exception type only, never request/response content
 _last_backend: str | None = None
 # Quota/auth failures do not heal on their own; transient errors get a short pause.
 _PERSISTENT_STATUS = {401, 402, 403, 404, 422}
@@ -76,7 +77,8 @@ def status() -> dict[str, Any]:
     now = monotonic()
     return {"last_backend": _last_backend,
             "backends": [{"name": b.name, "model": b.model, "style": b.style,
-                          "cooldown_s": max(0, round(_cooldown_until.get(b.name, 0) - now))}
+                          "cooldown_s": max(0, round(_cooldown_until.get(b.name, 0) - now)),
+                          "last_error": _last_error.get(b.name)}
                          for b in backends()]}
 
 
@@ -142,6 +144,7 @@ async def chat(
         except LLMError as e:
             long = getattr(e, "status", None) in _PERSISTENT_STATUS
             _cooldown_until[b.name] = monotonic() + (s.llm_cooldown_long_s if long else s.llm_cooldown_s)
+            _last_error[b.name] = str(e)
             failures.append(str(e))
             continue
         _last_backend = b.name

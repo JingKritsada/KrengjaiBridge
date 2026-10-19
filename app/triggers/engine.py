@@ -1,4 +1,5 @@
 """Thresholds → context judge → private, rate-limited outreach."""
+import asyncio
 import hashlib
 from datetime import timedelta
 
@@ -47,13 +48,15 @@ async def run_engine(session, redis, team_id, *, now=None):
     member_map = {m.actor_hash: m for m in members}
     events = load_events(session, team_id)
     rows, outreach = [], []
+    fresh = []
     for signal in detect(events, members, now=now):
         period = now.strftime("%G-%V") if signal.kind in ("friday_urgent", "late_night", "review_concentration") else ""
         key = hashlib.sha256(f"{team_id}:{signal.kind}:{signal.ref}:{signal.affected_hash}:{period}".encode()).hexdigest()
-        existing = session.scalar(select(SignalRow).where(SignalRow.dedup_key == key))
-        if existing:
-            continue
-        signal = await judge_signal(signal, events)
+        if not session.scalar(select(SignalRow).where(SignalRow.dedup_key == key)):
+            fresh.append((key, signal))
+    # Judge in parallel and before any write, so no DB lock is held while the LLM thinks.
+    judged = await asyncio.gather(*(judge_signal(signal, events) for _, signal in fresh))
+    for (key, _), signal in zip(fresh, judged):
         row = SignalRow(team_id=team_id, dedup_key=key, **signal.model_dump())
         row.state = "pending" if signal.judge_ok else "suppressed"
         session.add(row)

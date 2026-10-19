@@ -1,4 +1,5 @@
 """Released themes, anonymous replies and metric-based two-week follow-up."""
+import asyncio
 import json
 from datetime import datetime, timedelta
 from statistics import mean, median
@@ -95,13 +96,13 @@ async def proposal_for(theme):
     fallback = PROPOSALS.get(theme.slug, "ตกลงแนวทางร่วมกับทีมและติดตามผลใน 2 สัปดาห์")
     if get_settings().llm_api_key:
         try:
-            result = await llm.chat([
+            result = await asyncio.wait_for(llm.chat([
                 {"role": "system", "content": "เสนอการปรับกระบวนการทีม 1 ข้อ เป็นภาษาไทยสั้น ๆ ห้ามคาดเดาตัวผู้ส่ง"},
                 {"role": "user", "content": theme.label},
-            ], max_tokens=200)
+            ], max_tokens=200), timeout=get_settings().llm_judge_timeout_s * 2)
             if result.strip():
                 return result.strip()[:1000]
-        except (llm.LLMError, ValueError):
+        except (llm.LLMError, ValueError, asyncio.TimeoutError):
             pass
     return fallback
 

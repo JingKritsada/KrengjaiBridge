@@ -22,15 +22,17 @@ async def agent_loop(app):
     from app.triggers.engine import run_engine
     while True:
         await asyncio.sleep(30)
-        try:
-            with app.state.session_factory() as session:
-                await run_engine(session, app.state.redis, TEAM_ID)
-                await release_themes(session, app.state.redis, TEAM_ID)
-                follow_up(session, app.state.redis, TEAM_ID)
-                session.commit()
-        except Exception:
-            # Retry next tick; model/SDK exceptions can contain sensitive request data.
-            continue
+        # One short transaction per stage so a slow LLM call never holds locks other requests need.
+        for stage in (run_engine, release_themes, follow_up):
+            try:
+                with app.state.session_factory() as session:
+                    result = stage(session, app.state.redis, TEAM_ID)
+                    if asyncio.iscoroutine(result):
+                        await result
+                    session.commit()
+            except Exception:
+                # Retry next tick; model/SDK exceptions can contain sensitive request data.
+                continue
 
 
 def create_app(*, database_url=None, redis=None, background=True):

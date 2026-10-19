@@ -1,4 +1,5 @@
 """HTTP contract shared by the demo pages and LINE postback handlers."""
+import asyncio
 import hashlib
 import json
 import secrets
@@ -218,9 +219,12 @@ async def teammates(body: TeammatesBody = TeammatesBody(), session=Depends(db_se
         "pr-review-delay": ["PR review ล่าช้าทำให้งานต่อไปติดขัด ขอ SLA review ภายใน 24 ชั่วโมง", "PR ต้องรอ review หลายวัน อยากให้มีกรอบเวลา review 24 ชั่วโมง"],
     }
     added = 0
-    for member_id, text in zip(("m-boat", "m-fon"), texts.get(theme.slug, [theme.label, theme.label])):
+    pairs = list(zip(("m-boat", "m-fon"), texts.get(theme.slug, [theme.label, theme.label])))
+    # Run both privacy pipelines at once (slow local LLMs batch parallel requests); confirm in order.
+    previews = await asyncio.gather(*(preview_feedback(session, redis, get_member(session, member_id), text)
+                                      for member_id, text in pairs))
+    for (member_id, _), previewed in zip(pairs, previews):
         prior = gate_for(redis).count(TEAM_ID, theme.slug)
-        previewed = await preview_feedback(session, redis, get_member(session, member_id), text)
         if previewed["draft_id"]:
             # Simulated teammates explicitly opt into the same existing theme.
             draft_key = f"kjb:draft:{previewed['draft_id']}"

@@ -1,4 +1,6 @@
 """Reject known context decoys before asking an optional LLM context judge."""
+import asyncio
+
 from app import llm
 from app.config import get_settings
 from app.db import aware
@@ -28,12 +30,13 @@ async def judge_signal(signal, events):
     ok, reason = context_check(signal, events)
     if ok and get_settings().llm_api_key:
         try:
-            answer = await llm.chat_json([
+            # The rules above already decided; the LLM may only refine it within a short budget.
+            answer = await asyncio.wait_for(llm.chat_json([
                 {"role": "system", "content": "Check this SDLC metadata signal. Return JSON {ok: boolean, reason: string in Thai}. Do not infer private conversations."},
                 {"role": "user", "content": signal.model_dump_json()},
-            ], max_tokens=200)
+            ], max_tokens=200), timeout=get_settings().llm_judge_timeout_s)
             if isinstance(answer.get("ok"), bool):
                 ok, reason = answer["ok"], str(answer.get("reason", reason))[:500]
-        except (llm.LLMError, ValueError, TypeError, AttributeError):
+        except (llm.LLMError, ValueError, TypeError, AttributeError, asyncio.TimeoutError):
             pass
     return signal.model_copy(update={"judge_ok": ok, "judge_reason": reason})

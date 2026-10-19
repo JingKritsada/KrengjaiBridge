@@ -141,6 +141,9 @@ def make_session_factory(database_url: str):
             Path(url.database).parent.mkdir(parents=True, exist_ok=True)
     elif url.drivername == "postgresql":
         url = url.set(drivername="postgresql+psycopg")
+    if url.get_backend_name() == "postgresql":
+        # Sync DB calls run on the event loop; a blocked lock must fail fast, not freeze every request.
+        options["connect_args"] = {"options": "-c lock_timeout=5000 -c statement_timeout=20000"}
     engine = create_engine(url, pool_pre_ping=True, **options)
     Base.metadata.create_all(engine)
     return sessionmaker(engine, expire_on_commit=False)

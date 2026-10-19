@@ -227,10 +227,11 @@ def test_line_signature_follow_link_preview_confirm_and_push(backend_client, bac
     c = backend_client
     backend_settings.line_channel_secret = "test-channel-secret"
     backend_settings.line_channel_access_token = "test-access-token"
-    replies, pushes = [], []
+    replies, pushes, loading = [], [], []
     from linebot.v3.messaging import MessagingApi
     monkeypatch.setattr(MessagingApi, "reply_message", lambda self, payload: replies.append(payload))
     monkeypatch.setattr(MessagingApi, "push_message", lambda self, payload: pushes.append(payload))
+    monkeypatch.setattr(MessagingApi, "show_loading_animation", lambda self, payload: loading.append(payload))
     base = {"replyToken": "reply-token", "timestamp": 1720000000000, "source": {"type": "user", "userId": "Umint"}, "mode": "active"}
     secret = backend_settings.line_channel_secret
     follow = {**base, "type": "follow", "follow": {"isUnblocked": False}}
@@ -273,10 +274,11 @@ def test_line_typed_text_works_without_quick_replies(backend_client, backend_set
     c = backend_client
     backend_settings.line_channel_secret = "test-channel-secret"
     backend_settings.line_channel_access_token = "test-access-token"
-    replies, pushes = [], []
+    replies, pushes, loading = [], [], []
     from linebot.v3.messaging import MessagingApi
     monkeypatch.setattr(MessagingApi, "reply_message", lambda self, payload: replies.append(payload))
     monkeypatch.setattr(MessagingApi, "push_message", lambda self, payload: pushes.append(payload))
+    monkeypatch.setattr(MessagingApi, "show_loading_animation", lambda self, payload: loading.append(payload))
     secret = backend_settings.line_channel_secret
     base = {"replyToken": "reply-token", "timestamp": 1720000000000, "source": {"type": "user", "userId": "Upc"}, "mode": "active"}
 
@@ -301,3 +303,19 @@ def test_line_typed_text_works_without_quick_replies(backend_client, backend_set
     assert flex.type == "flex"
     assert "ยืนยันแล้ว" in say("ยืนยัน").text
     assert "ไม่มีฉบับร่าง" in say("ยืนยัน").text
+
+
+def test_line_errors_become_short_replies(backend_client, backend_settings, monkeypatch):
+    c = backend_client
+    backend_settings.line_channel_secret = "s"
+    backend_settings.line_channel_access_token = "t"
+    replies = []
+    from linebot.v3.messaging import MessagingApi
+    monkeypatch.setattr(MessagingApi, "reply_message", lambda self, payload: replies.append(payload))
+    with c.app.state.session_factory() as session:
+        session.get(Member, "m-mint").line_user_id = "Uother"
+        session.commit()
+    event = {"replyToken": "r", "timestamp": 1720000000000, "source": {"type": "user", "userId": "Unew"}, "mode": "active",
+             "type": "postback", "postback": {"data": "link:m-mint"}}
+    assert line_event(c, "s", [event]).status_code == 200  # LINE always gets 200; the user gets the reason
+    assert "ผูกกับบัญชี LINE อื่น" in replies[-1].messages[0].text

@@ -42,7 +42,7 @@ We built the prototype in about one day with AI agents doing most of the hands-o
 
 **Requirement analysis.** We started from a concept study (problem evidence, users, risks, competitors) and converted it into a one-page build contract (`docs/ARCHITECTURE.md`): hard privacy rules, module boundaries, the HTTP API, view shapes, LINE postback actions and one end-to-end demo story. An LLM helped turn the research into user stories and acceptance criteria; the team fixed the scope for a one-day MVP (LINE 1:1 bot, three SDLC signals, full privacy pipeline, manager loop, evaluation). We checked Huawei Cloud capabilities early in the console: ModelArts Studio MaaS in CN-Hong Kong lists DeepSeek-V4.1-Flash, GLM-5.x and DeepSeek-V4 with OpenAI-compatible endpoints (`/v2/chat/completions`), which is why the app talks to LLMs only through an OpenAI-compatible client.
 
-**Code generation.** An orchestrating coding agent wrote the shared contracts (`app/contracts.py`, LLM client, settings) and then dispatched parallel coding agents with disjoint file scopes: (A) the Thai privacy pipeline, (B) backend, trigger engine, LINE bot and manager loop, (C) the Thai web UI, then (D) evaluation and (E) the Huawei Cloud provisioning skill. Each worker received only goal, scope and verification commands; the orchestrator reviewed every diff and re-ran the tests itself. The result is about 2,000 lines of Python and a static web UI with {{tests_passed}} automated tests.
+**Code generation.** An orchestrating coding agent wrote the shared contracts (`app/contracts.py`, LLM client, settings) and then dispatched parallel coding agents with disjoint file scopes: (A) the Thai privacy pipeline, (B) backend, trigger engine, LINE bot and manager loop, (C) the Thai web UI, then (D) evaluation and (E) the Huawei Cloud provisioning skill. Each worker received only goal, scope and verification commands; the orchestrator reviewed every diff and re-ran the tests itself. The result is about 2,000 lines of Python and a static web UI with 74 automated tests.
 
 **Project building.** One FastAPI service (Python 3.12, `uv`), PostgreSQL and Redis, packaged with a Dockerfile and `docker compose`. Local development uses SQLite and in-process Redis, so tests run offline in seconds; the same code runs on PostgreSQL/Redis in the cloud by changing `DATABASE_URL` and `REDIS_URL`.
 
@@ -62,7 +62,7 @@ We built the prototype in about one day with AI agents doing most of the hands-o
 
 ## Technical Solution Introduction
 
-**Overall solution.** See `assets/architecture.png`. Data flows one way: SDLC metadata (hashed identities) → Trigger Engine → private outreach in LINE → (optional) feedback → Privacy Pipeline → k-anonymity gate → themes → Manager Loop → follow-up metric.
+**Overall solution.** See the architecture diagram below. Data flows one way: SDLC metadata (hashed identities) → Trigger Engine → private outreach in LINE → (optional) feedback → Privacy Pipeline → k-anonymity gate → themes → Manager Loop → follow-up metric.
 
 **Module 1 — Thai privacy pipeline with attacker loop.** Identifier removal (roster names and nicknames, PyThaiNLP NER when available, LLM pass for unique projects/dates/meetings) → deterministic neutralization over PyThaiNLP tokens (polite particles ครับ/ค่ะ/คะ/จ้ะ/คับ/งับ…, first-person pronouns ผม/ดิฉัน/หนู/กระผม…, kin terms พี่/น้อง) → LLM rewrite → LLM attacker given the roster profiles and past messages guesses the author; if it hits the real author with confidence ≥ max(0.5, 2/N) the text is rewritten more aggressively, up to 3 rounds, otherwise blocked → structured "situation / impact / request" → user preview and confirmation. Originals are never persisted.
 
@@ -79,7 +79,7 @@ We built the prototype in about one day with AI agents doing most of the hands-o
 - Texts with any Thai gender/seniority marker: {{leak_before}} → {{leak_after}}.
 - Meaning preserved (LLM judge ≥ 4/5): {{meaning}}; pipeline pass rate {{ok_rate}}; median latency {{p50}} s.
 - Theme clustering ARI {{ari}}, theme assignment accuracy {{theme_acc}}.
-- Trigger engine on a 12-week simulated team history with decoys: recall {{recall}}, precision {{precision}}, median detection delay {{delay}} min.
+- Trigger engine on a 12-week simulated team history with decoys: recall {{recall}}, precision {{precision}}; every episode detected within one 15-minute replay tick (median delay {{delay}} min at that resolution).
 - Demo story end to end: PR #123 nudged without naming the junior; Friday urgent-work theme released at 3 people; after the manager accepted the 15:00 cut-off, Friday after-17:00 assignments went 3 → 0 in the simulated follow-up.
 
 Expected impact (to validate in a pilot): shorter PR wait and blocked time, higher check-in response than quarterly surveys, and a measurable share of themes that managers answer and fix. Running cost of the demo stack: about USD 0.10 per hour (ECS) plus LLM tokens.

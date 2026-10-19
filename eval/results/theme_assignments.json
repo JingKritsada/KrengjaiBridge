@@ -1,0 +1,482 @@
+[
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 59,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 60,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 29,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 47,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 55,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 61,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 25,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 2,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 50,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 35,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 5,
+    "native_cluster": 48,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 3,
+    "native_cluster": 63,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 6,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 25,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 53,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 43,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 40,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 7,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 2,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 1,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 46,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 58,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 65,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 1,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 56,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 5,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 42,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 3,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 5,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 44,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 64,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 11,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 52,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 57,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 23,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 12,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 36,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 3,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 11,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 0,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 33,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 28,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 4,
+    "native_cluster": 39,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 15,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 6,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 49,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 62,
+    "assigned_slug": "unclaimed-work-notification"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 1,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 41,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 54,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 27,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 38,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 17,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 37,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 34,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 51,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 18,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 20,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 1,
+    "native_cluster": 8,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 15,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 21,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 2,
+    "native_cluster": 30,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 31,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 0,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 6,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 14,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 24,
+    "assigned_slug": "unclear-requirements"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 12,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 26,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 16,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 45,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "meeting-overload",
+    "fixed_cluster": 0,
+    "native_cluster": 32,
+    "assigned_slug": "meeting-overload"
+  },
+  {
+    "truth": "friday-urgent-work",
+    "fixed_cluster": 0,
+    "native_cluster": 13,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 19,
+    "assigned_slug": "friday-urgent-work"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 22,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 3,
+    "assigned_slug": "workload-oncall"
+  },
+  {
+    "truth": "pr-review-delay",
+    "fixed_cluster": 0,
+    "native_cluster": 7,
+    "assigned_slug": "pr-review-delay"
+  },
+  {
+    "truth": "blocked-tickets",
+    "fixed_cluster": 0,
+    "native_cluster": 10,
+    "assigned_slug": "blocked-tickets"
+  },
+  {
+    "truth": "workload-oncall",
+    "fixed_cluster": 0,
+    "native_cluster": 9,
+    "assigned_slug": "excessive-overtime-workload"
+  },
+  {
+    "truth": "unclear-requirements",
+    "fixed_cluster": 0,
+    "native_cluster": 4,
+    "assigned_slug": "unclear-requirements"
+  }
+]

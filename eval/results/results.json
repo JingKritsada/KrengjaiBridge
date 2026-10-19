@@ -1,0 +1,305 @@
+{
+  "synthetic": true,
+  "version": 1,
+  "model": "qwen3.5",
+  "source_hashes": {
+    "app/privacy/__init__.py": "2f69cc2d62da35de32ba46f0ef048b1d09e9fa6b540f2dc573ddbc3b0ea8aa9e",
+    "app/privacy/attacker.py": "26ce80d2448f5fd7ef41bcb2b1b3a4c226a707261091a1cc490496e2d3650161",
+    "app/privacy/cluster.py": "81793f6c42c8933683af5dec65d8d3c474b1611db4bb6ddf4f111747d0bf32cd",
+    "app/privacy/gate.py": "8d4f17118a492a969771ee57bbb727be4622a56a0d81f28879e927239f918261",
+    "app/privacy/identifiers.py": "14ea7fb35d03aacdbf69b1fb12acf2aca67b19c9629b5e95f2d553f85a1eda39",
+    "app/privacy/neutralize.py": "11dd171ef441a7c16eb21f2961ffbe7677002e51397f0ea1cbb258afa76c6029",
+    "app/privacy/pipeline.py": "fe6f8936c1cd7aedaf42f0f64f15c7750a6302193c385deae1204b46a2577d0b",
+    "app/privacy/rewrite.py": "a4c155860eb2a5e6ace05b709e8056d4309857331eb100f34e5606f05ddea325",
+    "app/privacy/structure.py": "bc6f3d61f23ff9b7703516d08aa801af941c9d5f07a4c07154d7b6d3329dd833",
+    "app/llm.py": "86b10a0b6661b2cb12e917464bf55de477cd35636a047a346acadb5aab62650e",
+    "app/contracts.py": "87759387b5dcd22058834befff8ef1d848bcf9095211e92f692513743c5ae59c",
+    "app/triggers/mockdata.py": "c11f23c9d56697274c2cfb72480cc07ff9c2228e5e6862b043ebf09da38929e9",
+    "app/triggers/rules.py": "2d487dd5e39f2efadaa55dabc56158efff9b87d0d93c95129a932b2a55a840e2"
+  },
+  "updated_at": "2026-10-19T11:50:49.567976+00:00",
+  "privacy": {
+    "n_train": 160,
+    "n_test": 80,
+    "attackers": {
+      "stylometric": {
+        "before": 1.0,
+        "after": 0.0375,
+        "baseline": 0.05,
+        "chance": 0.05,
+        "before_correct": 80,
+        "after_correct": 3
+      },
+      "gender": {
+        "before": 0.9375,
+        "after": 0.4625,
+        "baseline": 0.5,
+        "chance": 0.5,
+        "before_correct": 75,
+        "after_correct": 37
+      },
+      "seniority": {
+        "before": 0.95,
+        "after": 0.2,
+        "baseline": 0.25,
+        "chance": 0.25,
+        "before_correct": 76,
+        "after_correct": 16
+      },
+      "marker_leak": {
+        "before": 0.95,
+        "after": 0.0,
+        "baseline": 0
+      },
+      "llm_attacker": {
+        "before": 1.0,
+        "after": 0.075,
+        "chance": 0.05,
+        "baseline": 0.05
+      }
+    },
+    "released_only": {
+      "n": 75,
+      "attackers": {
+        "stylometric": {
+          "before": 1.0,
+          "after": 0.04,
+          "baseline": 0.05333333333333334,
+          "chance": 0.05,
+          "before_correct": 75,
+          "after_correct": 3
+        },
+        "gender": {
+          "before": 0.9466666666666667,
+          "after": 0.4533333333333333,
+          "baseline": 0.5066666666666667,
+          "chance": 0.5,
+          "before_correct": 71,
+          "after_correct": 34
+        },
+        "seniority": {
+          "before": 0.9466666666666667,
+          "after": 0.21333333333333335,
+          "baseline": 0.26666666666666666,
+          "chance": 0.25,
+          "before_correct": 71,
+          "after_correct": 16
+        },
+        "marker_leak": {
+          "before": 0.96,
+          "after": 0.0,
+          "baseline": 0
+        },
+        "llm_attacker": {
+          "after": 0.08
+        }
+      },
+      "meaning_mean": 4.013333333333334,
+      "meaning_fraction_ge_4": 0.6133333333333333
+    },
+    "meaning": {
+      "mean": 3.825,
+      "fraction_ge_4": 0.575,
+      "scores": [
+        5,
+        3,
+        2,
+        5,
+        3,
+        3,
+        3,
+        3,
+        3,
+        5,
+        1,
+        1,
+        5,
+        5,
+        3,
+        4,
+        5,
+        4,
+        3,
+        5,
+        4,
+        3,
+        4,
+        4,
+        5,
+        4,
+        3,
+        5,
+        4,
+        5,
+        5,
+        3,
+        5,
+        3,
+        3,
+        5,
+        5,
+        5,
+        5,
+        3,
+        5,
+        3,
+        1,
+        4,
+        5,
+        4,
+        5,
+        5,
+        5,
+        5,
+        3,
+        5,
+        3,
+        3,
+        3,
+        5,
+        3,
+        5,
+        1,
+        3,
+        5,
+        1,
+        3,
+        3,
+        5,
+        3,
+        5,
+        3,
+        4,
+        3,
+        3,
+        5,
+        5,
+        4,
+        4,
+        4,
+        2,
+        5,
+        5,
+        4
+      ]
+    },
+    "pipeline": {
+      "ok_rate": 0.9375,
+      "blocked": 5,
+      "blocked_by_attacker": 4,
+      "blocked_validation_or_model_error": 1,
+      "mean_attacker_rounds": 1.1375,
+      "latency": {
+        "n": 10,
+        "p50_seconds": 4.281601541559212,
+        "p95_seconds": 5.6651235935511055,
+        "seconds": [
+          6.102473999955691,
+          4.463962791021913,
+          4.857461625011638,
+          3.850216916995123,
+          4.042116749915294,
+          4.265469875070266,
+          4.297733208048157,
+          4.21868400007952,
+          4.084634082973935,
+          5.130584207945503
+        ],
+        "method": "10 serial uncached pipelines; dated measurements reused on rerun"
+      }
+    }
+  },
+  "theme": {
+    "n": 80,
+    "k": 6,
+    "ari": 0.0027564115239356968,
+    "released_only": {
+      "n": 75,
+      "k": 6,
+      "ari": 0.6645762675710842,
+      "purity": 0.7733333333333333,
+      "native_cluster_count": 61,
+      "native_ari": 0.06368189348201898,
+      "native_purity": 1.0,
+      "assign_theme_accuracy": 0.92
+    },
+    "cluster_sizes": {
+      "0": 75,
+      "5": 1,
+      "3": 1,
+      "4": 1,
+      "1": 1,
+      "2": 1
+    },
+    "purity": 0.2375,
+    "native_cluster_count": 66,
+    "native_ari": 0.056592696225696244,
+    "native_purity": 1.0,
+    "assign_theme_accuracy": 0.9
+  },
+  "engine": {
+    "tick_minutes": 15,
+    "runs": [
+      {
+        "seed": 1,
+        "ground_truth_episodes": 17,
+        "recall": 1.0,
+        "precision": 1.0,
+        "median_detection_delay_minutes": 0
+      },
+      {
+        "seed": 2,
+        "ground_truth_episodes": 17,
+        "recall": 1.0,
+        "precision": 1.0,
+        "median_detection_delay_minutes": 0
+      },
+      {
+        "seed": 3,
+        "ground_truth_episodes": 17,
+        "recall": 1.0,
+        "precision": 1.0,
+        "median_detection_delay_minutes": 0
+      },
+      {
+        "seed": 4,
+        "ground_truth_episodes": 17,
+        "recall": 1.0,
+        "precision": 1.0,
+        "median_detection_delay_minutes": 0
+      },
+      {
+        "seed": 5,
+        "ground_truth_episodes": 17,
+        "recall": 1.0,
+        "precision": 1.0,
+        "median_detection_delay_minutes": 0
+      }
+    ],
+    "six_hour_seed1_reference": {
+      "recall": 1.0,
+      "precision": 1.0,
+      "median_detection_delay_minutes": 240.0
+    },
+    "recall": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "precision": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "median_detection_delay_minutes": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  },
+  "last_run_llm": {
+    "new_calls": 0,
+    "cache_hits": 320,
+    "outer_retries": 0,
+    "retained_llm_response_files": 667,
+    "note": "app.llm.chat may internally retry HTTP transport errors; these are not counted separately"
+  },
+  "evaluation_source_sha256": "108687894099111d27fab62ab77feeabc06910729b0a276221c49a0ccaf8f917"
+}

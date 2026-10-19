@@ -1,0 +1,1282 @@
+[
+  {
+    "persona_id": "p01",
+    "before_guess": {
+      "persona_id": "p01",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (late Friday assignment with high detail risks accuracy), the impact (insufficient time for verification), and the actionable request (defer start to normal working days), without inventing new information or losing substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p01",
+    "before_guess": {
+      "persona_id": "p01",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (slow PR review) and request (speed up) are preserved, but the anonymized text invents a specific detail ('Friday evening') not present in the original, while omitting the original's specific impact context ('fear of missing deadline'). The addition of unverified data lowers the score."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p01",
+    "before_guess": {
+      "persona_id": "p01",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 2,
+      "reason": "The anonymized text invents a specific scenario ('Friday evening') and consequences not present in the original, while altering the tone from a polite request for clarification to a formal warning. Although the core issue of approval bottleneck is retained, the fabrication of details and shift in intent constitute a major loss of the original meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p01",
+    "before_guess": {
+      "persona_id": "p01",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (excessive on-call shifts causing lack of rest) and the actionable request (distribute work to others), removing only personal pronouns and politeness markers as intended."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p02",
+    "before_guess": {
+      "persona_id": "p02",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (stalled PRs blocking work) and request (faster reviews) are preserved, but the anonymized text invents a specific detail ('Friday evenings') not present in the original, and shifts the tone from a direct personal request to a generalized statement."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p02",
+    "before_guess": {
+      "persona_id": "p02",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (blocked work) and request (assign someone to fix) are preserved, but the anonymized text invents a specific context ('recurring on Friday evenings') that was not present in the original, altering the substantive scope of the complaint."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p02",
+    "before_guess": {
+      "persona_id": "p02",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p15",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (on-call fatigue leading to errors) and the request (add staff) are preserved. However, the anonymized text invents a specific detail ('especially on Friday evenings') that was not present in the original text, which violates the constraint against inventions and alters the specific scope of the complaint."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p02",
+    "before_guess": {
+      "persona_id": "p02",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (unclear requirements causing rework) and the request (detailed summary document) are preserved. However, the anonymized text invents a specific scenario ('working late on Friday') and adds an explicit impact statement on 'efficiency' that was only implied in the original, altering the substantive content beyond simple anonymization."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p03",
+    "before_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern and primary request are preserved, but the anonymized text adds a specific new condition ('Friday evening') regarding when the intervention is needed, which was not present in the original text. This constitutes an invention of detail rather than strict preservation."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p03",
+    "before_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (night emergencies causing burnout and decision risks), the impact, and the specific actionable request (compensatory time off or special pay), with no loss of substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p03",
+    "before_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p01",
+      "confidence": 0.05
+    },
+    "judge": {
+      "score": 1,
+      "reason": "The anonymized text is empty, resulting in a complete loss of the original concern, impact, and actionable request."
+    },
+    "released": false
+  },
+  {
+    "persona_id": "p03",
+    "before_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p01",
+      "confidence": 0.05
+    },
+    "judge": {
+      "score": 1,
+      "reason": "The anonymized text is empty, resulting in a complete loss of the original concern, impact, and actionable request."
+    },
+    "released": false
+  },
+  {
+    "persona_id": "p04",
+    "before_guess": {
+      "persona_id": "p04",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (urgent Friday work reducing quality), the impact (rushing), and the actionable request (establish a cut-off time), while appropriately removing stylistic particles and personal pronouns."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p04",
+    "before_guess": {
+      "persona_id": "p04",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (burnout due to lack of rest from consecutive on-call shifts) and the specific actionable requests (increase rotation staff or reduce shift duration). The removal of personal pronouns and polite particles aligns with the anonymization goal without altering the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p04",
+    "before_guess": {
+      "persona_id": "p04",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (incomplete details cause rework) and the primary request (written confirmation) are preserved. However, the anonymized text invents a specific new condition ('especially during continuous operations on Friday evenings') that was not present in the original, altering the scope of the feedback."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p04",
+    "before_guess": {
+      "persona_id": "p04",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "Core concern (excessive meetings causing lost focus/stalled work) and actionable requests (shorten duration, switch to text updates) are fully preserved. Minor loss occurs as the original's specific timing ('evening') and frequency ('too often') are generalized to 'Friday evenings' and 'high frequency', slightly altering the specific scope of the complaint without changing the central issue."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p05",
+    "before_guess": {
+      "persona_id": "p05",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (Friday evening urgent tasks causing stress and impacting rest), the impact (risk of burnout), and the actionable request (need for clear guidelines on handling Friday urgent work), despite shifting from a personal narrative to a formal objective tone."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p05",
+    "before_guess": {
+      "persona_id": "p05",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 4,
+      "reason": "The core concern (PR review delays causing bottlenecks) and the actionable request (establish a clear SLA, e.g., 4 hours or before end of day) are preserved. However, the anonymized text invents a specific detail ('working continuously on Friday evenings') that was not present in the original text, which only mentioned being stuck and the feature being delayed."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p05",
+    "before_guess": {
+      "persona_id": "p05",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (incomplete requirements leading to risk) and the general request for clarification are preserved. However, the anonymized text invents a specific condition ('working continuously on Friday evenings') that was not present in the original text, altering the scope of the actionable request."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p05",
+    "before_guess": {
+      "persona_id": "p05",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concerns (excessive meeting length, lack of clear agenda, impact on personal work backlog) and the actionable request (attend only relevant discussion parts). The removal of emojis, personal pronouns, and casual tone is appropriate per instructions, and no substantive meaning was lost or invented."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p06",
+    "before_guess": {
+      "persona_id": "p06",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "The core concern (Friday rush jobs causing incomplete testing and customer risk) and the primary request (better advance planning) are fully preserved. However, the specific actionable request to 'sync' (meet/discuss immediately) is generalized to a broader proposal to 'coordinate and discuss process improvement,' resulting in a minor loss of the original's immediate urgency and specific call to action."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p06",
+    "before_guess": {
+      "persona_id": "p06",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (slow PR reviews causing context loss) and the request for clear SLAs are preserved. However, the anonymized text invents a specific detail ('recurring on Friday evenings') that was not present in the original, and slightly alters the actionable request from a direct 'sync' to a more formal 'coordinate to discuss solutions', representing a material alteration/addition."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p06",
+    "before_guess": {
+      "persona_id": "p06",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 4,
+      "reason": "The core concern (technical blockers causing delays) and the actionable requests (clear pending work, assign owners) are fully preserved. However, the specific request to 'sync' (meet/discuss) was generalized into a broader goal of 'effective coordination,' resulting in a minor loss of the specific actionable step."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p06",
+    "before_guess": {
+      "persona_id": "p06",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "Core concern (long meetings, no agenda, overtime) and actionable request (shorten meetings or use docs) are preserved. Minor loss occurs as the specific detail 'Friday evening' was added in the anonymized text (not in original) and the casual 'sync' request was dropped, though the main actionable path remains clear."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p07",
+    "before_guess": {
+      "persona_id": "p07",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (late Friday urgent requests without notice), the impact (testing delays and quality risks), and the actionable request (set a Friday noon cutoff). Personal pronouns and politeness markers were removed appropriately without altering the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p07",
+    "before_guess": {
+      "persona_id": "p07",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "The core concern (code review bottleneck causing delays) and the actionable request (4-hour response standard) are fully preserved. However, there is a minor loss of specificity regarding the timing: the original specifies 'end of the week' generally, while the anonymized version narrows this to 'Friday evenings', which is a slight alteration of the original scope."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p07",
+    "before_guess": {
+      "persona_id": "p07",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (delayed technical fixes impacting delivery and customer trust) and the primary actionable request (1-hour escalation mechanism) are preserved. However, the anonymized text invents a specific condition ('especially on Friday evenings') that was not present in the original text, altering the scope of the request."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p07",
+    "before_guess": {
+      "persona_id": "p07",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (excessive night alerts causing fatigue), the impact (reduced concentration and work efficiency), and the actionable request (review alert criteria or add filtering). No substantive meaning was lost or invented; only personal pronouns and polite particles were removed."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p08",
+    "before_guess": {
+      "persona_id": "p08",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "The core concern (code review bottlenecks causing bugs) and actionable requests (distribute PRs, set limits) are preserved. However, the anonymized text adds a specific detail ('Friday') not present in the original ('end of day'), which is a minor invention altering the scope of the data."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p08",
+    "before_guess": {
+      "persona_id": "p08",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p10",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (external delays causing missed deadlines), the impact, and the specific actionable request (automatic escalation after 48 hours for immediate coordination), with only minor stylistic adjustments and removal of politeness markers."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p08",
+    "before_guess": {
+      "persona_id": "p08",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (excessive monitoring alerts causing noise), the impact (unnecessary night checks for non-incidents), and the actionable request (review alerts and adjust thresholds for accuracy). No substantive meaning was lost or invented."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p08",
+    "before_guess": {
+      "persona_id": "p08",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern and actionable request are preserved, but the anonymized text invents a specific new impact ('working late on Fridays continuously') that was not present in the original text, violating the constraint against inventions."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p09",
+    "before_guess": {
+      "persona_id": "p09",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (2-day delay due to missing data/owner), the impact (blocked code push), and the actionable request (escalate or assign an owner), while only removing informal style and emotional expressions."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p09",
+    "before_guess": {
+      "persona_id": "p09",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (heavy on-call load) and primary requests (add staff or reduce hours) are preserved. However, the anonymized text invents a specific condition ('working continuously until Friday evening') that was not present in the original text, and slightly alters the specific impact description from 'brain fog/unable to work' to general 'reduced efficiency'."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p09",
+    "before_guess": {
+      "persona_id": "p09",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (conflicting requirements) and the request for a meeting are preserved, but the anonymized text invents a specific constraint ('working on Friday evening') that was not present in the original text, altering the substantive context of the request."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p09",
+    "before_guess": {
+      "persona_id": "p09",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (unnecessary meetings wasting time), the impact (reduced productivity), and the actionable request (send agenda/recordings instead of requiring attendance if no decision is needed). The shift from a casual personal plea to a formal objective statement is appropriate for anonymization and does not alter the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p10",
+    "before_guess": {
+      "persona_id": "p10",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (urgent Friday notifications without warning), the impact (inability to test systems and risk to stability), and the actionable request (communicate one day in advance or wait until Monday). The removal of the specific ticket reference and minor stylistic adjustments do not alter the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p10",
+    "before_guess": {
+      "persona_id": "p10",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (system alerts during shifts reducing efficiency), the impact (missed targets and team stress), and the actionable request (review alert criteria to reduce noise). Minor stylistic changes and the removal of the specific ticket reference do not alter the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p10",
+    "before_guess": {
+      "persona_id": "p10",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (frequent unnotified scope changes), the impact (confusion and inaccurate time estimation), and the actionable request (lock scope before sprints and limit changes). The removal of the specific ticket reference is appropriate for anonymization and does not alter the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p10",
+    "before_guess": {
+      "persona_id": "p10",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (urgent meetings without agenda) and the request (meeting-free day) are preserved. However, the anonymized text invents a specific new detail ('working late on Fridays') that was not present in the original text, which only mentioned general loss of focus and missed deadlines. This addition alters the specific evidence supporting the complaint."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p11",
+    "before_guess": {
+      "persona_id": "p11",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (Friday late deployments causing risks), the specific impacts (lack of verification, recovery bottlenecks), and the actionable request (move to Monday morning) without inventing new information or losing substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p11",
+    "before_guess": {
+      "persona_id": "p11",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (approval delays causing context loss) and the primary request (establishing an SLA) are preserved. However, the anonymized text invents a specific new problem ('repetitive work on Friday evenings') that was not present in the original, and slightly alters the phrasing of the context loss from 'developer context' to 'technical context'. The invention of specific timing details prevents a higher score."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p11",
+    "before_guess": {
+      "persona_id": "p11",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p01",
+      "confidence": 0.05
+    },
+    "judge": {
+      "score": 1,
+      "reason": "The anonymized text is empty, resulting in a complete loss of the original concern, impact, and actionable request."
+    },
+    "released": false
+  },
+  {
+    "persona_id": "p11",
+    "before_guess": {
+      "persona_id": "p11",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "Core concern (inefficient meetings) and actionable requests (check attendee necessity, limit duration) are preserved. However, the anonymized text invents a specific detail ('recurring on Friday evenings') not present in the original, and slightly alters the perspective by removing the 'system view' framing."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p12",
+    "before_guess": {
+      "persona_id": "p12",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (urgent Friday late notices reduce quality), the impact (rushed work), and the actionable request (stop accepting new work after 3 PM). The shift from a question to a proposal is a stylistic change appropriate for anonymization and does not alter the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p12",
+    "before_guess": {
+      "persona_id": "p12",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "The core concern (risk of bugs in production due to delayed code review) and the actionable request (schedule afternoon reviews) are preserved. However, the original text's collaborative proposal ('Is this okay?') is altered into a formal declaration of necessity ('It is necessary'), resulting in a minor loss of the original tone and intent regarding team consensus."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p12",
+    "before_guess": {
+      "persona_id": "p12",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (work locked without notification causing resource waste), the specific impact, and the actionable request (notify in group chat if locked over 2 hours). Minor stylistic changes and the removal of personal pronouns do not affect the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p12",
+    "before_guess": {
+      "persona_id": "p12",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (long meetings without agendas cause loss of focus and backlog), the impact, and the specific actionable requests (limit to 30 minutes, require summaries). The removal of the conversational closing question and personal pronouns aligns with the instruction to ignore style and identifying details without altering the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p13",
+    "before_guess": {
+      "persona_id": "p13",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (late Friday task affecting quality), the impact (need for rework on Monday), and the actionable request (clarify details now, start work Monday). The removal of politeness markers and personal pronouns aligns with the scoring guidelines."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p13",
+    "before_guess": {
+      "persona_id": "p13",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (no feedback on yesterday's PR), the specific impact (risk of missing deployment and delaying the release plan if not merged today), and the actionable request (review or reassign). The shift from a casual tone to a formal one is appropriate for anonymization and does not alter the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p13",
+    "before_guess": {
+      "persona_id": "p13",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (blocked by approval) and request (identify approver/expedite) are preserved, but the anonymized text invents a specific detail ('working on Friday evening') not present in the original, and slightly alters the tone from a personal block to a general process issue."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p13",
+    "before_guess": {
+      "persona_id": "p13",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (excessive on-call frequency affecting performance and risk of missing alerts) and the actionable request (reduce frequency or rotate shifts). The shift from a personal question to an observational statement is an appropriate anonymization technique that retains all substantive meaning without invention or loss."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p14",
+    "before_guess": {
+      "persona_id": "p14",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (long PR review causing merge conflicts) and the general request (schedule reviews) are preserved. However, the anonymized text invents a specific scenario ('especially Friday evenings') that was not present in the original, and slightly alters the actionable request from 'clearing the queue' to just 'defining a schedule'."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p14",
+    "before_guess": {
+      "persona_id": "p14",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (delays due to external approval) and the primary request (tracking system for items stuck >1 day) are preserved. However, the anonymized text invents a specific new condition ('especially cases requiring continuous action on Friday evenings') that was not present in the original text, altering the scope of the request."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p14",
+    "before_guess": {
+      "persona_id": "p14",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (on-call workload affecting balance) and the general request (compensation or reduced load) are preserved. However, the anonymized text invents a specific detail ('recurring on Friday evenings') that was not present in the original text, and slightly alters the tone from a direct request to discuss ('want to discuss') to a statement of necessity ('necessary to consider')."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p14",
+    "before_guess": {
+      "persona_id": "p14",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (unclear examples causing misinterpretation), the impact (work not meeting expectations), and the actionable request (hold a short meeting to clarify ambiguities). The removal of politeness particles and the translation of the mixed-language word 'session' to 'meeting' are appropriate anonymization steps that do not alter the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p15",
+    "before_guess": {
+      "persona_id": "p15",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p15",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The anonymized text invents a specific detail ('working late on Fridays') that is not present in the original, while omitting the original's explicit actionable request to 'accept/acknowledge' this feedback ('ขอรับ'). The core concern and main solution are preserved, but the fabrication of context and loss of the closing request prevent a higher score."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p15",
+    "before_guess": {
+      "persona_id": "p15",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p15",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (repeated emergency duties causing burnout), the potential impact (resignation, errors), and the actionable request (review selection criteria and mandate rest periods). The only omission is the final phrase 'ขอรับ' (Request received/Acknowledged), which is an administrative marker rather than part of the substantive feedback content."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p15",
+    "before_guess": {
+      "persona_id": "p15",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p01",
+      "confidence": 0.05
+    },
+    "judge": {
+      "score": 1,
+      "reason": "The anonymized text is empty, resulting in a complete loss of the original concern, impact, and actionable request."
+    },
+    "released": false
+  },
+  {
+    "persona_id": "p15",
+    "before_guess": {
+      "persona_id": "p15",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p15",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern and primary actionable requests are preserved, but the anonymized text invents a specific new condition ('especially during continuous work on Friday evenings') that was not present in the original, altering the scope of the feedback."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p16",
+    "before_guess": {
+      "persona_id": "p16",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (urgent Friday evening tasks), the specific impacts (unbalanced schedule, lack of rest), and the actionable request (assess urgency, 4-hour notice). The removal of the closing phrase and minor structural changes do not affect the substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p16",
+    "before_guess": {
+      "persona_id": "p16",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p01",
+      "confidence": 0.05
+    },
+    "judge": {
+      "score": 1,
+      "reason": "The anonymized text is empty, resulting in a complete loss of the original concern, impact, and actionable request."
+    },
+    "released": false
+  },
+  {
+    "persona_id": "p16",
+    "before_guess": {
+      "persona_id": "p16",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (unclear requirements), impact (bugs/rework), and primary request (clarification before development) are preserved. However, the anonymized text invents a new specific constraint ('avoid working on Friday evenings') that was not present in the original text, altering the scope of the feedback."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p16",
+    "before_guess": {
+      "persona_id": "p16",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern and primary actionable requests are preserved, but the anonymized text invents a new specific action ('reduce work on Friday evenings') that was not present in the original feedback, altering the scope of the request."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p17",
+    "before_guess": {
+      "persona_id": "p17",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (frequent urgent Friday evening work), the impact (team burnout/fatigue and reduced work quality), and the actionable request (verify necessity before assigning). While the tone shifted from informal/emotional to formal/objective and specific pronouns were removed, the substantive meaning remains intact without invention or loss of key details."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p17",
+    "before_guess": {
+      "persona_id": "p17",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The anonymized text preserves the core concern (slow review), impact (fear of bugs, blocked deployment), and request (allocate time). However, it introduces a specific detail not present in the original ('working late on Friday'), which constitutes an invention of facts, and slightly alters the tone from a personal plea to a formal report."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p17",
+    "before_guess": {
+      "persona_id": "p17",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (unclear conditions preventing work start), the potential impact (risk of rework due to guessing), and the actionable request (need for a meeting to clarify doubts). While the tone shifted from casual to formal and specific pronouns were removed, the substantive meaning remains intact without invention or loss of critical details."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p17",
+    "before_guess": {
+      "persona_id": "p17",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (unnecessary meetings) and request (send summaries instead) are preserved, but the anonymized text invents a specific detail ('continuous work on Friday evenings') that was not present in the original, and shifts the tone from a direct personal request to a general observation."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p18",
+    "before_guess": {
+      "persona_id": "p18",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 4,
+      "reason": "Core concern (last-minute tasks causing burnout) and request (filter urgency) are preserved, but specific timing details ('almost end of day') were generalized to 'Friday afternoon', representing a minor loss of precision."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p18",
+    "before_guess": {
+      "persona_id": "p18",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (delayed review) and request (advance notice) are preserved, but the anonymized text invents a specific scenario ('Friday evening') that was not present in the original, altering the factual basis of the feedback."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p18",
+    "before_guess": {
+      "persona_id": "p18",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 3,
+      "reason": "The core concern (blocked by dependency) and request (urgent support) are preserved, but the anonymized text invents a specific scenario ('recurring on Friday evenings') that was not present in the original, altering the factual context of the issue."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p18",
+    "before_guess": {
+      "persona_id": "p18",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (excessive meeting length causing unfinished work) and the actionable requests (limit time, invite only relevant people) without adding or omitting substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p19",
+    "before_guess": {
+      "persona_id": "p19",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (late Friday feature requests without impact assessment leading to testing gaps and production bugs), the specific actionable proposal (queue requests after 14:00 on Fridays for the next business day), and the request to communicate this guideline. No substantive meaning was lost or invented."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p19",
+    "before_guess": {
+      "persona_id": "p19",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p19",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "Core concern (stalled reviews causing pressure) and actionable request (establish standard for reassignment and communicate via central channel) are preserved. However, the specific context changed from 'end of sprint' to 'Friday evenings', which slightly alters the situational nuance of the original feedback."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p19",
+    "before_guess": {
+      "persona_id": "p19",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "Core concern (work stoppage due to lack of follow-up), impact (lost time/development halt), and actionable request (auto-alerts or assigned owner after 24h) are preserved. However, the anonymized text invents a specific detail ('Friday evenings') not present in the original, and slightly shifts the specific project context to a general recurring time pattern."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p19",
+    "before_guess": {
+      "persona_id": "p19",
+      "confidence": 0.92
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "Core concern, impact, and actionable requests are preserved, but the anonymized text adds specific details about timing (Friday evenings/holidays) not present in the original."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p20",
+    "before_guess": {
+      "persona_id": "p20",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 2,
+      "reason": "The anonymized text invents specific details not present in the original (working late on Friday evenings), which violates the constraint against inventions. Additionally, it changes the tone from a direct personal request to a passive report ('there is a request'), altering the nature of the actionable item."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p20",
+    "before_guess": {
+      "persona_id": "p20",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (blocked work due to lack of ownership), the impact (wasted resources and delays), and the actionable request (assign clear owners and organize the system). The removal of politeness markers and emojis aligns with the scoring guidelines."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p20",
+    "before_guess": {
+      "persona_id": "p20",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.85
+    },
+    "judge": {
+      "score": 5,
+      "reason": "The anonymized text fully preserves the core concern (excessive overtime affecting health/morale), the impact (team fatigue and low morale), and the actionable requests (review staffing levels and reorganize the system) without adding or omitting substantive meaning."
+    },
+    "released": true
+  },
+  {
+    "persona_id": "p20",
+    "before_guess": {
+      "persona_id": "p20",
+      "confidence": 0.95
+    },
+    "after_guess": {
+      "persona_id": "p03",
+      "confidence": 0.92
+    },
+    "judge": {
+      "score": 4,
+      "reason": "Core concern (vague requirements causing rework) and request (detailed documentation) are preserved, but the anonymized text invents a specific detail ('working late on Fridays') not present in the original."
+    },
+    "released": true
+  }
+]

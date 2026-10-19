@@ -1,4 +1,4 @@
-import { api, isMock } from './api.js';
+import { api, isMock, onStaticServer } from './api.js';
 
 export const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const list = value => Array.isArray(value) ? value : [];
@@ -6,34 +6,87 @@ export const number = (value, digits = 0) => value !== null && value !== undefin
   ? Number(value).toLocaleString('th-TH', { maximumFractionDigits: digits }) : '—';
 export const percent = value => value == null ? '—' : `${number(Number(value) * 100)}%`;
 
-const paths = {
-  bridge: '<path d="M3 18V7m18 11V7M3 12c5 0 5-7 9-7s4 7 9 7M3 18h18M8 10v8m8-8v8"/>',
-  arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
-  shield: '<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/>',
-  chart: '<path d="M4 3v17h17M8 14l4-5 4 3 5-8"/>',
-  message: '<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2V11.5a9.5 9.5 0 0 1 19 0Z"/><path d="M7 9h9m-9 4h6"/>',
-  check: '<path d="m5 12 4 4L19 6"/>',
-  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
-  play: '<path d="m8 5 11 7-11 7V5Z"/>',
-  refresh: '<path d="M20 7a9 9 0 1 0 1 8M20 3v5h-5"/>',
-  close: '<path d="m6 6 12 12M6 18 18 6"/>',
+export const isRec = new URLSearchParams(location.search).get('rec') === '1';
+
+// Lucide icons (ISC licence), 24 px grid. Injected once as a <symbol> sprite by shell(); stroke styles come from .icon in app.css.
+const symbols = {
+  'bridge': '<path d="M3 18h18M5 18V9M19 18V9M5 11c3 0 4.5-4 7-4s4 4 7 4M9 18v-5M15 18v-5"/>',
+  'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  'arrow-up-right': '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  'check': '<path d="M20 6 9 17l-5-5"/>',
+  'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  'shield-check': '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  'lock': '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  'git-pull-request': '<circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M6 9v12"/>',
+  'circle-alert': '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  'calendar-clock': '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/>',
+  'moon': '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  'flag': '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
+  'users': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  'user': '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  'fast-forward': '<path d="M13 19 22 12 13 5z"/><path d="M2 19 11 12 2 5z"/>',
+  'rotate-ccw': '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  'refresh-cw': '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  'chart-line': '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/>',
+  'message-square': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  'eye': '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',
+  'send': '<path d="M14.54 21.69a.5.5 0 0 0 .94-.03l6.5-19a.5.5 0 0 0-.64-.63l-19 6.5a.5.5 0 0 0-.02.93l7.93 3.18a2 2 0 0 1 1.11 1.11z"/><path d="m21.85 2.15-10.94 10.94"/>',
+  'eraser': '<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>',
+  'languages': '<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>',
+  'crosshair': '<circle cx="12" cy="12" r="10"/><path d="M22 12h-4"/><path d="M6 12H2"/><path d="M12 6V2"/><path d="M12 22v-4"/>',
+  'list-checks': '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
+  'layers': '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  'inbox': '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
 };
-export const icon = (name, cls = '') => `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.message}</svg>`;
+// Older names still used by page scripts.
+const aliases = { arrow: 'arrow-right', shield: 'shield-check', chart: 'chart-line', message: 'message-square', refresh: 'rotate-ccw', close: 'x', clock: 'calendar-clock' };
+export const icon = (name, cls = '') => `<svg class="icon${cls ? ` ${cls}` : ''}" aria-hidden="true" focusable="false"><use href="#i-${aliases[name] || name}"/></svg>`;
+
+function injectIcons() {
+  if (document.querySelector('#kjb-icons')) return;
+  document.body.insertAdjacentHTML('afterbegin', `<svg id="kjb-icons" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>${Object.entries(symbols).map(([name, body]) => `<symbol id="i-${name}" viewBox="0 0 24 24">${body}</symbol>`).join('')}</defs></svg>`);
+}
 
 export function pageURL(name = '') {
-  const staticServer = location.port === '8099' || (location.pathname.endsWith('.html') && !location.pathname.startsWith('/static/'));
-  const path = staticServer ? `/${name ? `${name}.html` : 'index.html'}` : `/${name}`;
-  return path + (isMock ? '?mock=1' : '');
+  const path = onStaticServer ? `/${name ? `${name}.html` : 'index.html'}` : `/${name}`;
+  const query = [isMock && 'mock=1', isRec && 'rec=1'].filter(Boolean).join('&');
+  return path + (query ? `?${query}` : '');
+}
+
+// Recording mode: a 3 px accent ring, 4 px outside the target, shown for `ms` (Playwright video has no cursor).
+function spotlight(target, ms = 1200) {
+  const el = typeof target === 'string' ? document.querySelector(target) : target;
+  if (!el) return false;
+  const box = el.getBoundingClientRect();
+  const ring = document.createElement('div');
+  ring.className = 'kjb-spotlight';
+  ring.setAttribute('aria-hidden', 'true');
+  Object.assign(ring.style, {
+    left: `${box.left + scrollX - 4}px`, top: `${box.top + scrollY - 4}px`, width: `${box.width + 8}px`, height: `${box.height + 8}px`,
+    borderRadius: `${(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0) + 4}px`,
+  });
+  document.body.append(ring);
+  requestAnimationFrame(() => ring.classList.add('on'));
+  setTimeout(() => { ring.classList.remove('on'); setTimeout(() => ring.remove(), 300); }, ms);
+  return true;
 }
 
 export function shell(active) {
-  document.querySelector('#site-header').innerHTML = `<div class="nav-inner">
-    <a class="brand" href="${pageURL()}"><span class="brand-mark">${icon('bridge')}</span><span>เกรงใจบริดจ์<small>Kreng-jai Bridge</small></span></a>
-    <nav aria-label="เมนูหลัก"><a href="${pageURL()}" ${active === 'home' ? 'aria-current="page"' : ''}>รู้จักเรา</a><a href="${pageURL('manager')}" ${active === 'manager' ? 'aria-current="page"' : ''}>แดชบอร์ดหัวหน้า</a><a href="${pageURL('demo')}" ${active === 'demo' ? 'aria-current="page"' : ''}>ห้องควบคุมเดโม</a></nav>
-    <div class="nav-status">${isMock ? '<span class="badge mock-badge">ข้อมูลจำลอง</span>' : '<span class="live-dot"></span><span>พื้นที่ปลอดภัยของทีม</span>'}</div>
-  </div>`;
+  injectIcons();
+  document.querySelectorAll('#site-header [data-nav]').forEach(a => {
+    if (a.dataset.nav === active) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
   document.querySelectorAll('[data-page]').forEach(a => { a.href = pageURL(a.dataset.page); });
-  if (isMock) document.body.classList.add('mock-mode');
+  if (isMock) {
+    document.body.classList.add('mock-mode');
+    document.querySelector('#mock-badge')?.removeAttribute('hidden');
+  }
+  if (isRec) {
+    document.body.classList.add('rec');
+    document.documentElement.style.setProperty('--step-cadence', '900ms');
+    window.kjbSpotlight = spotlight;
+  }
   if (!document.querySelector('#toast')) {
     const toast = document.createElement('div');
     toast.id = 'toast';
@@ -42,6 +95,7 @@ export function shell(active) {
     toast.setAttribute('aria-live', 'polite');
     document.body.append(toast);
   }
+  health();
 }
 
 let toastTimer;
@@ -70,17 +124,25 @@ export async function busy(button, task) {
   finally { button.disabled = false; button.removeAttribute('aria-busy'); }
 }
 
-export async function health() {
+let healthCheck;
+// Header status pill (#health). Runs once per page load; returns the /api/health payload or null.
+export function health() {
+  healthCheck ||= checkHealth();
+  return healthCheck;
+}
+async function checkHealth() {
   const el = document.querySelector('#health');
-  if (!el) return;
+  if (!el) return null;
   try {
     const data = await api('/api/health');
-    el.className = 'health-chip';
-    el.innerHTML = `<span class="live-dot ${data.ok ? '' : 'offline'}"></span><span>${data.ok ? 'ระบบพร้อมใช้งาน' : 'ระบบยังไม่พร้อม'} · ${escapeHTML(data.llm_model || 'ยังไม่ได้ระบุโมเดล')} · LINE ${data.line_enabled ? 'เปิด' : 'ปิด'}</span>`;
+    el.classList.remove('unavailable');
+    el.innerHTML = `<span class="dot ${data.ok ? '' : 'offline'}"></span><span class="status-main">${data.ok ? 'ระบบพร้อม' : 'ระบบยังไม่พร้อม'}</span><span class="status-detail">· <span class="mono">${escapeHTML(data.llm_model || 'ยังไม่ระบุโมเดล')}</span> · LINE ${data.line_enabled ? 'เปิด' : 'ปิด'}</span>`;
+    return data;
   } catch (error) {
-    el.className = 'health-chip unavailable';
-    el.innerHTML = '<span class="live-dot offline"></span><span>ยังเชื่อมต่อระบบไม่ได้ · ลองรีเฟรชอีกครั้ง</span>';
+    el.classList.add('unavailable');
+    el.innerHTML = '<span class="dot offline"></span><span class="status-main">เชื่อมต่อระบบไม่ได้</span>';
     showError(error);
+    return null;
   }
 }
 

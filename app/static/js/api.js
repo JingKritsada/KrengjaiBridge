@@ -1,4 +1,6 @@
-export const isMock = new URLSearchParams(location.search).get('mock') === '1';
+// The plain static server (python3 -m http.server, port 8099, *.html paths) has no API, so it always runs on mock data.
+export const onStaticServer = location.port === '8099' || (location.pathname.endsWith('.html') && !location.pathname.startsWith('/static/'));
+export const isMock = new URLSearchParams(location.search).get('mock') === '1' || onStaticServer;
 
 // Reads are quick; POSTs may run the privacy pipeline on a slow fallback model (20-60 s).
 export async function api(path, { method = 'GET', body, timeout = method === 'GET' ? 15000 : 180000 } = {}) {

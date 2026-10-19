@@ -1,5 +1,5 @@
 import { api, post } from './api.js';
-import { shell, escapeHTML as e, list, number, percent, icon, showError, busy, toast, structuredHTML, kindLabel } from './ui.js';
+import { shell, escapeHTML as e, list, number, percent, icon, showError, busy, toast, structuredHTML, kindLabel, isRec } from './ui.js';
 
 shell('demo');
 const stepNames = ['ลบข้อมูลระบุตัวตน', 'ปรับภาษาให้เป็นกลาง', 'ทดสอบการเดาตัวตน', 'จัดโครงสร้างความเห็น', 'รอประตูนิรนาม (k=3)', 'จัดกลุ่มประเด็น'];
@@ -17,7 +17,7 @@ let pipelineFallback = false;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const fallbackBadge = document.createElement('span');
-fallbackBadge.className = 'badge amber pipeline-fallback';
+fallbackBadge.className = 'chip wait pipeline-fallback';
 fallbackBadge.textContent = 'โหมดสำรอง (ไม่มี LLM)';
 fallbackBadge.setAttribute('role', 'status');
 fallbackBadge.hidden = true;
@@ -27,10 +27,11 @@ function renderFallback() {
   fallbackBadge.hidden = !llmUnavailable && !pipelineFallback;
 }
 
+// Polled every 15 s (health() in ui.js runs once), so the fallback chip follows the LLM going up or down.
 async function loadHealth() {
   try {
-    const health = await api('/api/health');
-    llmUnavailable = health.llm_available === false;
+    const data = await api('/api/health');
+    llmUnavailable = data.llm_available === false;
     renderFallback();
   } catch { /* Keep the last known status until health is reachable. */ }
 }
@@ -38,11 +39,27 @@ async function loadHealth() {
 function resetSteps() {
   pipelineFallback = false;
   renderFallback();
-  document.querySelector('#pipeline-steps').innerHTML = stepNames.map((name, i) => `<li class="pipeline-step" data-step="${i + 1}"><span class="step-number">${i + 1}</span><div><h3>${name}</h3><p class="step-output">รอทดสอบ</p></div><span class="step-done"></span></li>`).join('');
-  ['attacker-rounds', 'feedback-preview', 'confirm-actions', 'removed-markers'].forEach(id => { document.getElementById(id).hidden = true; });
+  document.querySelector('#pipeline-steps').innerHTML = stepNames.map((name, i) => `<li class="pipeline-step" data-step="${i + 1}"><span class="step-number">${i + 1}</span><div class="step-line"><h3>${name}</h3><p class="step-output">รอทดสอบ</p></div><span class="step-done"></span>${i === 2 ? '<div id="attacker-rounds" class="attacker-rounds" hidden></div>' : ''}${i === 3 ? '<div id="feedback-preview" hidden></div>' : ''}</li>`).join('');
+  document.querySelector('#confirm-actions').hidden = true;
+  document.querySelector('#confirm-note').hidden = true;
+  document.querySelector('#removed-markers').hidden = true;
+  document.querySelector('#removed-markers').replaceChildren();
+  document.querySelector('#feedback-text').hidden = false;
   document.querySelector('#feedback-text').readOnly = false;
   document.querySelector('#member-select').disabled = false;
+  document.querySelector('#preview').hidden = false;
   document.querySelector('#preview').disabled = false;
+  document.querySelector('.preview-actions').hidden = false;
+}
+
+function setPipelineStatus(text, className = '', state = 'idle') {
+  const status = document.querySelector('#pipeline-status');
+  status.textContent = text;
+  status.className = `pipeline-status ${className}`;
+  document.querySelector('.gate-bar').dataset.state = state;
+  const sent = state === 'sent' || state === 'released';
+  document.querySelector('#gate').hidden = !sent;
+  document.querySelector('#teammates').hidden = !sent;
 }
 
 function renderGate(gate) {
@@ -52,31 +69,32 @@ function renderGate(gate) {
   currentTheme = gate.theme_slug || currentTheme;
   document.querySelector('#gate-count').textContent = `${count}/${k}`;
   document.querySelector('#gate-label').textContent = gate.theme_label || `ต้องมีเสียงร่วมอย่างน้อย ${k} คน`;
-  document.querySelector('#gate-progress').style.transform = `scaleX(${Math.min(1, Math.max(0, count / k))})`;
+  document.querySelector('.gate-slots').innerHTML = Array.from({ length: k }, (_, i) => `<span class="gate-slot ${i < count ? 'full' : ''}">${icon('user', 'sm')}</span>`).join('');
   document.querySelector('#gate').classList.toggle('released', !!gate.released);
-  document.querySelector('#gate-note').textContent = gate.released ? `ผ่านประตูนิรนามแล้ว · หัวหน้าเห็นจำนวนเป็นช่วง ${gate.count_range || ''}` : `รอเสียงร่วมอีก ${Math.max(0, k - count)} คน · หัวหน้ายังไม่เห็นความเห็นนี้`;
+  const note = gate.released ? `ผ่านประตูนิรนามแล้ว · หัวหน้าเห็นจำนวนเป็นช่วง ${gate.count_range || '3–5 คน'}` : `รอเสียงร่วมอีก ${Math.max(0, k - count)} คน · หัวหน้ายังไม่เห็นความเห็นนี้`;
+  document.querySelector('#gate-note').textContent = note;
+  document.querySelector('#gate-note').hidden = !!gate.released;
+  document.querySelector('[data-step="5"] .step-output').textContent = gate.released ? `มีเสียงร่วมครบอย่างน้อย ${k} คน` : `ยืนยันส่งแล้ว · รอเสียงร่วมอีก ${Math.max(0, k - count)} คน`;
+  document.querySelector('[data-step="6"] .step-output').textContent = gate.released ? gate.theme_label || 'จัดกลุ่มประเด็นแล้ว' : `เมื่อครบ ${k} คน`;
+  setPipelineStatus(gate.released ? note : 'ยืนยันส่งแล้ว · เก็บเฉพาะข้อความที่ปรับแล้ว', 'success', gate.released ? 'released' : 'sent');
 }
 
 function renderAttacker(rounds) {
   const el = document.querySelector('#attacker-rounds');
   el.hidden = !rounds.length;
-  el.innerHTML = '<h3>รอบทดสอบผู้โจมตี</h3>' + rounds.map(round => {
+  el.innerHTML = rounds.map(round => {
     const member = members.find(m => m.member_id === round.guessed_member_id);
-    return `<div class="attacker-chip ${round.identified ? 'identified' : 'protected'}"><strong>รอบ ${number(round.round)} · เดา: ${e(member?.display_name || round.guessed_member_id || 'ระบุไม่ได้')}</strong><span>มั่นใจ ${percent(round.confidence)} · ${round.identified ? '✓ เดาถูก → เขียนใหม่' : '✗ ระบุตัวตนไม่ได้'}</span>${round.reason ? `<small>${e(round.reason)}</small>` : ''}</div>`;
+    return `<div class="attacker-chip" ${round.reason ? `title="${e(round.reason)}"` : ''}><strong>รอบ ${number(round.round)}</strong><span class="attacker-guess">เดา: ${e(member?.display_name || round.guessed_member_id || 'ระบุไม่ได้')} · มั่นใจ ${percent(round.confidence)}</span><span class="chip ${round.identified ? 'wait' : 'ok'}">${icon(round.identified ? 'refresh-cw' : 'shield-check', 'sm')}${round.identified ? 'เดาถูก · เขียนใหม่' : 'ระบุตัวตนไม่ได้'}</span></div>`;
   }).join('');
 }
 
 function highlightMarkers(text) {
   const el = document.querySelector('#removed-markers');
   el.hidden = false;
-  // This stays in the browser only; the original never enters fixture storage.
-  el.innerHTML = `<span class="sample-label">ร่องรอยภาษาที่ต้องตัดออก</span><p>${e(text).replace(/หนู|ค่ะ|ครับ|ดิฉัน|ผม/g, marker => `<del>${marker}</del>`)}</p>`;
-}
-
-function setPipelineStatus(text, className = '') {
-  const status = document.querySelector('#pipeline-status');
-  status.textContent = text;
-  status.className = `pipeline-status ${className}`;
+  document.querySelector('#feedback-text').hidden = true;
+  document.querySelector('.preview-actions').hidden = true;
+  // The source stays in browser memory only, never fixture storage.
+  el.innerHTML = `<p>${e(text).replace(/หนู|ค่ะ|ครับ|ดิฉัน|ผม|พี่/g, marker => `<del>${marker}</del>`)}</p>`;
 }
 
 async function loadTeam() {
@@ -101,12 +119,12 @@ async function loadTeam() {
 }
 
 function renderTabs() {
-  document.querySelector('#member-tabs').innerHTML = members.map(m => `<button id="tab-${e(m.member_id)}" role="tab" aria-selected="${m.member_id === selectedMember}" aria-controls="inbox" data-member="${e(m.member_id)}" tabindex="${m.member_id === selectedMember ? 0 : -1}">${e(m.display_name)}${m.line_linked ? '<span class="tab-line" aria-label="เชื่อม LINE แล้ว"></span>' : ''}</button>`).join('');
+  document.querySelector('#member-tabs').innerHTML = members.map(m => `<button id="tab-${e(m.member_id)}" role="tab" aria-selected="${m.member_id === selectedMember}" aria-controls="inbox" data-member="${e(m.member_id)}" tabindex="${m.member_id === selectedMember ? 0 : -1}">${e(m.display_name)}${m.line_linked ? '<span class="dot line" aria-label="เชื่อม LINE แล้ว"></span>' : ''}</button>`).join('');
   const member = members.find(m => m.member_id === selectedMember);
   document.querySelector('#inbox-name').textContent = member?.display_name || 'ยังไม่มีสมาชิก';
   document.querySelector('#inbox-avatar').textContent = member?.display_name?.slice(0, 1) || '—';
   document.querySelector('#line-badge').hidden = !member?.line_linked;
-  document.querySelector('#inbox-channel').textContent = member?.line_linked ? 'ข้อความส่งไปยัง LINE ด้วย' : 'กล่องข้อความบนเว็บ';
+  document.querySelector('#inbox-channel').textContent = member?.role || 'กล่องข้อความบนเว็บ';
   if (member) document.querySelector('#inbox').setAttribute('aria-labelledby', `tab-${member.member_id}`);
 }
 
@@ -121,7 +139,7 @@ async function loadInbox() {
     if (serialized === inboxVersion) return;
     inboxVersion = serialized;
     const inbox = document.querySelector('#inbox');
-    inbox.innerHTML = data.length ? data.map(message => `<article class="chat-entry"><span class="chat-agent">เกรงใจบริดจ์ · ${e(kindLabel(message.kind))}</span><div class="chat-bubble">${e(message.text || 'ยังไม่มีข้อความ')}</div><div class="quick-replies">${list(message.buttons).map(button => `<button data-outreach="${e(message.id)}" data-action="${e(button.action)}" ${message.response ? 'disabled' : ''}>${e(button.label || 'ตอบกลับ')}</button>`).join('')}</div>${message.response ? `<p class="chat-response">${icon('check')}ตอบกลับแล้ว${list(message.buttons).find(b => b.action === message.response)?.label ? ` · ${e(list(message.buttons).find(b => b.action === message.response).label)}` : ''}</p>` : ''}</article>`).join('') : '<div class="chat-empty">ยังไม่มีข้อความส่วนตัว<br>ลองเริ่มจากสถานการณ์ทางซ้าย</div>';
+    inbox.innerHTML = data.length ? data.map(message => `<article class="chat-entry"><span class="chat-agent">เกรงใจบริดจ์ · ${e(kindLabel(message.kind))}</span><div class="chat-bubble">${e(message.text || 'ยังไม่มีข้อความ')}</div><div class="quick-replies">${list(message.buttons).map(button => `<button class="${message.response === button.action ? 'answered' : ''}" data-outreach="${e(message.id)}" data-action="${e(button.action)}" ${message.response ? 'disabled' : ''}>${message.response === button.action ? icon('check', 'sm') : ''}${e(button.label || 'ตอบกลับ')}</button>`).join('')}</div>${message.response ? `<p class="chat-response">ตอบกลับแล้ว</p>` : ''}</article>`).join('') : '<div class="chat-empty">ยังไม่มีข้อความส่วนตัว · ลองเริ่มจากสถานการณ์ทางซ้าย</div>';
     inbox.scrollTop = inbox.scrollHeight;
   } catch (error) { showError(error); }
   finally {
@@ -135,7 +153,14 @@ async function loadSignals() {
   signalsPending = true;
   try {
     const signals = list(await api('/api/signals'));
-    document.querySelector('#signals').innerHTML = signals.length ? signals.map(signal => `<tr><td>${e(kindLabel(signal.kind))}</td><td class="code-ref">${e(signal.ref || '—')}</td><td>${e(signal.affected_display || '—')}${signal.target_display ? ` <span class="muted">→</span> ${e(signal.target_display)}` : ''}</td><td><span class="badge ${signal.judge_ok ? '' : 'amber'}">${signal.judge_ok ? 'ผ่าน' : 'รอตรวจสอบ'}</span>${signal.judge_reason ? `<span class="signal-reason">${e(signal.judge_reason)}</span>` : ''}</td><td>${e(({ pending: 'รอตอบรับ', sent: 'ส่งแล้ว', accepted: 'ตอบรับแล้ว', dismissed: 'ข้ามแล้ว', declined: 'ปฏิเสธแล้ว', detected: 'ตรวจพบ', nudged: 'เตือนแล้ว', responded: 'ตอบกลับแล้ว' })[signal.state] || 'กำลังดำเนินการ')}</td></tr>`).join('') : '<tr><td colspan="5" class="table-empty">ยังไม่มีสัญญาณ · เลือกสถานการณ์เพื่อเริ่มเดโม</td></tr>';
+    const stateLabels = { pending: 'รอตอบรับ', sent: 'ส่งแล้ว', accepted: 'ตอบรับแล้ว', dismissed: 'ข้ามแล้ว', declined: 'ปฏิเสธแล้ว', detected: 'ตรวจพบ', nudged: 'เตือนแล้ว', responded: 'ตอบกลับแล้ว' };
+    document.querySelectorAll('[data-scenario]').forEach(button => {
+      const signal = signals.filter(item => item.kind === button.dataset.scenario).at(-1);
+      const trail = button.querySelector('.scenario-trail');
+      trail.hidden = !signal || !button.classList.contains('selected');
+      trail.innerHTML = signal ? `${icon(signal.state === 'accepted' ? 'check' : 'send', 'sm')}ส่งถึง${e(signal.affected_display || 'สมาชิก')} · ${e(stateLabels[signal.state] || 'กำลังดำเนินการ')}` : '';
+    });
+    document.querySelector('#signals').innerHTML = signals.length ? signals.map(signal => `<tr><td>${e(kindLabel(signal.kind))}</td><td class="code-ref">${e(signal.ref || '—')}</td><td>${e(signal.affected_display || '—')}${signal.target_display ? ` ${icon('arrow-right', 'sm')} ${e(signal.target_display)}` : ''}</td><td><span class="badge ${signal.judge_ok ? '' : 'amber'}">${signal.judge_ok ? 'ผ่าน' : 'รอตรวจสอบ'}</span>${signal.judge_reason ? `<span class="signal-reason">${e(signal.judge_reason)}</span>` : ''}</td><td>${e(stateLabels[signal.state] || 'กำลังดำเนินการ')}</td></tr>`).join('') : '<tr><td colspan="5" class="table-empty">ยังไม่มีสัญญาณ · เลือกสถานการณ์เพื่อเริ่มเดโม</td></tr>';
   } catch (error) { showError(error); }
   finally { signalsPending = false; }
 }
@@ -152,7 +177,7 @@ document.querySelector('#feedback-form').addEventListener('submit', event => {
     document.querySelector('#preview').disabled = true;
     document.querySelector('#feedback-text').readOnly = true;
     document.querySelector('#member-select').disabled = true;
-    setPipelineStatus('กำลังทดสอบการปกป้องตัวตน…', 'running');
+    setPipelineStatus('กำลังทดสอบ… ขั้น 1/6', 'running', 'running');
     try {
       const data = await post('/api/feedback/preview', { member_id: memberID, text });
       draftID = data.draft_id || null;
@@ -161,37 +186,33 @@ document.querySelector('#feedback-form').addEventListener('submit', event => {
       pipelineFallback = steps.some(step => list(step.notes).some(note => String(note).includes('โหมดสำรอง')));
       renderFallback();
       highlightMarkers(text);
+      const cadence = getComputedStyle(document.documentElement).getPropertyValue('--step-cadence').trim();
+      const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : parseFloat(cadence) * (cadence.endsWith('ms') ? 1 : 1000);
       for (let i = 1; i <= 6; i++) {
+        setPipelineStatus(`กำลังทดสอบ… ขั้น ${i}/6`, 'running', 'running');
         const step = steps.find(s => Number(s.step) === i);
         const el = document.querySelector(`[data-step="${i}"]`);
         el.classList.add('active');
         el.querySelector('.step-output').textContent = step?.output || (i === 5 ? 'รอยืนยันส่งก่อนนับเสียงร่วมของทีม' : 'ยังไม่มีผลจากระบบ');
-        if (list(step?.notes).length) {
-          const notes = document.createElement('small');
-          notes.className = 'step-notes';
-          notes.textContent = step.notes.join(' · ');
-          el.querySelector('div').append(notes);
-        }
         el.querySelector('.step-done').innerHTML = step ? icon('check') : '';
         if (i === 3) renderAttacker(list(result.attacker_rounds));
-        const panel = document.querySelector('.live-pipeline');
-        if (panel.scrollHeight > panel.clientHeight && el.getBoundingClientRect().bottom > panel.getBoundingClientRect().bottom - 25) {
-          panel.scrollTop += el.getBoundingClientRect().bottom - panel.getBoundingClientRect().bottom + 45;
+        if (i === 4) {
+          const preview = document.querySelector('#feedback-preview');
+          preview.hidden = !result.structured && !result.final_text;
+          preview.innerHTML = result.structured ? structuredHTML(result.structured) : `<p>${e(result.final_text)}</p>`;
         }
-        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) await sleep(420);
+        if (delay > 0) await sleep(delay);
       }
       currentTheme = result.theme_slug || currentTheme;
-      document.querySelector('#feedback-preview').hidden = !result.structured && !result.final_text;
-      document.querySelector('#feedback-preview').innerHTML = `<h3>ข้อความที่จะส่งแบบนิรนาม</h3>${result.structured ? structuredHTML(result.structured) : `<p>${e(result.final_text)}</p>`}`;
-      setPipelineStatus(result.ok ? 'ทดสอบแล้ว · รอคุณยืนยันส่ง' : 'หยุดส่งเพื่อปกป้องตัวตน', result.ok ? 'success' : 'blocked');
+      setPipelineStatus(result.ok ? 'ทดสอบแล้ว · รอคุณยืนยันส่ง' : 'หยุดส่งเพื่อปกป้องตัวตน', result.ok ? 'success' : 'blocked', 'ready');
       document.querySelector('#confirm-actions').hidden = !draftID;
       document.querySelector('#confirm').disabled = !result.ok;
-      document.querySelector('#confirm-note').textContent = result.ok ? 'ตรวจข้อความที่ปรับแล้ว ก่อนส่งแบบนิรนาม' : result.reason_blocked || 'ยังมีร่องรอยที่เดาตัวตนได้ กรุณายกเลิกแล้วปรับข้อความ';
-      const panel = document.querySelector('.live-pipeline');
-      if (panel.scrollHeight > panel.clientHeight) panel.scrollTop = panel.scrollHeight;
+      document.querySelector('#confirm-note').hidden = !!result.ok;
+      document.querySelector('#confirm-note').textContent = result.reason_blocked || 'ยังมีร่องรอยที่เดาตัวตนได้ กรุณายกเลิกแล้วปรับข้อความ';
     } catch (error) {
-      document.querySelector('#feedback-text').readOnly = false;
-      document.querySelector('#member-select').disabled = false;
+      if (draftID) await post('/api/feedback/cancel', { draft_id: draftID }).catch(() => {});
+      draftID = null;
+      resetSteps();
       setPipelineStatus('ทดสอบยังไม่สำเร็จ · ลองอีกครั้งได้');
       throw error;
     } finally { pendingPreview = false; }
@@ -204,10 +225,7 @@ document.querySelector('#confirm').addEventListener('click', event => {
     const data = await post('/api/feedback/confirm', { draft_id: draftID });
     draftID = null;
     document.querySelector('#confirm-actions').hidden = true;
-    document.querySelector('#feedback-text').readOnly = false;
-    document.querySelector('#member-select').disabled = false;
     renderGate(data.gate);
-    setPipelineStatus('ยืนยันส่งแล้ว · เก็บเฉพาะข้อความที่ปรับแล้ว', 'success');
     toast('ส่งความเห็นแบบนิรนามแล้ว');
     await loadInbox();
   });
@@ -225,7 +243,7 @@ document.querySelector('#cancel').addEventListener('click', event => {
 
 document.querySelectorAll('[data-scenario]').forEach(button => button.addEventListener('click', () => busy(button, async () => {
   await post(`/api/demo/scenario/${button.dataset.scenario}`);
-  document.querySelectorAll('[data-scenario]').forEach(b => b.classList.toggle('selected', b === button));
+  document.querySelectorAll('[data-scenario]').forEach(b => { b.classList.toggle('selected', b === button); b.setAttribute('aria-pressed', String(b === button)); });
   toast('สร้างสถานการณ์แล้ว · ดูข้อความส่วนตัวของสมาชิก');
   await Promise.all([loadInbox(), loadSignals()]);
 })));
@@ -247,8 +265,10 @@ document.querySelector('#reset').addEventListener('click', event => {
     currentTheme = '';
     inboxVersion = '';
     resetSteps();
-    renderGate({ count: 0, k: 3 });
-    document.querySelectorAll('[data-scenario]').forEach(b => b.classList.remove('selected'));
+    selectedMember = '';
+    teamVersion = '';
+    document.querySelector('#feedback-form').reset();
+    document.querySelectorAll('[data-scenario]').forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-pressed', 'false'); });
     setPipelineStatus('พร้อมทดสอบ · ความเห็นจะยังไม่ถูกส่ง');
     await loadTeam();
     await Promise.all([loadInbox(), loadSignals()]);
@@ -289,6 +309,6 @@ document.querySelector('#inbox').addEventListener('click', event => {
 resetSteps();
 loadHealth();
 loadTeam().then(() => Promise.all([loadInbox(), loadSignals()]));
-setInterval(() => { if (!document.hidden) loadInbox(); }, 3000);
+setInterval(() => { if (!document.hidden) loadInbox(); }, isRec ? 1000 : 3000);
 setInterval(() => { if (!document.hidden) { loadTeam(); loadSignals(); loadHealth(); } }, 15000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { loadTeam().then(loadInbox); loadSignals(); loadHealth(); } });

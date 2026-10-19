@@ -20,8 +20,10 @@ const proposal = 'กำหนดเวลารับงานวันศุ�
 const metric = {
   pr_wait_hours_median: 18, pr_wait_hours_p90: 32, blocked_ticket_days_avg: 1.2,
   friday_after17_assignments_4w: 0, review_top_share: .42,
-  series: { weeks: ['31 ส.ค.', '7 ก.ย.', '14 ก.ย.', '21 ก.ย.', '28 ก.ย.', '5 ต.ค.', '12 ต.ค.', '19 ต.ค.'], pr_wait_hours: [51, 48, 53, 42, 38, 29, 24, 18], friday_after17: [2, 3, 1, 3, 2, 1, 0, 0], blocked_days: [3.4, 3, 3.2, 2.6, 2.3, 1.9, 1.5, 1.2] },
+  series: { weeks: ['31 ส.ค.', '7 ก.ย.', '14 ก.ย.', '21 ก.ย.', '28 ก.ย.', '5 ต.ค.', '12 ต.ค.', '19 ต.ค.'], pr_wait_hours: [47, 53, 49, 52, 46, 48, 24, 18], friday_after17: [2, 3, 3, 2, 3, 3, 1, 0], blocked_days: [3.1, 3.6, 3.2, 3.5, 3.3, 3.4, 1.9, 1.2] },
 };
+// Before the 2-week skip: the series ends at the current values, so sparklines and deltas agree with the numbers shown.
+const seriesBefore = { weeks: ['17 ส.ค.', '24 ส.ค.', '31 ส.ค.', '7 ก.ย.', '14 ก.ย.', '21 ก.ย.', '28 ก.ย.', '5 ต.ค.'], pr_wait_hours: [44, 51, 47, 53, 49, 52, 46, 48], friday_after17: [2, 3, 2, 3, 3, 2, 3, 3], blocked_days: [2.9, 3.3, 3.1, 3.6, 3.2, 3.5, 3.3, 3.4] };
 const stamp = () => new Date().toISOString();
 function theme(status = 'open') {
   return { id: 'theme-friday', slug: 'friday-urgent-work', label: 'งานด่วนเย็นวันศุกร์', count_range: '3–5 คน', status, samples: [sample], proposal, manager_reply: status === 'open' ? null : 'ขอบคุณที่ช่วยสะท้อนเรื่องนี้ ตกลงใช้เวลา 15:00 เป็นจุดรับงานสุดท้ายของวันศุกร์ เริ่มสัปดาห์นี้ และกลับมาดูผลด้วยกัน', followup: status === 'resolved' ? { due_at: stamp(), metric_name: 'งานหลัง 17:00 วันศุกร์ (ครั้ง)', before: 3, after: 0, improved: true } : null, released_at: stamp() };
@@ -93,6 +95,7 @@ export async function mockRequest(path, method = 'GET', body = {}) {
     fresh.metrics.pr_wait_hours_p90 = 72;
     fresh.metrics.blocked_ticket_days_avg = 3.4;
     fresh.metrics.review_top_share = .67;
+    fresh.metrics.series = structuredClone(seriesBefore);
     save(fresh);
     return { ok: true };
   }

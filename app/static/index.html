@@ -2,38 +2,77 @@
 <html lang="th">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#17685f">
+  <meta name="theme-color" content="#e8eded">
   <meta name="description" content="ผู้ช่วย AI ที่ลงมือแทนพนักงาน ส่งเสียงอย่างนิรนาม และติดตามผลด้วยตัวเลขจริง">
   <title>เกรงใจบริดจ์ — ให้ความเกรงใจ ไม่ขวางการทำงาน</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%2317685f%27/%3E%3Cpath d=%27M6 24V10m20 14V10M6 16c5 0 5-9 10-9s5 9 10 9M6 24h20M12 13v11m8-11v11%27 fill=%27none%27 stroke=%27white%27 stroke-width=%271.5%27/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230b6a60%27/%3E%3Cpath d=%27M7 23h18M9.5 23V12.5M22.5 23V12.5M9.5 15c3.5 0 5-4.5 6.5-4.5s3 4.5 6.5 4.5M13 23v-6M19 23v-6%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
   <script>window.appAssetBase=(location.port==='8099'||(location.pathname.endsWith('.html')&&!location.pathname.startsWith('/static/')))?new URL('./',location.href).href:new URL('/static/',location.origin).href;</script>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;450;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" id="app-styles"><script>document.querySelector('#app-styles').href=window.appAssetBase+'css/app.css';</script><script type="module">import(window.appAssetBase+'js/home.js');</script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+  <!-- /static/… is the FastAPI path; onerror falls back to the plain static server (python3 -m http.server, mock mode). -->
+  <link rel="stylesheet" href="/static/css/tokens.css" onerror="this.onerror=null;this.href='css/tokens.css'">
+  <link rel="stylesheet" href="/static/css/app.css" onerror="this.onerror=null;this.href='css/app.css'">
+  <link rel="stylesheet" href="/static/css/home.css" onerror="this.onerror=null;this.href='css/home.css'">
+  <script type="module">import(window.appAssetBase+'js/home.js');</script>
 </head>
 <body>
   <a class="skip-link" href="#main">ข้ามไปยังเนื้อหา</a>
-  <header id="site-header"></header>
+  <header id="site-header" class="site-header">
+    <div class="nav-inner">
+      <a class="brand" data-page="" href="/"><span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 18h18M5 18V9M19 18V9M5 11c3 0 4.5-4 7-4s4 4 7 4M9 18v-5M15 18v-5"/></svg></span><span class="brand-name">เกรงใจบริดจ์</span><span class="brand-sub">Kreng-jai Bridge</span></a>
+      <nav class="site-nav" aria-label="เมนูหลัก"><a data-page="" data-nav="home" href="/" aria-current="page">รู้จักเรา</a><a data-page="manager" data-nav="manager" href="/manager">แดชบอร์ดหัวหน้า</a><a data-page="demo" data-nav="demo" href="/demo">ห้องควบคุมเดโม</a></nav>
+      <div class="nav-status"><span id="mock-badge" class="chip wait" hidden>ข้อมูลจำลอง</span><div id="health" class="status-pill" role="status" aria-live="polite"><span class="dot offline"></span><span class="status-main">กำลังตรวจสอบระบบ…</span></div></div>
+    </div>
+  </header>
   <main id="main" class="home-main">
-    <section class="hero">
+    <section class="hero" aria-labelledby="hero-h">
       <div class="hero-copy">
-        <h1>ให้ความเกรงใจ<br>ไม่ขวาง<span>การทำงาน</span></h1>
-        <p class="hero-pitch">ผู้ช่วย AI ที่ลงมือแทนพนักงาน ส่งเสียงอย่างนิรนาม<br class="desktop-break"> และพาทีมไปถึงการเปลี่ยนแปลงที่วัดผลได้</p>
-        <div class="hero-actions"><a class="button primary" data-page="manager" href="/manager">ดูแดชบอร์ดหัวหน้า <span aria-hidden="true">→</span></a><a class="button secondary" data-page="demo" href="/demo">เปิดห้องควบคุมเดโม</a></div>
-        <div id="health" class="health-chip"><span class="live-dot offline"></span><span>กำลังตรวจสอบระบบ…</span></div>
+        <h1 id="hero-h">ให้ความเกรงใจ<br>ไม่ขวาง<span>การทำงาน</span></h1>
+        <p class="hero-pitch">ผู้ช่วย AI ใน LINE ที่ลงมือแทนพนักงาน ส่งเสียงอย่างนิรนาม และพาทีมไปถึงการเปลี่ยนแปลงที่วัดผลได้</p>
+        <div class="hero-actions">
+          <a class="button primary large" data-page="demo" href="/demo">เริ่มเดโม <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+          <a class="button large" data-page="manager" href="/manager">ดูแดชบอร์ดหัวหน้า</a>
+        </div>
+        <ul class="hero-facts">
+          <li><b>k = 3</b>คนขึ้นไป หัวหน้าจึงเห็น</li>
+          <li><b>0</b>แชตหรืออีเมลที่ถูกอ่าน</li>
+          <li><b>≤ 3</b>ข้อความต่อคนต่อสัปดาห์</li>
+        </ul>
       </div>
-      <div class="bridge-proof" aria-label="ตัวอย่างการทำงาน จากความกังวลส่วนตัวสู่ข้อตกลงร่วมกัน">
-        <div class="proof-heading"><span class="proof-avatar">ก</span><div><strong>จากเรื่องที่ไม่กล้าพูด</strong><small>สู่เรื่องที่ทีมช่วยกันแก้</small></div><span class="badge">ตัวอย่าง</span></div>
-        <div class="private-message"><span class="message-label">ความกังวลส่วนตัว</span><p>“ไม่กล้าบอกหัวหน้า ว่างานด่วนเย็นวันศุกร์<br>กระทบเวลาส่วนตัว”</p></div>
-        <div class="bridge-connector"><span></span><span class="connector-lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5z"/><path d="M12 14v3"/></svg>คัดข้อมูลระบุตัวตน · ทดสอบนิรนาม</span><span></span></div>
-        <div class="team-message"><div class="message-top"><span class="message-label">เสียงร่วมของทีม</span><span class="badge">3–5 คน</span></div><strong>งานด่วนเย็นวันศุกร์</strong><p>กำหนดเวลารับงานภายใน 15:00<br>เพื่อลดผลกระทบต่อเวลาส่วนตัว</p></div>
-        <div class="proof-result"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><span>หัวหน้าตอบรับ · ติดตามผลอีก 2 สัปดาห์</span></div>
-      </div>
+      <figure class="journey">
+        <figcaption class="journey-heading"><b>เส้นทางของหนึ่งเสียง</b><span class="meta">ตัวอย่างจากเดโม</span></figcaption>
+        <ol class="journey-steps">
+          <li class="journey-step"><span class="journey-number" aria-hidden="true">1</span><div>
+            <span class="journey-label">ความกังวลส่วนตัว</span>
+            <q><del>หนู</del>ไม่กล้าบอกพี่หัวหน้า<del>ค่ะ</del> ว่าสั่งงานเย็นวันศุกร์ทำให้<del>หนู</del>ต้องยกเลิกนัดตลอด</q>
+            <p class="journey-warning">“หนู” และ “ค่ะ” บอกเพศและอาวุโสของผู้เขียน</p>
+          </div></li>
+          <li class="journey-step"><span class="journey-number" aria-hidden="true">2</span><div>
+            <span class="journey-label">ปกป้องตัวตน</span>
+            <div class="journey-chips">
+              <span class="chip ok"><svg class="icon sm" aria-hidden="true"><use href="#i-check"/></svg>ตัดตัวระบุ</span>
+              <span class="chip ok"><svg class="icon sm" aria-hidden="true"><use href="#i-check"/></svg>ทำให้เป็นกลาง</span>
+              <span class="chip ok"><svg class="icon sm" aria-hidden="true"><use href="#i-check"/></svg>ทดสอบเดาตัวตน 2 รอบ</span>
+            </div>
+          </div></li>
+          <li class="journey-step"><span class="journey-number" aria-hidden="true">3</span><div>
+            <span class="journey-label">เสียงร่วมของทีม</span>
+            <div class="journey-theme"><b>งานด่วนเย็นวันศุกร์</b><span class="chip count"><svg class="icon sm" aria-hidden="true"><use href="#i-users"/></svg>3–5 คน</span></div>
+          </div></li>
+          <li class="journey-step"><span class="journey-number" aria-hidden="true">4</span><div>
+            <span class="journey-label">วัดผลหลัง 2 สัปดาห์ · งานหลัง 17:00 วันศุกร์</span>
+            <div class="journey-result"><span class="result-number" aria-label="จาก 3 เหลือ 0">3 <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg> <em>0</em></span><span class="meta">ครั้ง / 4 สัปดาห์</span></div>
+          </div></li>
+        </ol>
+      </figure>
     </section>
-    <section class="pillars" aria-label="หลักการทำงานสามด้าน">
-      <article><div class="pillar-top"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H4l-2 2V11a9.5 9.5 0 0 1 19 0ZM7 9h9M7 13h6"/></svg><h2>ลงมือแทนพนักงาน</h2></div><p>เห็นงานที่ติดขัดจากข้อมูลการทำงาน<br>ถามเป็นการส่วนตัว แล้วช่วยเตือนอย่างเป็นกลาง</p></article>
-      <article><div class="pillar-top"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg><h2>นิรนามที่พิสูจน์ได้</h2></div><p>ลบร่องรอยภาษา ทดสอบการเดาตัวตน<br>รวมเสียงอย่างน้อย 3 คน ก่อนส่งถึงหัวหน้า</p></article>
-      <article><div class="pillar-top"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 3v17h17M8 14l4-5 4 3 5-8"/></svg><h2>ปิดวงจรด้วยตัวเลขจริง</h2></div><p>จากข้อเสนอ สู่คำตอบ และการติดตามผล<br>เทียบตัวเลขก่อน–หลัง เพื่อให้เห็นว่าอะไรดีขึ้น</p></article>
+    <section class="loop" aria-label="วงจรการทำงาน">
+      <ol>
+        <li><h2><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>1 สังเกต</h2><p>อ่านเฉพาะ metadata ของงาน เช่น PR รอรีวิวเกิน 48 ชม. ไม่อ่านแชตหรืออีเมล</p></li>
+        <li><h2><svg class="icon" aria-hidden="true"><use href="#i-message-square"/></svg>2 ถามเป็นการส่วนตัว</h2><p>ทักใน LINE พร้อมปุ่ม “ยังไม่ต้อง” และ “ปิดการแจ้งเตือน” ทุกครั้ง</p></li>
+        <li><h2><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg>3 ลงมือแทน</h2><p>เตือนอย่างเป็นกลางตามข้อตกลงทีม หรือส่งความเห็นแบบนิรนาม</p></li>
+        <li><h2><svg class="icon" aria-hidden="true"><use href="#i-refresh-cw"/></svg>4 ปิดวงจร</h2><p>หัวหน้าตอบกลับ แล้ววัดตัวเลขเดิมซ้ำหลัง 2 สัปดาห์</p></li>
+      </ol>
     </section>
     <footer class="home-footer"><span>เกรงใจได้ แต่ไม่ต้องเก็บไว้คนเดียว</span><span>อ่านเฉพาะข้อมูลการทำงาน · ไม่อ่านแชตหรืออีเมล</span></footer>
   </main>

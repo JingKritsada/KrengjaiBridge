@@ -1,3 +1,2 @@
-import { shell, health } from './ui.js';
+import { shell } from './ui.js';
 shell('home');
-health();

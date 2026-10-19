@@ -1,42 +1,71 @@
-import { api, post } from './api.js';
-import { shell, escapeHTML as e, list, number, percent, icon, showError, connected, busy, toast, structuredHTML } from './ui.js';
+import { api, post, isMock } from './api.js';
+import { shell, health, escapeHTML as e, list, number, icon, showError, connected, busy, toast, structuredHTML } from './ui.js';
 
 const METRIC_LABELS = {
   friday_after17_assignments_4w: 'งานหลัง 17:00 วันศุกร์ (ครั้ง / 4 สัปดาห์)',
-  pr_wait_hours_median: 'เวลารอ PR review (ชม. ค่ากลาง)',
+  pr_wait_hours_median: 'เวลารอรีวิว PR (ชม. ค่ากลาง)',
   blocked_ticket_days_avg: 'งานติดขัดเฉลี่ย (วัน)',
 };
 
 shell('manager');
-const charts = new Map();
+document.querySelector('#metrics-period').textContent = `8 สัปดาห์${isMock ? ' · ข้อมูลจำลอง' : ''}`;
 let lastThemes = '';
 let refreshing = false;
+let modelName = '';
+// The AI proposal shows the model name; fetch it without holding up the first render.
+health().then(data => { modelName = data?.llm_model || ''; lastThemes = ''; refresh(); });
+
+function sparkline(values) {
+  if (!values.length) return '<span class="no-spark">—</span>';
+  const min = Math.min(...values), max = Math.max(...values);
+  const points = values.map((value, i) => [values.length === 1 ? 56 : 4 + i * 104 / (values.length - 1), max === min ? 16 : 28 - (value - min) / (max - min) * 24]);
+  const line = points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
+  const [lastX, lastY] = points.at(-1);
+  return `<svg class="spark" viewBox="0 0 112 32" width="112" height="32" aria-hidden="true"><polygon class="spark-area" points="${points[0][0]},32 ${line} ${lastX},32"/><polyline class="spark-line" points="${line}"/><circle class="spark-dot" cx="${lastX}" cy="${lastY}" r="3"/></svg>`;
+}
 
 function renderMetrics(metrics = {}) {
   const items = [
-    ['เวลารอ PR · ค่ากลาง', number(metrics.pr_wait_hours_median, 1), 'ชม.', 'ครึ่งหนึ่งของ PR รอไม่เกินค่านี้'],
-    ['เวลารอ PR · p90', number(metrics.pr_wait_hours_p90, 1), 'ชม.', '90% ของ PR รอไม่เกินค่านี้'],
-    ['งานติดขัดเฉลี่ย', number(metrics.blocked_ticket_days_avg, 1), 'วัน', 'ระยะเวลาที่งานอยู่ในสถานะติดขัด'],
-    ['งานด่วนเย็นวันศุกร์', number(metrics.friday_after17_assignments_4w), 'ครั้ง', 'หลัง 17:00 · ย้อนหลัง 4 สัปดาห์'],
-    ['รีวิวกระจุกตัวสูงสุด', percent(metrics.review_top_share), '', 'สัดส่วนรีวิวที่อยู่กับคนเดียว'],
+    ['เวลารอรีวิว PR<br>ค่ากลาง', 'pr_wait_hours_median', 'ชม.', 'pr_wait_hours'],
+    ['งานหลัง 17:00 วันศุกร์<br>ครั้ง / 4 สัปดาห์', 'friday_after17_assignments_4w', 'ครั้ง', 'friday_after17'],
+    ['งานติดขัดเฉลี่ย', 'blocked_ticket_days_avg', 'วัน', 'blocked_days'],
+    ['เวลารอรีวิว PR · p90', 'pr_wait_hours_p90', 'ชม.'],
+    ['รีวิวกระจุกที่คนเดียว', 'review_top_share', '%'],
   ];
-  document.querySelector('#metrics').innerHTML = items.map(([label, value, unit, hint]) => `<article class="metric" title="${hint}"><h2>${label}</h2><p>${value} <small>${unit}</small></p><span>${hint}</span></article>`).join('');
+  document.querySelector('#metrics').innerHTML = items.map(([label, key, unit, seriesKey]) => {
+    const values = list(metrics.series?.[seriesKey]).filter(value => typeof value === 'number' && Number.isFinite(value));
+    const value = key === 'review_top_share' && metrics[key] != null ? metrics[key] * 100 : metrics[key];
+    const delta = values.length ? Number((values.at(-1) - values[0]).toFixed(2)) : null;
+    // Every metric here is lower-is-better: only a drop gets the accent (colour means a good state).
+    const change = delta === null ? 'ไม่มีรายสัปดาห์' : `<strong class="${delta < 0 ? 'better' : ''}">${delta < 0 ? '−' : delta > 0 ? '+' : ''}${number(Math.abs(delta), 2)} ${unit}</strong>จาก ${number(values[0], 2)}`;
+    return `<div class="metric"><dt>${label}</dt><dd class="metric-trend">${sparkline(values)}</dd><dd class="metric-value">${number(value, key === 'review_top_share' ? 0 : 1)}<small> ${unit}</small></dd><dd class="metric-delta">${change}</dd></div>`;
+  }).join('');
 }
 
 function followupHTML(followup) {
   if (!followup) return '';
-  const ready = followup.after !== null && followup.after !== undefined;
-  return `<div class="followup"><div class="followup-title">${icon('chart')}<strong>ติดตามผลหลัง 2 สัปดาห์</strong>${ready ? `<span class="badge ${followup.improved ? '' : 'neutral'}">${followup.improved ? 'ดีขึ้นแล้ว' : 'ติดตามต่อ'}</span>` : '<span class="badge neutral">รอติดตามผล</span>'}</div><div class="followup-comparison"><span>${e(METRIC_LABELS[followup.metric_name] || followup.metric_name || 'ตัวชี้วัดของทีม')}</span><div><span><small>ก่อน</small><b>${number(followup.before, 1)}</b></span>${icon('arrow')}<span><small>หลัง</small><b class="${followup.improved ? 'teal' : ''}">${ready ? number(followup.after, 1) : '—'}</b></span></div></div></div>`;
+  if (followup.after === null || followup.after === undefined) {
+    return `<div class="followup pending">${icon('calendar-clock', 'sm')}<span>ติดตามผลหลัง 2 สัปดาห์ · รอวัดผลอีกครั้ง</span></div>`;
+  }
+  return `<div class="followup outcome"><div><strong class="followup-title">ติดตามผลหลัง 2 สัปดาห์</strong><span class="followup-metric">${e(METRIC_LABELS[followup.metric_name] || followup.metric_name || 'ตัวชี้วัดของทีม')}</span></div><div class="followup-comparison"><span><span class="sr-only">ก่อน </span>${number(followup.before, 1)}</span>${icon('arrow-right')}<span class="after"><span class="sr-only">หลัง </span>${number(followup.after, 1)}</span></div></div>`;
+}
+
+function replyFormHTML(theme) {
+  return `<form class="reply-form" data-theme-id="${e(theme.id)}"><div class="reply-heading"><label for="reply-${e(theme.id)}">คำตอบถึงทีม</label><span class="meta">ส่งถึงผู้เขียนผ่าน token นิรนาม</span></div><textarea id="reply-${e(theme.id)}" name="text" rows="2" maxlength="3000" placeholder="ขอบคุณที่สะท้อนเรื่องนี้ เราจะ…" required></textarea><div class="reply-actions"><label class="checkbox-label"><input type="checkbox" name="accept_proposal">ยอมรับข้อเสนอ</label><button class="button primary small" type="submit">ส่งคำตอบ ${icon('arrow-right')}</button></div></form>`;
 }
 
 function themeHTML(theme) {
-  const status = { open: ['รอหัวหน้าตอบ', 'amber'], responded: ['ตอบกลับแล้ว', 'neutral'], resolved: ['ปิดวงจรแล้ว', ''] }[theme.status] || ['รอหัวหน้าตอบ', 'neutral'];
-  return `<article class="theme-card"><div class="theme-title"><div><h3>${e(theme.label || 'ประเด็นจากทีม')}</h3><div class="theme-badges"><span class="badge count-range">${e(theme.count_range || 'ผ่านประตูนิรนาม')}</span><span class="badge ${status[1]}">${theme.status === 'resolved' ? icon('check') : ''}${status[0]}</span></div></div>${icon('message', 'theme-icon')}</div>
-    <div class="samples">${list(theme.samples).slice(0, 3).map((sample, i) => `<div class="sample"><div class="sample-label">เสียงนิรนาม${list(theme.samples).length > 1 ? ` ${i + 1}` : ''}</div>${structuredHTML(sample)}</div>`).join('') || '<p class="subtle">ยังไม่มีข้อความสรุป</p>'}</div>
-    <div class="proposal"><div class="proposal-label">${icon('bridge')}<strong>ข้อเสนอจาก AI</strong></div><p>${e(theme.proposal || 'กำลังจัดทำข้อเสนอจากเสียงของทีม')}</p></div>
-    ${theme.manager_reply ? `<div class="manager-reply"><span class="sample-label">คำตอบที่ส่งถึงทีมแล้ว</span><p>${e(theme.manager_reply)}</p></div>` : ''}
-    ${theme.manager_reply ? '<details class="reply-details"><summary>เพิ่มเติมคำตอบถึงทีม</summary>' : ''}<form class="reply-form" data-theme-id="${e(theme.id)}"><label for="reply-${e(theme.id)}">คำตอบถึงทีม</label><textarea id="reply-${e(theme.id)}" name="text" rows="2" maxlength="3000" placeholder="ขอบคุณที่สะท้อนเรื่องนี้ เราจะ…" required></textarea><div class="reply-actions"><label class="checkbox-label"><input type="checkbox" name="accept_proposal">ยอมรับข้อเสนอ</label><button class="button primary small" type="submit">ส่งคำตอบ ${icon('arrow')}</button></div></form>${theme.manager_reply ? '</details>' : ''}
-    ${followupHTML(theme.followup)}</article>`;
+  const resolved = theme.status === 'resolved';
+  const [status, chip] = { open: ['รอหัวหน้าตอบ', 'wait'], responded: ['ตอบกลับแล้ว', ''], resolved: ['ปิดวงจรแล้ว', 'ok'] }[theme.status] || ['รอหัวหน้าตอบ', 'wait'];
+  const form = resolved ? '' : replyFormHTML(theme);
+  return `<article class="theme-card">
+    ${resolved ? followupHTML(theme.followup) : ''}
+    <div class="theme-title"><h3>${e(theme.label || 'ประเด็นจากทีม')}</h3><span class="chip count">${icon('users', 'sm')}${e(theme.count_range || 'ผ่านประตูนิรนาม')}</span><span class="chip ${chip}">${resolved ? icon('check', 'sm') : ''}${status}</span></div>
+    <div class="samples">${list(theme.samples).slice(0, 3).map(sample => `<div class="sample"><div class="voice-label">${icon('shield-check', 'sm')}เสียงนิรนาม · ผ่านการทดสอบเดาตัวตนแล้ว</div>${structuredHTML(sample)}</div>`).join('') || '<p class="subtle">ยังไม่มีข้อความสรุป</p>'}</div>
+    ${resolved ? '' : `<div class="proposal"><div class="proposal-label">${icon('list-checks', 'sm')}<strong>ข้อเสนอจาก AI</strong>${modelName ? `<span class="mono">${e(modelName)} · ร่าง</span>` : ''}</div><p>${e(theme.proposal || 'กำลังจัดทำข้อเสนอจากเสียงของทีม')}</p></div>`}
+    ${theme.manager_reply ? `<blockquote class="manager-reply"><span class="sample-label">คำตอบที่ส่งถึงทีมแล้ว</span><p>${e(theme.manager_reply)}</p></blockquote>` : ''}
+    ${theme.manager_reply && !resolved ? `<details class="reply-details"><summary>เพิ่มเติมคำตอบถึงทีม</summary>${form}</details>` : form}
+    ${resolved ? '' : followupHTML(theme.followup)}</article>`;
 }
 
 function renderThemes(themes) {
@@ -47,34 +76,11 @@ function renderThemes(themes) {
   const drafts = new Map([...document.querySelectorAll('.reply-form')].map(form => [form.dataset.themeId, { text: form.elements.text.value, accept: form.elements.accept_proposal.checked }]));
   if ([...drafts.values()].some(draft => draft.text || draft.accept) || document.activeElement?.closest('.reply-form')) return;
   lastThemes = serialized;
-  document.querySelector('#themes').innerHTML = themes.length ? themes.map(themeHTML).join('') : `<div class="empty-state">${icon('shield')}<h3>ยังไม่มีประเด็นที่ผ่านประตูนิรนาม (k=3)</h3><p>เมื่อมีเสียงร่วมอย่างน้อย 3 คน<br>ประเด็นที่ผ่านการทดสอบนิรนามจะปรากฏที่นี่</p></div>`;
-}
-
-function renderChart(id, weeks, values, label, color) {
-  const canvas = document.getElementById(id);
-  const hasData = weeks.length > 0 && values.length > 0;
-  document.getElementById(`${id}-empty`).hidden = hasData && !!window.Chart;
-  canvas.hidden = !hasData || !window.Chart;
-  if (!hasData || !window.Chart) {
-    if (hasData) document.getElementById(`${id}-empty`).textContent = `${label}: ${values.map(v => number(v, 1)).join(' → ')}`;
-    return;
-  }
-  if (charts.has(id)) {
-    const chart = charts.get(id);
-    chart.data.labels = weeks;
-    chart.data.datasets[0].data = values;
-    chart.update('none');
-    return;
-  }
-  charts.set(id, new window.Chart(canvas, {
-    type: 'line',
-    data: { labels: weeks, datasets: [{ label, data: values, borderColor: color, backgroundColor: color, borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 5, tension: 0.3, fill: false }] },
-    options: { responsive: true, maintainAspectRatio: false, animation: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: false } }, scales: { x: { border: { display: false }, grid: { display: false }, ticks: { color: '#68746f', maxTicksLimit: 6, font: { family: 'IBM Plex Sans Thai', size: 11 } } }, y: { beginAtZero: true, border: { display: false }, grid: { color: '#edf0ec' }, ticks: { color: '#68746f', maxTicksLimit: 4, precision: id === 'friday-chart' ? 0 : undefined, font: { size: 11 } } } } },
-  }));
+  document.querySelector('#themes').innerHTML = themes.length ? themes.map(themeHTML).join('') : `<div class="panel empty-state">${icon('shield-check')}<p>เมื่อมีเสียงร่วมอย่างน้อย 3 คน ประเด็นที่ผ่านการทดสอบนิรนามจะปรากฏที่นี่</p></div>`;
 }
 
 function renderStats(stats = {}) {
-  document.querySelector('#pipeline-stats').innerHTML = [[stats.submitted, 'ความเห็นที่ส่ง'], [stats.released, 'เผยแพร่แล้ว'], [stats.blocked_by_attacker, 'หยุดเพื่อปกป้องตัวตน'], [stats.avg_attacker_rounds, 'รอบทดสอบเฉลี่ย']].map(([value, label], i) => `<div><strong>${number(value, i === 3 ? 1 : 0)}</strong><span>${label}</span></div>`).join('');
+  document.querySelector('#pipeline-stats').innerHTML = [[stats.submitted, 'ความเห็นที่ส่ง'], [stats.released, 'เผยแพร่แล้ว'], [stats.blocked_by_attacker, 'หยุดเพื่อปกป้อง'], [stats.avg_attacker_rounds, 'รอบทดสอบเฉลี่ย']].map(([value, label], i) => `<div><dt>${label}</dt><dd>${number(value, i === 3 ? 1 : 0)}</dd></div>`).join('');
 }
 
 async function refresh() {
@@ -84,16 +90,13 @@ async function refresh() {
     const summary = await api('/api/manager/summary');
     connected();
     document.querySelector('#week-label').textContent = summary.week_label || 'ภาพรวมประจำสัปดาห์';
-    document.querySelector('#refresh-status').innerHTML = '<span class="live-dot"></span>อัปเดตอัตโนมัติทุก 5 วินาที';
+    document.querySelector('#refresh-status').innerHTML = '<span class="dot"></span>อัปเดตทุก 5 วินาที';
     renderThemes(list(summary.themes));
     renderMetrics(summary.metrics || {});
     renderStats(summary.pipeline || {});
-    const series = summary.metrics?.series || {};
-    renderChart('pr-chart', list(series.weeks), list(series.pr_wait_hours), 'เวลารอ PR (ชม.)', '#17685f');
-    renderChart('friday-chart', list(series.weeks), list(series.friday_after17), 'งานด่วนวันศุกร์ (ครั้ง)', '#9b7852');
   } catch (error) {
     showError(error);
-    document.querySelector('#refresh-status').innerHTML = '<span class="live-dot offline"></span>เชื่อมต่อไม่ได้ · กำลังลองใหม่';
+    document.querySelector('#refresh-status').innerHTML = '<span class="dot offline"></span>เชื่อมต่อไม่ได้ · กำลังลองใหม่';
     if (!lastThemes) renderThemes([]);
   } finally { refreshing = false; }
 }
@@ -116,8 +119,6 @@ document.querySelector('#themes').addEventListener('submit', event => {
 
 renderMetrics();
 renderStats();
-renderChart('pr-chart', [], [], '', '#17685f');
-renderChart('friday-chart', [], [], '', '#9b7852');
 refresh();
 setInterval(refresh, 5000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });

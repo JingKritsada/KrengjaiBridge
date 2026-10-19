@@ -21,11 +21,13 @@ async def run_pipeline(
         return result
     try:
         source_markers = leak_markers(text)
-        cleaned = await remove_identifiers(text, roster)
+        identifier_notes = []
+        cleaned = await remove_identifiers(text, roster, fallback_notes=identifier_notes)
         dropped = [m for m in source_markers if m not in leak_markers(cleaned)]
         result.steps.append(PipelineStep(
-            step=1, name="ลบข้อมูลระบุตัวตน", output=cleaned,
-            notes=["ลบชื่อ วันที่ และรายละเอียดเฉพาะตัว"]
+            step=1, name="ลบข้อมูลระบุตัวตน", output=neutralize(cleaned) if identifier_notes else cleaned,
+            notes=["ลบชื่อตามรายชื่อทีมและใช้ NER ที่มีในเครื่อง" if identifier_notes else "ลบชื่อ วันที่ และรายละเอียดเฉพาะตัว"]
+            + identifier_notes
             + ([f"ตัดคำบ่งชี้เพศ/อาวุโส: {', '.join(dropped)}"] if dropped else []),
         ))
         before = leak_markers(cleaned)
@@ -34,18 +36,20 @@ async def run_pipeline(
             step=2, name="ปรับภาษาให้เป็นกลาง", output=cleaned,
             notes=[f"ตรวจด้วยพจนานุกรมคำลงท้าย/สรรพนาม: ตัดเพิ่ม {len(before)} คำ, เหลือ {len(leak_markers(cleaned))} คำ"],
         ))
+        rewrite_notes = []
         rewritten, guesses, safe = await rewrite_with_attacker(
-            cleaned, author_id, roster, max_rounds=rounds,
+            cleaned, author_id, roster, max_rounds=rounds, fallback_notes=rewrite_notes,
         )
         result.attacker_rounds = guesses
         result.steps.append(PipelineStep(
             step=3, name="ทดสอบผู้โจมตี", output=rewritten,
-            notes=[f"ทดสอบ {len(guesses)} รอบ", "ผ่านการทดสอบ" if safe else "ยังระบุผู้เขียนได้"],
+            notes=[f"ทดสอบ {len(guesses)} รอบ", "ผ่านการทดสอบ" if safe else "ยังระบุผู้เขียนได้"] + rewrite_notes,
         ))
         if not safe:
             result.reason_blocked = "ยังสามารถระบุผู้เขียนได้หลังทดสอบครบจำนวนรอบ"
             return result
-        structured, theme = await structure_and_theme(rewritten, existing_themes)
+        structure_notes = []
+        structured, theme = await structure_and_theme(rewritten, existing_themes, fallback_notes=structure_notes)
         for field in type(structured).model_fields:
             setattr(structured, field, neutralize(scrub_roster(getattr(structured, field), roster)))
         slug, label = theme
@@ -55,12 +59,13 @@ async def run_pipeline(
         result.steps.append(PipelineStep(
             step=4, name="จัดโครงสร้าง",
             output=f"สถานการณ์: {structured.situation}\nผลกระทบ: {structured.impact}\nสิ่งที่ขอ: {structured.request}",
+            notes=structure_notes,
         ))
         result.steps.append(PipelineStep(
             step=5, name="ประตูความเป็นส่วนตัว", output="รอประตู k",
             notes=["นับหลังยืนยันส่งเท่านั้น"],
         ))
-        result.steps.append(PipelineStep(step=6, name="จัดกลุ่มประเด็น", output=f"{slug}: {label}"))
+        result.steps.append(PipelineStep(step=6, name="จัดกลุ่มประเด็น", output=f"{slug}: {label}", notes=structure_notes))
         result.final_text = rewritten
         result.structured = structured
         result.theme_slug, result.theme_label = slug, label

@@ -5,13 +5,14 @@ import fakeredis
 import pytest
 
 from app import llm
-from app.contracts import MemberProfile
+from app.contracts import AttackerGuess, MemberProfile
 from app.privacy import identifiers
-from app.privacy.attacker import guess_author
+from app.privacy.attacker import LOCAL_ATTACKER_REASON, guess_author, guess_author_local
 from app.privacy.cluster import assign_theme, cluster_offline
 from app.privacy.gate import KGate, count_range
 from app.privacy.neutralize import leak_markers, neutralize
 from app.privacy.pipeline import demo_roster, run_pipeline
+from app.privacy.rewrite import rewrite_with_attacker
 from app.privacy.structure import structure
 
 DEMO_TEXT = "หนูไม่กล้าบอกพี่หัวหน้าค่ะ ว่าสั่งงานเย็นวันศุกร์ทำให้หนูต้องยกเลิกนัดตลอด"
@@ -192,6 +193,7 @@ def test_pipeline_six_step_trace_and_call_budget(monkeypatch):
     assert [g.identified for g in result.attacker_rounds] == [True, False]
     assert leak_markers(result.final_text) == []
     assert all(not leak_markers(value) for value in result.structured.model_dump().values())
+    assert not any("โหมดสำรอง" in note for step in result.steps for note in step.notes)
 
 
 def test_pipeline_trace_step_one_never_has_names(monkeypatch):
@@ -223,9 +225,123 @@ def test_pipeline_llm_error_does_not_echo_source(monkeypatch):
         raise llm.LLMError(DEMO_TEXT)
 
     monkeypatch.setattr(llm, "chat_json", broken)
+    monkeypatch.setattr(llm, "chat", broken)
     result = asyncio.run(run_pipeline(DEMO_TEXT, "m-mint", demo_roster()))
-    assert not result.ok and result.steps == []
+    assert result.ok and len(result.steps) == 6
+    assert result.theme_slug == "friday-urgent-work"
+    assert result.structured and all(result.structured.model_dump().values())
+    assert not leak_markers(result.final_text)
+    assert all(not leak_markers(value) for value in result.structured.model_dump().values())
+    assert all("โหมดสำรอง" in " ".join(step.notes) for step in result.steps if step.step in (1, 3, 4, 6))
+    assert all(LOCAL_ATTACKER_REASON in guess.reason for guess in result.attacker_rounds)
     assert DEMO_TEXT not in result.model_dump_json()
+
+
+def test_identifier_fallback_retains_roster_and_ner_scrub(monkeypatch):
+    class LocalNER:
+        def tag(self, text):
+            assert "สมชาย" not in text
+            return [("ข้อมูลเฉพาะ", "B-ORGANIZATION"), ("งานเย็นวันศุกร์", "O")]
+
+    async def unavailable(*args, **kwargs):
+        raise llm.LLMError("422: Budget has been exceeded")
+
+    monkeypatch.setattr(identifiers, "_local_ner", lambda: LocalNER())
+    monkeypatch.setattr(llm, "chat_json", unavailable)
+    notes = []
+    cleaned = asyncio.run(identifiers.remove_identifiers("พี่สมชายส่งข้อมูลเฉพาะ", demo_roster(), fallback_notes=notes))
+    assert cleaned == "[ข้อมูลระบุตัวตน]งานเย็นวันศุกร์"
+    assert notes == ["โหมดสำรอง: LLM ไม่พร้อมใช้งาน"]
+
+
+@pytest.mark.parametrize("text,slug", [
+    ("งานเย็นวันศุกร์", "friday-urgent-work"), ("งานหลังเลิกงาน", "friday-urgent-work"),
+    ("PR รอ review", "pr-review-delay"), ("งานบล็อก", "blocked-tickets"),
+    ("เวร on-call ดึก", "workload-oncall"), ("สเปกไม่ชัด", "unclear-requirements"),
+    ("ประชุมหลายรอบ", "meeting-overload"), ("ขอปรับกระบวนการ", "general-feedback"),
+])
+def test_theme_fallback_keywords(monkeypatch, text, slug):
+    async def unavailable(*args, **kwargs):
+        raise llm.LLMError("unavailable")
+
+    monkeypatch.setattr(llm, "chat_json", unavailable)
+    actual_slug, label = asyncio.run(assign_theme(text))
+    assert actual_slug == slug and label
+    assert asyncio.run(assign_theme("ปรับกระบวนการ", [("existing", "ประเด็นเดิม")])) == ("existing", "ประเด็นเดิม")
+
+
+@pytest.mark.parametrize("connector", ["ทำให้", "เพราะ", "จึง", "ส่งผลให้"])
+def test_structure_fallback_splits_without_inventing_impact(monkeypatch, connector):
+    async def unavailable(*args, **kwargs):
+        raise llm.LLMError("unavailable")
+
+    monkeypatch.setattr(llm, "chat_json", unavailable)
+    result = asyncio.run(structure(f"งานด่วนวันศุกร์{connector}ต้องยกเลิกนัดค่ะ"))
+    assert result.situation == "งานด่วนวันศุกร์"
+    assert result.impact == "ต้องยกเลิกนัด"
+    assert result.request == "ขอให้ทีมพิจารณาแนวทางแก้ไขร่วมกัน"
+    assert asyncio.run(structure("งานด่วนวันศุกร์")).impact == "ยังไม่ได้ระบุผลกระทบ"
+
+
+def test_local_attacker_training_and_threshold():
+    roster = [MemberProfile(member_id=str(i), display_name=f"member {i}", style_samples=[text] * 40)
+              for i, text in enumerate(["uniquely recognizable alpha writing", "different beta vocabulary", "third gamma phrasing"])]
+    guess = guess_author_local(roster[0].style_samples[0], roster, author_id="0")
+    assert guess.guessed_member_id == "0" and guess.identified
+    assert guess.confidence >= 2 / 3
+    assert guess.reason == LOCAL_ATTACKER_REASON
+    assert not guess_author_local(roster[0].style_samples[0], roster, author_id="1").identified
+    assert not guess_author_local(roster[0].style_samples[0], roster[:2], author_id="0").identified
+
+
+@pytest.mark.parametrize("samples", [[], ["one style sample"]])
+def test_local_attacker_insufficient_samples(samples):
+    roster = [MemberProfile(member_id="a", display_name="a", style_samples=samples),
+              MemberProfile(member_id="b", display_name="b")]
+    guess = guess_author_local("feedback", roster, author_id="a")
+    assert not guess.identified and guess.guessed_member_id is None
+    assert "training skipped" in guess.reason
+
+
+@pytest.mark.parametrize("still_identified", [False, True])
+def test_local_rewrite_generalizes_once_then_passes_or_blocks(monkeypatch, still_identified):
+    from app.privacy import rewrite
+
+    async def unavailable(*args, **kwargs):
+        raise llm.LLMError("unavailable")
+
+    attacked = []
+
+    def local_guess(text, roster, *, author_id, round):
+        attacked.append(text)
+        return AttackerGuess(round=round, guessed_member_id=author_id, confidence=.9,
+                             identified=len(attacked) == 1 or still_identified, reason=LOCAL_ATTACKER_REASON)
+
+    monkeypatch.setattr(llm, "chat_json", unavailable)
+    monkeypatch.setattr(rewrite, "guess_author_local", local_guess)
+    notes = []
+    text, guesses, safe = asyncio.run(rewrite_with_attacker(
+        "งาน PR นะ!!! 😀  ต้องแก้ไข", "m-mint", demo_roster(), max_rounds=1, fallback_notes=notes,
+    ))
+    assert safe is (not still_identified)
+    assert len(guesses) == len(attacked) == 2
+    assert text == "งาน pr ต้องแก้ไข"
+    assert "โหมดสำรอง" in notes[0]
+
+
+def test_attacker_only_failure_uses_local_check(monkeypatch):
+    fake_pipeline_llm(monkeypatch)
+    normal_json = llm.chat_json
+
+    async def attacker_unavailable(messages, **kwargs):
+        if "privacy attacker" in messages[0]["content"]:
+            raise llm.LLMError("unavailable")
+        return await normal_json(messages, **kwargs)
+
+    monkeypatch.setattr(llm, "chat_json", attacker_unavailable)
+    result = asyncio.run(run_pipeline(DEMO_TEXT, "m-mint", demo_roster()))
+    assert result.ok
+    assert [step.step for step in result.steps if any("โหมดสำรอง" in note for note in step.notes)] == [3]
 
 
 @pytest.mark.parametrize("kwargs", [{"max_rounds": 0}, {"author_id": "unknown"}, {"roster": []}, {"text": " "}])

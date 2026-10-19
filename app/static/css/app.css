@@ -207,6 +207,8 @@ input[type='checkbox'] { accent-color: var(--teal); width: 15px; height: 15px; m
 .reset-button .icon { width: 15px; height: 15px; }
 .reset-hint { text-align: center; font-size: 11px; }
 .live-pipeline { padding: 20px 22px; min-width: 0; }
+.live-pipeline>.section-heading { flex-wrap: wrap; }
+.pipeline-fallback { font-size: 11px; white-space: nowrap; }
 #feedback-form { margin-top: 19px; }
 .feedback-author { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 14px; }
 .feedback-author label { font-size: 11px; }

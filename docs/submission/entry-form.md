@@ -51,6 +51,7 @@ We built the prototype in about one day with AI agents doing most of the hands-o
 - The competition IAM user has VPC/ECS rights but gets 403 on RDS and `dcs:instance:create` on DCS, and has no programmatic access (no AK/SK). We kept the database and cache as containers on the ECS behind the same interfaces and wrote the provisioning skill so RDS and DCS can be created as soon as the permissions are granted, with no code change.
 - The LLM added polite particles ("ครับ") to "neutral" rewrites, so the pipeline re-runs the deterministic neutralizer after every LLM step and refuses to publish if any marker remains.
 - Container start-up failures (missing compose variables, DB host resolution) were diagnosed from `docker compose logs` on the ECS and fixed in the deploy script.
+- The shared LLM key reached its budget during evaluation. We added an offline fallback (roster scrub + PyThaiNLP, a local stylometric attacker, rule-based structuring and themes), labelled in the UI, so the demo degrades instead of failing.
 
 **Deployment.** VPC `vpc-kjb`, security group `sg-kjb` (HTTP/HTTPS public, SSH only from the admin IP), an EIP and a pay-per-use ECS (c9.large.2, Ubuntu 24.04) in CN-Hong Kong. `deploy/deploy.sh` syncs the repo and rebuilds with Docker Compose; Caddy terminates TLS automatically, which LINE requires for webhooks. The LINE webhook URL was registered and tested through the LINE API (HTTP 200).
 

@@ -52,13 +52,14 @@
 | 3:15–3:45 | `/demo` กด "ข้ามเวลา 2 สัปดาห์" แล้วกลับไป `/manager` | ระบบวัดซ้ำ: งานหลัง 17:00 วันศุกร์ลดจาก 3 เหลือ 0 ปิดวงจรด้วยตัวเลขจริง |
 | 3:45–4:00 | slide ผลประเมิน + architecture | ผลวัดความนิรนาม และระบบรันบน Huawei Cloud |
 
-## 4. ขอสิทธิ์จากอาจารย์/ผู้ดูแลบัญชี (5 นาที) — ไม่บล็อก demo แต่ได้คะแนน Huawei เพิ่ม
+## 4. ขอสิทธิ์จากอาจารย์/ผู้ดูแลบัญชี (5 นาที) — ข้อ 4) เรื่อง budget LLM ด่วนที่สุด
 บัญชี IAM ตอนนี้สร้าง RDS/DCS ไม่ได้ (403 และ `dcs:instance:create required`) และไม่มี AK/SK ข้อความที่ใช้ส่งได้เลย:
 
 > เรียนอาจารย์ครับ ทีม HC-2026a-02 ขออนุญาตเพิ่มสิทธิ์ใน tenant cp-dept-deverhood สำหรับ enterprise project HC-2026a-02 ดังนี้
 > 1) RDS FullAccess และ DCS FullAccess (ใช้สร้าง RDS for PostgreSQL ขนาดเล็กสุด และ DCS Redis 0.125 GB แบบ pay-per-use ใน CN-Hong Kong)
 > 2) เปิด programmatic access (AK/SK) ให้ IAM user HC-2026a-02
 > 3) (ถ้าได้) สิทธิ์สร้าง API key ของ ModelArts Studio MaaS เพื่อเรียก DeepSeek-V4.1-Flash
+> 4) **ด่วน:** เพิ่ม budget ของ LLM key `huawei-2026-k02` บน llm.nattee.net (ตอนนี้ใช้ครบ 3.00 USD แล้ว ระบบตอบ 422 Budget has been exceeded) เพราะ demo ต้องใช้ LLM ตอนกรรมการทดลอง
 > ขอบคุณครับ
 
 ได้สิทธิ์แล้วให้แจ้งผม ผมจะรัน `skills/huawei-cloud-provision/provision.py plan → apply → env` แล้ว redeploy ให้ ใช้เวลาประมาณ 20 นาที

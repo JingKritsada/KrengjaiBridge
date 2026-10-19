@@ -12,9 +12,32 @@ let teamVersion = '';
 let pendingPreview = false;
 let inboxPending = false;
 let signalsPending = false;
+let llmUnavailable = false;
+let pipelineFallback = false;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+const fallbackBadge = document.createElement('span');
+fallbackBadge.className = 'badge amber pipeline-fallback';
+fallbackBadge.textContent = 'โหมดสำรอง (ไม่มี LLM)';
+fallbackBadge.setAttribute('role', 'status');
+fallbackBadge.hidden = true;
+document.querySelector('.live-pipeline .section-heading').append(fallbackBadge);
+
+function renderFallback() {
+  fallbackBadge.hidden = !llmUnavailable && !pipelineFallback;
+}
+
+async function loadHealth() {
+  try {
+    const health = await api('/api/health');
+    llmUnavailable = health.llm_available === false;
+    renderFallback();
+  } catch { /* Keep the last known status until health is reachable. */ }
+}
+
 function resetSteps() {
+  pipelineFallback = false;
+  renderFallback();
   document.querySelector('#pipeline-steps').innerHTML = stepNames.map((name, i) => `<li class="pipeline-step" data-step="${i + 1}"><span class="step-number">${i + 1}</span><div><h3>${name}</h3><p class="step-output">รอทดสอบ</p></div><span class="step-done"></span></li>`).join('');
   ['attacker-rounds', 'feedback-preview', 'confirm-actions', 'removed-markers'].forEach(id => { document.getElementById(id).hidden = true; });
   document.querySelector('#feedback-text').readOnly = false;
@@ -135,6 +158,8 @@ document.querySelector('#feedback-form').addEventListener('submit', event => {
       draftID = data.draft_id || null;
       const result = data.result || {};
       const steps = list(result.steps);
+      pipelineFallback = steps.some(step => list(step.notes).some(note => String(note).includes('โหมดสำรอง')));
+      renderFallback();
       highlightMarkers(text);
       for (let i = 1; i <= 6; i++) {
         const step = steps.find(s => Number(s.step) === i);
@@ -262,7 +287,8 @@ document.querySelector('#inbox').addEventListener('click', event => {
 });
 
 resetSteps();
+loadHealth();
 loadTeam().then(() => Promise.all([loadInbox(), loadSignals()]));
 setInterval(() => { if (!document.hidden) loadInbox(); }, 3000);
-setInterval(() => { if (!document.hidden) { loadTeam(); loadSignals(); } }, 15000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { loadTeam().then(loadInbox); loadSignals(); } });
+setInterval(() => { if (!document.hidden) { loadTeam(); loadSignals(); loadHealth(); } }, 15000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { loadTeam().then(loadInbox); loadSignals(); loadHealth(); } });

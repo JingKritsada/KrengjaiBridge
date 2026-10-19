@@ -2,6 +2,7 @@
 
 import json
 import re
+from time import monotonic
 from typing import Any
 
 import httpx
@@ -9,10 +10,19 @@ import httpx
 from app.config import get_settings
 
 _JSON_BLOCK = re.compile(r"\{.*\}|\[.*\]", re.S)
+_last_error_at: float | None = None
+
+
+def is_available() -> bool:
+    """Report recent failures without making a network request."""
+    return _last_error_at is None or monotonic() - _last_error_at >= 60
 
 
 class LLMError(RuntimeError):
-    pass
+    def __init__(self, *args):
+        global _last_error_at
+        _last_error_at = monotonic()
+        super().__init__(*args)
 
 
 async def chat(

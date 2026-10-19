@@ -139,9 +139,11 @@ async def confirm_feedback(session, redis, draft_id):
 
 @router.get("/health")
 def health(session=Depends(db_session), redis=Depends(redis_client)):
+    from app import llm
     from sqlalchemy import text
     db_ok = bool(session.execute(text("SELECT 1")).scalar())
     return {"ok": db_ok and bool(redis.ping()), "llm_model": get_settings().llm_model,
+            "llm_available": llm.is_available(),
             "line_enabled": get_settings().line_enabled, "db": "ok", "redis": "ok"}
 
 

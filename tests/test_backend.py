@@ -5,10 +5,13 @@ import json
 import uuid
 from datetime import timedelta
 
+import pytest
 from sqlalchemy import inspect, select
 
+from app import llm
 from app.config import get_settings
 from app.db import FeedbackItem, Member, ReplyToken, Theme
+from app.privacy.pipeline import run_pipeline as real_run_pipeline
 
 
 def post(client, path, body=None):
@@ -32,7 +35,19 @@ def release_friday(client):
     return client.get("/api/manager/summary").json()["themes"][0]
 
 
-def test_full_http_story(backend_client):
+@pytest.mark.parametrize("llm_down", [False, True])
+def test_full_http_story(backend_client, pipeline_mock, monkeypatch, llm_down):
+    if llm_down:
+        from app.privacy import identifiers
+
+        async def unavailable(*args, **kwargs):
+            raise llm.LLMError("422: Budget has been exceeded")
+
+        monkeypatch.setattr(llm, "chat", unavailable)
+        monkeypatch.setattr(llm, "chat_json", unavailable)
+        monkeypatch.setattr(identifiers, "_local_ner", lambda: None)
+        monkeypatch.setattr(pipeline_mock, "run_pipeline", real_run_pipeline)
+        monkeypatch.setattr(get_settings(), "llm_api_key", "offline-test-key")
     c = backend_client
     assert c.get("/api/health").json()["ok"] is True
     assert len(c.get("/api/team").json()["members"]) == 6
@@ -40,6 +55,8 @@ def test_full_http_story(backend_client):
     signal = next(s for s in result["signals"] if s["kind"] == "pr_stale")
     outreach = next(o for o in result["outreach"] if o["kind"] == "pr_stale")
     assert signal["judge_ok"]
+    if llm_down:
+        assert c.get("/api/health").json()["llm_available"] is False
     post(c, f"/api/outreach/{outreach['id']}/respond", {"action": f"nudge:accept:{signal['id']}"})
     reviewer_inbox = c.get("/api/outreach", params={"member_id": "m-somchai"}).json()
     reminder = next(o for o in reviewer_inbox if o["kind"] == "reminder")
@@ -47,6 +64,8 @@ def test_full_http_story(backend_client):
     assert "มิ้น" not in reminder["text"] and "Mint" not in reminder["text"]
     draft = preview(c)
     assert draft["result"]["ok"] and draft["result"]["structured"]
+    if llm_down:
+        assert any("โหมดสำรอง" in note for step in draft["result"]["steps"] for note in step["notes"])
     gate = confirm(c, draft)["gate"]
     assert gate["count"] == 1 and not gate["released"]
     assert c.get("/api/manager/summary").json()["themes"] == []
@@ -67,6 +86,19 @@ def test_full_http_story(backend_client):
     assert followed["followup"]["improved"] is True
     assert followed["followup"]["before"] == 3 and followed["followup"]["after"] == 0
     assert c.get("/api/manager/metrics").json()["friday_after17_assignments_4w"] == 0
+
+
+def test_health_llm_availability_expires_without_network(backend_client, monkeypatch):
+    clock = [100.0]
+    monkeypatch.setattr(llm, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(llm, "_last_error_at", None)
+    assert backend_client.get("/api/health").json()["llm_available"] is True
+    llm.LLMError("422: Budget has been exceeded")
+    assert backend_client.get("/api/health").json()["llm_available"] is False
+    clock[0] += 59
+    assert backend_client.get("/api/health").json()["llm_available"] is False
+    clock[0] += 1
+    assert backend_client.get("/api/health").json()["llm_available"] is True
 
 
 def test_source_never_persisted_and_no_author_column(backend_client):

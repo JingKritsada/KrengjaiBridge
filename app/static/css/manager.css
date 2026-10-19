@@ -66,6 +66,23 @@
 .stats-grid > div { display: flex; flex-direction: column-reverse; gap: 4px; }
 .stats-grid dd { font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .stats-grid dt { font-size: var(--t-xs); line-height: 1.4; color: var(--ink-3); }
+/* ---------- motion (DESIGN.md section 7) ---------- */
+/* Live dot: one ring each time a refresh lands (every 5 s), so the page shows it is watching. */
+.live-ping { position: relative; }
+.live-ping::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: inherit; animation: kjb-ping 900ms var(--ease-out) both; }
+.count-badge.kjb-bump { animation: kjb-pop var(--dur-slow) var(--ease-enter); }
+/* Metrics: on a new value the line draws left to right, then the area and end dot follow; the value counts (manager.js). */
+.kjb-drawn .spark-line { stroke-dasharray: 1; animation: kjb-draw var(--dur-draw) var(--ease-move) both; animation-delay: calc(var(--i, 0) * 80ms); }
+.kjb-drawn .spark-area { animation: kjb-fade var(--dur-med) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 80ms + 360ms); }
+.kjb-drawn .spark-dot { transform-box: fill-box; transform-origin: center; animation: kjb-pop var(--dur-med) var(--ease-enter) both; animation-delay: calc(var(--i, 0) * 80ms + 520ms); }
+.kjb-drawn .metric-delta { animation: kjb-fade var(--dur-med) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 80ms + 600ms); }
+/* Status change: the chips and the sent reply settle in; the outcome band wipes in from the left. */
+.kjb-status .theme-title .chip, .kjb-status .manager-reply { animation: kjb-rise var(--dur-enter) var(--ease-enter) both; }
+.kjb-status .manager-reply { animation-delay: 120ms; }
+.followup.kjb-reveal { animation: kjb-wipe-right var(--dur-enter) var(--ease-enter) both; animation-delay: 160ms; }
+.followup.kjb-reveal .followup-comparison .icon { animation: kjb-slide var(--dur-med) var(--ease-enter) both; animation-delay: 400ms; }
+@keyframes kjb-slide { from { opacity: 0; transform: translateX(-6px); } }
+
 @media (max-width: 1100px) {
   .manager .page-heading { flex-wrap: wrap; padding-bottom: 16px; }
   .manager-grid { grid-template-columns: minmax(0, 1fr); }

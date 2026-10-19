@@ -225,7 +225,7 @@ def test_pipeline_six_step_trace_and_call_budget(monkeypatch):
     assert result.theme_slug == "friday-urgent-work"
     assert result.theme_label == "งานด่วนเย็นวันศุกร์"
     assert [step.step for step in result.steps] == [1, 2, 3, 4, 5, 6]
-    assert result.steps[4].output == "รอประตู k"
+    assert result.steps[4].output == "รอยืนยันส่ง แล้วรวมเสียงให้ครบอย่างน้อย 3 คน"
     assert DEMO_TEXT not in result.model_dump_json()
     assert len(attacks) == 2
     assert len(calls) == 2 + 2 * len(attacks)

@@ -19,7 +19,7 @@
   <header id="site-header" class="site-header">
     <div class="nav-inner">
       <a class="brand" data-page="" href="/"><span class="brand-mark"><svg class="mark" viewBox="72 140 496 320" aria-hidden="true" focusable="false"><path d="M205 160V400M435 160V400" stroke-width="40"/><path d="M90 340H550" stroke-width="40"/><path d="M90 328Q145 290 205 180Q320 350 435 180Q495 290 550 328" stroke-width="28"/><path d="M262 250V340M320 268V340M378 250V340" stroke-width="20"/><path d="M118 436Q168 422 218 436T318 436T418 436T518 436" stroke-width="20" opacity=".55"/></svg></span><span class="brand-name">เกรงใจบริดจ์</span><span class="brand-sub">Kreng-jai Bridge</span></a>
-      <nav class="site-nav" aria-label="เมนูหลัก"><a data-page="" data-nav="home" href="/">รู้จักเรา</a><a data-page="manager" data-nav="manager" href="/manager">แดชบอร์ดหัวหน้า</a><a data-page="demo" data-nav="demo" href="/demo" aria-current="page">ห้องควบคุมเดโม</a></nav>
+      <nav class="site-nav" aria-label="เมนูหลัก"><a data-page="" data-nav="home" href="/">รู้จักเรา</a><a data-page="manager" data-nav="manager" href="/manager">แดชบอร์ดหัวหน้า</a><a data-page="demo" data-nav="demo" href="/demo" aria-current="page">ห้องควบคุมเดโม<i class="nav-bar" aria-hidden="true"></i></a></nav>
       <div class="nav-status"><span id="mock-badge" class="chip wait" hidden>ข้อมูลจำลอง</span><div id="health" class="status-pill" role="status" aria-live="polite"><span class="dot offline"></span><span class="status-main">กำลังตรวจสอบระบบ…</span></div></div>
     </div>
   </header>
@@ -49,6 +49,7 @@
       <section class="panel live-pipeline">
         <div class="section-heading"><h2>ปกป้องตัวตนก่อนส่ง</h2><span class="meta mono">privacy pipeline · 6 ขั้น</span></div>
         <div class="gate-bar" data-state="idle">
+          <span class="gate-progress" aria-hidden="true"><span></span></span>
           <div id="pipeline-status" class="pipeline-status" role="status" aria-live="polite">พร้อมทดสอบ · ความเห็นจะยังไม่ถูกส่ง</div>
           <div id="confirm-actions" class="confirm-actions" hidden><button id="confirm" class="button primary small">ยืนยันส่งความเห็น</button><button id="cancel" class="button secondary small">ยกเลิก</button></div>
           <div id="gate" class="gate" hidden><div class="gate-summary"><strong>ประตูนิรนาม</strong><small id="gate-label">ต้องมีเสียงร่วมอย่างน้อย 3 คน</small></div><div class="gate-slots" aria-hidden="true"></div><strong id="gate-count" class="num">0/3</strong><p id="gate-note" class="meta">หัวหน้ายังไม่เห็นความเห็นนี้</p></div>

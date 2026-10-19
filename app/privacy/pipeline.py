@@ -110,7 +110,7 @@ async def run_pipeline(
             PipelineStep(
                 step=5,
                 name="ประตูความเป็นส่วนตัว",
-                output="รอประตู k",
+                output=f"รอยืนยันส่ง แล้วรวมเสียงให้ครบอย่างน้อย {get_settings().k_anonymity} คน",
                 notes=["นับหลังยืนยันส่งเท่านั้น"],
             )
         )

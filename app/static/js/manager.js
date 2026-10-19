@@ -1,5 +1,5 @@
 import { api, post, isMock } from './api.js';
-import { shell, health, escapeHTML as e, list, number, icon, showError, connected, busy, toast, structuredHTML } from './ui.js';
+import { shell, health, escapeHTML as e, list, number, icon, showError, connected, busy, toast, structuredHTML, enter, countTo } from './ui.js';
 
 const METRIC_LABELS = {
   friday_after17_assignments_4w: 'งานหลัง 17:00 วันศุกร์ (ครั้ง / 4 สัปดาห์)',
@@ -12,6 +12,10 @@ document.querySelector('#metrics-period').textContent = `8 สัปดาห์
 let lastThemes = '';
 let refreshing = false;
 let modelName = '';
+let lastMetrics = '';
+let lastStats = '';
+const shownValues = new Map();  // number on screen per metric / stat key, so a change counts from the old value
+const seenThemes = new Map();   // theme id -> status already on screen
 // The AI proposal shows the model name; fetch it without holding up the first render.
 health().then(data => { modelName = data?.llm_model || ''; lastThemes = ''; refresh(); });
 
@@ -21,10 +25,14 @@ function sparkline(values) {
   const points = values.map((value, i) => [values.length === 1 ? 56 : 4 + i * 104 / (values.length - 1), max === min ? 16 : 28 - (value - min) / (max - min) * 24]);
   const line = points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
   const [lastX, lastY] = points.at(-1);
-  return `<svg class="spark" viewBox="0 0 112 32" width="112" height="32" aria-hidden="true"><polygon class="spark-area" points="${points[0][0]},32 ${line} ${lastX},32"/><polyline class="spark-line" points="${line}"/><circle class="spark-dot" cx="${lastX}" cy="${lastY}" r="3"/></svg>`;
+  return `<svg class="spark" viewBox="0 0 112 32" width="112" height="32" aria-hidden="true"><polygon class="spark-area" points="${points[0][0]},32 ${line} ${lastX},32"/><polyline class="spark-line" pathLength="1" points="${line}"/><circle class="spark-dot" cx="${lastX}" cy="${lastY}" r="3"/></svg>`;
 }
 
 function renderMetrics(metrics = {}) {
+  // Polling every 5 s re-renders only on a change, so the draw and the count run once per new value.
+  const serialized = JSON.stringify(metrics);
+  if (serialized === lastMetrics) return;
+  lastMetrics = serialized;
   const items = [
     ['เวลารอรีวิว PR<br>ค่ากลาง', 'pr_wait_hours_median', 'ชม.', 'pr_wait_hours'],
     ['งานหลัง 17:00 วันศุกร์<br>ครั้ง / 4 สัปดาห์', 'friday_after17_assignments_4w', 'ครั้ง', 'friday_after17'],
@@ -38,8 +46,19 @@ function renderMetrics(metrics = {}) {
     const delta = values.length ? Number((values.at(-1) - values[0]).toFixed(2)) : null;
     // Every metric here is lower-is-better: only a drop gets the accent (colour means a good state).
     const change = delta === null ? 'ไม่มีรายสัปดาห์' : `<strong class="${delta < 0 ? 'better' : ''}">${delta < 0 ? '−' : delta > 0 ? '+' : ''}${number(Math.abs(delta), 2)} ${unit}</strong>จาก ${number(values[0], 2)}`;
-    return `<div class="metric"><dt>${label}</dt><dd class="metric-trend">${sparkline(values)}</dd><dd class="metric-value">${number(value, key === 'review_top_share' ? 0 : 1)}<small> ${unit}</small></dd><dd class="metric-delta">${change}</dd></div>`;
+    return `<div class="metric" data-key="${key}" data-value="${value ?? ''}"><dt>${label}</dt><dd class="metric-trend">${sparkline(values)}</dd><dd class="metric-value"><span class="num">${number(value, key === 'review_top_share' ? 0 : 1)}</span><small> ${unit}</small></dd><dd class="metric-delta">${change}</dd></div>`;
   }).join('');
+  const rows = [...document.querySelectorAll('#metrics .metric')];
+  rows.forEach((row, i) => {
+    const { key, value } = row.dataset;
+    if (value === '') return;
+    if (shownValues.get(key) !== Number(value)) {
+      row.style.setProperty('--i', i);
+      row.classList.add('kjb-drawn');
+      countTo(row.querySelector('.metric-value .num'), Number(value), { from: shownValues.get(key) ?? 0, digits: key === 'review_top_share' ? 0 : 1 });
+    }
+    shownValues.set(key, Number(value));
+  });
 }
 
 function followupHTML(followup) {
@@ -47,7 +66,7 @@ function followupHTML(followup) {
   if (followup.after === null || followup.after === undefined) {
     return `<div class="followup pending">${icon('calendar-clock', 'sm')}<span>ติดตามผลหลัง 2 สัปดาห์ · รอวัดผลอีกครั้ง</span></div>`;
   }
-  return `<div class="followup outcome${followup.improved ? ' improved' : ''}"><div><strong class="followup-title">ติดตามผลหลัง 2 สัปดาห์</strong><span class="followup-metric">${e(METRIC_LABELS[followup.metric_name] || followup.metric_name || 'ตัวชี้วัดของทีม')}${followup.improved ? '' : ' · ยังไม่ดีขึ้น ติดตามต่อ'}</span></div><div class="followup-comparison"><span><span class="sr-only">ก่อน </span>${number(followup.before, 1)}</span>${icon('arrow-right')}<span class="after"><span class="sr-only">หลัง </span>${number(followup.after, 1)}</span></div></div>`;
+  return `<div class="followup outcome${followup.improved ? ' improved' : ''}" data-before="${followup.before}" data-after="${followup.after}"><div><strong class="followup-title">ติดตามผลหลัง 2 สัปดาห์</strong><span class="followup-metric">${e(METRIC_LABELS[followup.metric_name] || followup.metric_name || 'ตัวชี้วัดของทีม')}${followup.improved ? '' : ' · ยังไม่ดีขึ้น ติดตามต่อ'}</span></div><div class="followup-comparison"><span><span class="sr-only">ก่อน </span>${number(followup.before, 1)}</span>${icon('arrow-right')}<span class="after"><span class="sr-only">หลัง </span><span class="num">${number(followup.after, 1)}</span></span></div></div>`;
 }
 
 function replyFormHTML(theme) {
@@ -58,7 +77,7 @@ function themeHTML(theme) {
   const resolved = theme.status === 'resolved';
   const [status, chip] = { open: ['รอหัวหน้าตอบ', 'wait'], responded: ['ตอบกลับแล้ว', ''], resolved: ['ปิดวงจรแล้ว', 'ok'] }[theme.status] || ['รอหัวหน้าตอบ', 'wait'];
   const form = resolved ? '' : replyFormHTML(theme);
-  return `<article class="theme-card">
+  return `<article class="theme-card" data-id="${e(theme.id)}" data-status="${e(theme.status)}">
     ${resolved ? followupHTML(theme.followup) : ''}
     <div class="theme-title"><h3>${e(theme.label || 'ประเด็นจากทีม')}</h3><span class="chip count">${icon('users', 'sm')}${e(theme.count_range || 'ผ่านประตูนิรนาม')}</span><span class="chip ${chip}">${resolved ? icon('check', 'sm') : ''}${status}</span></div>
     <div class="samples">${list(theme.samples).slice(0, 3).map(sample => `<div class="sample"><div class="voice-label">${icon('shield-check', 'sm')}เสียงนิรนาม · ผ่านการทดสอบเดาตัวตนแล้ว</div>${structuredHTML(sample)}</div>`).join('') || '<p class="subtle">ยังไม่มีข้อความสรุป</p>'}</div>
@@ -69,7 +88,13 @@ function themeHTML(theme) {
 }
 
 function renderThemes(themes) {
-  document.querySelector('#theme-count').textContent = themes.length;
+  const badge = document.querySelector('#theme-count');
+  if (badge.textContent !== String(themes.length)) {
+    badge.textContent = themes.length;
+    badge.classList.remove('kjb-bump');
+    void badge.offsetWidth;
+    badge.classList.add('kjb-bump');
+  }
   const serialized = JSON.stringify(themes);
   if (serialized === lastThemes) return;
   // Polling must never erase a reply the manager is composing.
@@ -77,10 +102,37 @@ function renderThemes(themes) {
   if ([...drafts.values()].some(draft => draft.text || draft.accept) || document.activeElement?.closest('.reply-form')) return;
   lastThemes = serialized;
   document.querySelector('#themes').innerHTML = themes.length ? themes.map(themeHTML).join('') : `<div class="panel empty-state">${icon('shield-check')}<p>เมื่อมีเสียงร่วมอย่างน้อย 3 คน ประเด็นที่ผ่านการทดสอบนิรนามจะปรากฏที่นี่</p></div>`;
+  // A theme that just passed the gate rises in; a status change animates its chip, the sent reply and the follow-up.
+  const cards = [...document.querySelectorAll('.theme-card')];
+  enter(cards.filter(card => !seenThemes.has(card.dataset.id)), 'kjb-enter kjb-enter-lg');
+  cards.forEach(card => {
+    const before = seenThemes.get(card.dataset.id);
+    if (before !== undefined && before !== card.dataset.status) card.classList.add('kjb-status');
+    if (before !== card.dataset.status) countFollowup(card.querySelector('.followup.outcome'));
+    seenThemes.set(card.dataset.id, card.dataset.status);
+  });
+}
+
+// The outcome band wipes in, then "after" counts down from "before" (3 → 0) once the band has landed.
+function countFollowup(band) {
+  if (!band) return;
+  band.classList.add('kjb-reveal');
+  countTo(band.querySelector('.after .num'), Number(band.dataset.after), { from: Number(band.dataset.before), digits: 1, delay: 500 });
 }
 
 function renderStats(stats = {}) {
-  document.querySelector('#pipeline-stats').innerHTML = [[stats.submitted, 'ความเห็นที่ส่ง'], [stats.released, 'เผยแพร่แล้ว'], [stats.blocked_by_attacker, 'หยุดเพื่อปกป้อง'], [stats.avg_attacker_rounds, 'รอบทดสอบเฉลี่ย']].map(([value, label], i) => `<div><dt>${label}</dt><dd>${number(value, i === 3 ? 1 : 0)}</dd></div>`).join('');
+  const serialized = JSON.stringify(stats);
+  if (serialized === lastStats) return;
+  lastStats = serialized;
+  const items = [['submitted', 'ความเห็นที่ส่ง'], ['released', 'เผยแพร่แล้ว'], ['blocked_by_attacker', 'หยุดเพื่อปกป้อง'], ['avg_attacker_rounds', 'รอบทดสอบเฉลี่ย']];
+  document.querySelector('#pipeline-stats').innerHTML = items.map(([key, label], i) => `<div><dt>${label}</dt><dd>${number(stats[key], i === 3 ? 1 : 0)}</dd></div>`).join('');
+  document.querySelectorAll('#pipeline-stats dd').forEach((dd, i) => {
+    const [key] = items[i];
+    const value = stats[key];
+    if (value === null || value === undefined) return;
+    countTo(dd, value, { from: shownValues.get(`stats.${key}`) ?? 0, digits: i === 3 ? 1 : 0 });
+    shownValues.set(`stats.${key}`, Number(value));
+  });
 }
 
 async function refresh() {
@@ -90,7 +142,7 @@ async function refresh() {
     const summary = await api('/api/manager/summary');
     connected();
     document.querySelector('#week-label').textContent = summary.week_label || 'ภาพรวมประจำสัปดาห์';
-    document.querySelector('#refresh-status').innerHTML = '<span class="dot"></span>อัปเดตทุก 5 วินาที';
+    document.querySelector('#refresh-status').innerHTML = '<span class="dot live-ping"></span>อัปเดตทุก 5 วินาที';
     renderThemes(list(summary.themes));
     renderMetrics(summary.metrics || {});
     renderStats(summary.pipeline || {});

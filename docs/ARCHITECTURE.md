@@ -48,7 +48,7 @@ Steps (each appends a `PipelineStep` for the demo trace):
 4. `structure.structure(text) -> StructuredFeedback` — สถานการณ์ / ผลกระทบ / สิ่งที่ขอ, neutralized.
 5. `gate.KGate` — Redis-backed: `add(team_id, theme_slug, item_id)`, `count(...)`, `is_open(...)` (count ≥ k),
    `count_range(n) -> "3–5 คน"`, random release delay 0..`gate_max_delay_s`. Pipeline does not call it; the
-   backend calls it after the user confirms. Pipeline step 5 note says "รอประตู k".
+   backend calls it after the user confirms. Pipeline step 5 says "รอยืนยันส่ง แล้วรวมเสียงให้ครบอย่างน้อย k คน".
 6. `cluster.assign_theme(text, existing_themes) -> (slug, label)` (LLM + seed list: friday-urgent-work
    "งานด่วนเย็นวันศุกร์", pr-review-delay "PR review ล่าช้า", blocked-tickets "งานติด block ไม่มีเจ้าของ",
    workload-oncall "ภาระงาน on-call", unclear-requirements "requirement ไม่ชัด", meeting-overload "ประชุมเยอะ").

@@ -6,15 +6,16 @@
 .demo-grid { display: grid; grid-template-columns: clamp(260px,19vw,360px) clamp(360px,26vw,520px) minmax(0,1fr); gap: 20px; }
 .demo-grid > .panel { padding: 20px; min-height: 708px; display: flex; flex-direction: column; gap: 14px; }
 .scenario-buttons { display: grid; gap: 8px; }
-.scenario-buttons > button { display: grid; grid-template-columns: 36px minmax(0,1fr); gap: 4px 12px; align-items: center; padding: 8px 10px; border-radius: var(--r-ctl); width: 100%; }
+.scenario-buttons > button { display: grid; grid-template-columns: 36px minmax(0,1fr); gap: 4px 12px; align-items: center; padding: 8px 10px; border-radius: var(--r-ctl); width: 100%; transition: box-shadow var(--dur-med) var(--ease-move), color var(--dur-fast) linear, transform var(--dur-fast) var(--ease-move); }
 .scenario-buttons > button:hover { color: var(--accent-ink); }
-.scenario-buttons > button.selected { box-shadow: var(--neu-inset); color: var(--accent-ink); }
-.scenario-symbol { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; box-shadow: var(--neu-raised-sm); color: var(--ink-2); }
+.scenario-buttons > button.selected, .scenario-buttons > button.is-pressed { box-shadow: var(--neu-inset); color: var(--accent-ink); }
+.scenario-symbol { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; box-shadow: var(--neu-raised-sm); color: var(--ink-2); transition: color var(--dur-med) var(--ease-move); }
 .selected .scenario-symbol { color: var(--accent); }
 .scenario-buttons strong { display: block; font-size: 15px; font-weight: 500; line-height: 1.4; }
 .scenario-buttons small { display: block; font-size: var(--t-xs); line-height: 1.4; color: var(--ink-3); }
 .scenario-trail { grid-column: 2; font-size: var(--t-xs); line-height: 1.5; color: var(--accent-ink); }
 .scenario-trail .icon { margin-right: 4px; }
+.scenario-trail:not([hidden]) { animation: kjb-rise var(--dur-med) var(--ease-enter) both; --rise: -4px; }
 .rail-controls { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--rule); display: grid; gap: 10px; }
 .rail-controls .text-button { padding: 0; font-size: var(--t-sm); }
 .inbox-panel > .section-heading { gap: 4px 10px; }
@@ -43,7 +44,8 @@
 .chat-time, .chat-read { flex: 0 0 auto; font-size: var(--t-xs); line-height: 1.3; color: var(--line-chat-meta); }
 .quick-reply-bar { flex: 0 0 auto; display: flex; gap: 10px; overflow-x: auto; padding: 8px 10px 12px; scrollbar-width: none; }
 .quick-reply-bar button { flex: 0 0 auto; min-height: 36px; padding: 0 16px; border-radius: 18px; background: var(--line-quick-reply); color: var(--line-bubble-in); font-size: 15px; font-weight: 600; line-height: 1.3; white-space: nowrap; }
-.quick-reply-bar button:hover:not(:disabled) { background: var(--ink); }
+.quick-reply-bar button { transition: background-color var(--dur-fast) linear, transform var(--dur-fast) var(--ease-move); }
+.quick-reply-bar button:hover:not(:disabled), .quick-reply-bar button.is-pressed { background: var(--ink); }
 .chat-empty { padding: 16px 0; font-size: var(--t-sm); color: var(--ink); }
 /* Recording: the newest message and the quick-reply bar end above the 136 px caption band. */
 body.rec .line-chat { padding-bottom: 120px; }
@@ -51,7 +53,7 @@ body.rec .line-chat { padding-bottom: 120px; }
 .live-pipeline > .section-heading { gap: 4px 10px; }
 .live-pipeline > .section-heading > .mono { margin-left: auto; }
 .pipeline-fallback { margin-left: auto; }
-.gate-bar { padding: 4px 10px; min-height: 44px; border-radius: var(--r-well); background: var(--paper); box-shadow: var(--neu-inset); display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.gate-bar { position: relative; padding: 4px 10px; min-height: 44px; border-radius: var(--r-well); background: var(--paper); box-shadow: var(--neu-inset); display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
 .pipeline-status { flex: 1; font-size: var(--t-sm); line-height: 1.5; color: var(--ink-2); }
 .pipeline-status.success { color: var(--accent-ink); }
 .pipeline-status.blocked { color: var(--danger); }
@@ -61,7 +63,7 @@ body.rec .line-chat { padding-bottom: 120px; }
 .gate-summary strong { display: block; font-size: var(--t-md); }
 .gate-summary small { display: block; color: var(--ink-3); font-size: var(--t-xs); }
 .gate-slots { display: flex; gap: 6px; }
-.gate-slot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; box-shadow: var(--neu-inset-sm); color: var(--ink-3); transition: opacity var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out); }
+.gate-slot { position: relative; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; box-shadow: var(--neu-inset-sm); color: var(--ink-3); }
 .gate-slot.full { background: var(--accent); color: #fff; box-shadow: var(--neu-accent); }
 #gate-count { font-size: var(--t-2xl); font-weight: 500; line-height: 1.3; }
 #gate-note { flex-basis: 100%; }
@@ -81,8 +83,10 @@ body.rec .line-chat { padding-bottom: 120px; }
 .pipeline-steps { list-style: none; padding: 0; margin: 0; display: grid; }
 .pipeline-step { position: relative; display: grid; grid-template-columns: 26px minmax(0,1fr) 20px; column-gap: 10px; align-items: start; padding: 7px 0; }
 .pipeline-step + .pipeline-step::before { content: ''; position: absolute; width: 2px; height: 14px; left: 12px; top: -7px; background: var(--rule); }
-.pipeline-step.active + .pipeline-step.active::before { background: var(--accent); }
-.step-number { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: var(--t-xs); font-weight: 600; color: var(--ink-3); box-shadow: var(--neu-inset-sm); }
+/* The accent connector grows down from the step above as each step turns on. */
+.pipeline-step + .pipeline-step::after { content: ''; position: absolute; width: 2px; height: 14px; left: 12px; top: -7px; background: var(--accent); transform: scaleY(0); transform-origin: top; transition: transform var(--dur-med) var(--ease-move); }
+.pipeline-step.active + .pipeline-step.active::after { transform: none; }
+.step-number { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: var(--t-xs); font-weight: 600; color: var(--ink-3); box-shadow: var(--neu-inset-sm); transition: background-color var(--dur-med) var(--ease-move), color var(--dur-med) var(--ease-move), box-shadow var(--dur-med) var(--ease-move); }
 .active .step-number { background: var(--accent); color: #fff; box-shadow: none; }
 .step-line { display: flex; align-items: baseline; gap: 10px; min-width: 0; padding-top: 2px; }
 .step-line h3 { font-size: 15px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
@@ -107,6 +111,45 @@ body.rec .line-chat { padding-bottom: 120px; }
 .signals-panel th { color: var(--ink-3); font-weight: 500; }
 .signal-reason { display: block; color: var(--ink-3); font-size: var(--t-xs); }
 .code-ref { font-family: var(--font-mono); }
+/* ---------- motion (DESIGN.md section 7) ---------- */
+@keyframes kjb-bubble { from { opacity: 0; transform: translateY(var(--rise-sm)) scale(.96); } }
+@keyframes kjb-grow { from { transform: scale(.7); } }
+@keyframes kjb-slide { from { opacity: 0; transform: translateX(-6px); } }
+@keyframes kjb-slot { from { transform: scale(.6); background: var(--paper); color: var(--ink-3); box-shadow: var(--neu-inset-sm); } }
+@keyframes kjb-indeterminate { from { transform: translateX(-100%); } to { transform: translateX(320%); } }
+/* Member tabs: one raised pill slides to the chosen member (demo.js placeIndicator). */
+.member-tabs { position: relative; }
+.member-tabs > button { position: relative; z-index: 1; }
+.member-tabs.has-indicator > button[aria-selected='true'] { background: none; box-shadow: none; }
+.tab-indicator { position: absolute; top: 0; left: 0; border-radius: 10px; background: var(--paper); box-shadow: var(--neu-raised-sm); transition: transform var(--dur-slow) var(--ease-move); pointer-events: none; }
+/* LINE chat: the OA bubble grows from its tail, the member's reply from the right, then its read receipt. */
+.chat-row.in.kjb-enter { animation-name: kjb-bubble; transform-origin: 44px 0; }
+.chat-row.in.kjb-enter .chat-time { animation: kjb-fade var(--dur-med) var(--ease-out) both; animation-delay: 240ms; }
+.chat-row.out.kjb-enter { animation-name: kjb-bubble; animation-duration: var(--dur-slow); transform-origin: right bottom; }
+.chat-row.out.kjb-enter .chat-read { animation: kjb-fade var(--dur-med) var(--ease-out) both; animation-delay: 600ms; }
+.quick-reply-bar > .kjb-enter { --rise: 12px; --delay: 280ms; animation-duration: var(--dur-slow); }
+/* Gate bar: determinate progress per step, an indeterminate sweep while the model works. */
+.gate-progress { position: absolute; left: 12px; right: 12px; bottom: 3px; height: 3px; overflow: hidden; border-radius: 2px; background: var(--rule); opacity: 0; transition: opacity var(--dur-med) var(--ease-out) var(--dur-slow); }
+.gate-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transform-origin: left; transform: scaleX(var(--progress, 0)); transition: transform var(--step-cadence) var(--ease-move); }
+.gate-bar[data-state='running'] .gate-progress { opacity: 1; transition-delay: 0s; }
+.gate-bar.waiting .gate-progress > span { width: 32%; transform: translateX(-100%); transition: none; animation: kjb-indeterminate 1400ms var(--ease-move) infinite; }
+#confirm-actions:not([hidden]), #gate:not([hidden]) { animation: kjb-rise var(--dur-enter) var(--ease-enter) both; }
+#teammates:not([hidden]) { animation: kjb-rise var(--dur-enter) var(--ease-enter) both; animation-delay: 200ms; }
+#confirm-note:not([hidden]), .pipeline-fallback:not([hidden]) { animation: kjb-fade var(--dur-med) var(--ease-out) both; }
+/* Slot n starts at n × 160 ms + 80 ms and reads as full about 80 ms later, when the count steps (demo.js renderGate). */
+.gate-slot.kjb-fill { animation: kjb-slot var(--dur-slow) var(--ease-enter) both; animation-delay: calc(var(--i, 0) * 160ms + 80ms); }
+/* Released: one ring from each filled slot, after the last fill lands. */
+.gate.released .gate-slot.full::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 2px var(--accent); opacity: 0; animation: kjb-ping 700ms var(--ease-out) 560ms both; }
+/* Source: the struck sentence replaces the textarea, then each marker's line draws (app.css .kjb-strike). */
+#removed-markers:not([hidden]) { animation: kjb-fade var(--dur-med) var(--ease-out) both; --delay: 200ms; }
+/* Steps: the number dot fills and grows, the result slides in, the check draws. */
+.active .step-number { animation: kjb-grow var(--dur-slow) var(--ease-enter) both; }
+.active .step-output { animation: kjb-slide var(--dur-med) var(--ease-enter) both; animation-delay: 80ms; }
+.step-done .icon { --dash: 24; stroke-dasharray: 24; animation: kjb-draw var(--dur-med) var(--ease-move) both; animation-delay: 160ms; }
+.attacker-chip.kjb-enter { --delay: 120ms; }
+.attacker-chip.kjb-enter .chip { animation: kjb-pop var(--dur-med) var(--ease-enter) both; animation-delay: calc(var(--i, 0) * var(--stagger) + 360ms); }
+#feedback-preview:not([hidden]) { animation: kjb-wipe-down var(--dur-enter) var(--ease-enter) both; animation-delay: 80ms; }
+
 @media (max-width: 1100px) {
   .demo-grid { grid-template-columns: clamp(260px,30vw,360px) minmax(0,1fr); align-items: start; }
   .scenario-column { grid-column: 1; grid-row: 1; }

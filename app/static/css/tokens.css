@@ -58,6 +58,16 @@
 
   /* motion */
   --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-enter: cubic-bezier(.05, .7, .1, 1);   /* M3 emphasized decelerate: arrivals */
+  --ease-exit: cubic-bezier(.3, 0, .8, .15);    /* M3 emphasized accelerate: departures */
+  --ease-move: cubic-bezier(.2, 0, 0, 1);       /* M3 standard: fills, draws, slides in place */
   --dur-fast: 120ms; --dur-med: 240ms; --dur-slow: 320ms;
+  --dur-enter: 400ms;                       /* new content arrives (M3 medium4, NN/g ceiling) */
+  --dur-exit: 200ms;                        /* half of enter: leaving is quicker */
+  --dur-draw: 600ms;                        /* strokes: sparklines, strike-through, checks */
+  --dur-count: 900ms;                       /* a number counting to its value */
+  --stagger: 60ms;                          /* between siblings; a list never waits more than 6 steps */
+  --rise-sm: 8px; --rise-lg: 16px;          /* entrance travel: bubbles and rows / cards */
+  --press-hold: 160ms;                      /* pressed look outlives the click so a 30 fps video shows it */
   --step-cadence: 420ms;                    /* 900ms in recording mode */
 }

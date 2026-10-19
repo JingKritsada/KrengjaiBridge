@@ -843,12 +843,14 @@ thead th { background: transparent; }
       <div class="tbl-wrap"><table>
         <thead><tr><th>What</th><th>Duration</th><th>Easing</th></tr></thead>
         <tbody>
-          <tr><td>Hover, press colour</td><td class="num">120 ms</td><td>linear</td></tr>
-          <tr><td>Step expand / collapse</td><td class="num">240 ms</td><td><code>--ease-out</code></td></tr>
-          <tr><td>Gate slot fill</td><td class="num">320 ms</td><td><code>--ease-out</code></td></tr>
+          <tr><td>Hover, press colour (press held 160 ms · rec 240)</td><td class="num">120 ms</td><td>linear</td></tr>
+          <tr><td>Content arrives / leaves</td><td class="num">400 / 200 ms · rec 480</td><td><code>--ease-enter</code> / <code>--ease-exit</code></td></tr>
+          <tr><td>Gate slot fill, tab pill slide</td><td class="num">320 ms</td><td><code>--ease-move</code></td></tr>
+          <tr><td>Sparkline draw · number count</td><td class="num">600 ms · 900 ms (rec 1200)</td><td><code>--ease-move</code> · cubic out</td></tr>
           <tr><td>Pipeline step cadence</td><td class="num">420 ms · rec 900 ms</td><td>—</td></tr>
-          <tr><td>Toast in / out</td><td class="num">200 / 160 ms</td><td><code>--ease-out</code></td></tr>
+          <tr><td>Toast in / out</td><td class="num">320 / 160 ms</td><td><code>--ease-enter</code> / <code>--ease-exit</code></td></tr>
           <tr><td>Reduced motion</td><td class="num">≤ 150 ms</td><td>opacity only</td></tr>
+          <tr><td colspan="3">Full inventory per page: <code>DESIGN.md</code> section 7</td></tr>
         </tbody>
       </table></div>
     </div>

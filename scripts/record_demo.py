@@ -130,7 +130,13 @@ class Demo:
         await self.show(key)
 
     async def go(self, name: str):
-        await self.p.goto(self.url(name))
+        url = self.url(name)
+        if self.p.url.startswith(self.base):
+            # An in-page navigation runs the page's view transition; goto() counts as the address bar and skips it.
+            await self.p.evaluate("url => setTimeout(() => location.assign(url))", url)
+            await self.p.wait_for_url(url)
+        else:
+            await self.p.goto(url)
         await self.p.evaluate("document.fonts.ready.then(() => true)")
         await self.wait(1.2)
 

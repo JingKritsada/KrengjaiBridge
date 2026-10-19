@@ -91,8 +91,9 @@ async def main():
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
+        # Reduced motion: entrances and counts land at once, so checks and screenshots read the final state.
         ctx = await browser.new_context(
-            viewport={"width": W, "height": H}, device_scale_factor=SCALE
+            viewport={"width": W, "height": H}, device_scale_factor=SCALE, reduced_motion="reduce"
         )
         page = await ctx.new_page()
         for name in ("", "manager", "demo"):

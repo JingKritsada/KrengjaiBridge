@@ -92,7 +92,17 @@ Pages use tokens by name (`var(--ink-2)`), never raw hex, except `#fff` on the a
 
   /* motion */
   --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-enter: cubic-bezier(.05, .7, .1, 1);   /* M3 emphasized decelerate: arrivals */
+  --ease-exit: cubic-bezier(.3, 0, .8, .15);    /* M3 emphasized accelerate: departures */
+  --ease-move: cubic-bezier(.2, 0, 0, 1);       /* M3 standard: fills, draws, slides in place */
   --dur-fast: 120ms; --dur-med: 240ms; --dur-slow: 320ms;
+  --dur-enter: 400ms;                       /* new content arrives (M3 medium4, NN/g ceiling) */
+  --dur-exit: 200ms;                        /* half of enter: leaving is quicker */
+  --dur-draw: 600ms;                        /* strokes: sparklines, strike-through, checks */
+  --dur-count: 900ms;                       /* a number counting to its value */
+  --stagger: 60ms;                          /* between siblings; a list never waits more than 6 steps */
+  --rise-sm: 8px; --rise-lg: 16px;          /* entrance travel: bubbles and rows / cards */
+  --press-hold: 160ms;                      /* pressed look outlives the click so a 30 fps video shows it */
   --step-cadence: 420ms;                    /* 900ms in recording mode */
 }
 ```
@@ -178,16 +188,67 @@ No sparkle / magic-wand icons for AI. Label AI output with the model name in mon
 
 ## 7. Motion
 
-| What | Duration | Easing |
-|---|---|---|
-| hover / press colour, shadow flip | 120 ms | linear |
-| step expand / collapse | 240 ms | `--ease-out` |
-| gate slot fill | 320 ms | `--ease-out` |
-| pipeline step cadence | 420 ms (900 ms in recording mode) | — |
-| toast in / out | 200 / 160 ms | `--ease-out` |
-| `prefers-reduced-motion` | ≤ 150 ms, opacity only | — |
+Motion explains a state change on a 30 fps screen recording; it never decorates. Timing follows NN/g
+(100–400 ms, exits shorter than entrances), curves and the duration scale follow Material 3, counts follow
+CountUp.js practice (ease out, run once per new value). Code: tokens in `tokens.css`, keyframes and shared
+classes in the motion block of `app.css`, page rules in the motion block of each page CSS, helpers in `ui.js`
+(`enter`, `countTo`, `cssTime`, `reducedMotion`, press hold).
 
-Animate `transform`, `opacity` and `box-shadow` only.
+**Frame budget.** 1 frame = 33.3 ms at 30 fps (OBS), 40 ms at 25 fps (Playwright video). Anything the viewer must
+see lasts ≥ 200 ms (6 frames). 120 ms is for hover/press colour only, which the video may show as a cut.
+Polling re-renders every 1–5 s, so an entrance runs **only for a node that is new** (key or value not on screen
+before); a re-render with the same data never replays motion.
+
+| Token | Value | Use |
+|---|---|---|
+| `--ease-out` | `cubic-bezier(.2, .8, .2, 1)` | routine fades |
+| `--ease-enter` | `cubic-bezier(.05, .7, .1, 1)` (M3 emphasized decelerate) | arrivals |
+| `--ease-exit` | `cubic-bezier(.3, 0, .8, .15)` (M3 emphasized accelerate) | departures |
+| `--ease-move` | `cubic-bezier(.2, 0, 0, 1)` (M3 standard) | fills, draws, slides in place |
+| `--dur-fast` / `--dur-med` / `--dur-slow` | 120 / 240 / 320 ms | hover colour / small state / fills and slides |
+| `--dur-enter` / `--dur-exit` | 400 / 200 ms (rec 480 / 200) | content arrives / leaves |
+| `--dur-draw` | 600 ms | sparklines |
+| `--dur-count` | 900 ms (rec 1200) | a number counting to its value |
+| `--stagger` | 60 ms (rec 90), at most 6 steps | siblings that arrive together |
+| `--rise-sm` / `--rise-lg` | 8 / 16 px | entrance travel: rows, bubbles / cards |
+| `--press-hold` | 160 ms (rec 240) | pressed look outlives a 1 ms Playwright click |
+| `--step-cadence` | 420 ms (rec 900) | one privacy pipeline step |
+
+**Inventory** (delays are from the trigger):
+
+| Where | Trigger | Motion |
+|---|---|---|
+| All buttons | pointer down | inset-sm + `scale(.97)`, held ≥ `--press-hold`; disabled fade 240 ms |
+| Busy button | `aria-busy` | 16 px ring spinner, 800 ms/turn, in place of the icon (`#reset` spins its own icon) |
+| Toast | show / hide | 12 px drop + fade, 320 ms `--ease-enter` / 160 ms `--ease-exit` |
+| Page change | link click (same origin) | view transition: page fades out 200 ms, new page rises 8 px over 400 ms; header holds; the 2 px nav bar slides to the new link, 320 ms `--ease-move` |
+| Spotlight (rec) | `kjbSpotlight()` | ring closes in from `scale(1.06)`, 320 ms `--ease-enter`, holds 1.2 s |
+| `/` journey card | page load, once | steps arrive at 200 / 1100 / 1700 / 2200 ms (rise 8 px, 400 ms); connectors draw 240 ms; strike draws through หนู, ค่ะ, หนู at 720 ms + 120 ms each; chips pop 90 ms apart with drawn checks; the result counts 3 → 2 → 1 → 0 from 2500 ms. Done by about 3.4 s (rec 3.7 s) |
+| `/demo` scenario row | select | inset 240 ms; trail line drops in 4 px, 240 ms |
+| `/demo` member tabs | select | one raised pill slides to the tab, 320 ms `--ease-move` |
+| `/demo` LINE chat | new message | OA bubble grows from its tail (`scale(.96)` + 8 px, 400 ms), time +240 ms; member reply grows from bottom right 320 ms, "อ่านแล้ว" +600 ms; quick replies rise 12 px, 60 ms apart, from +280 ms; list scrolls smoothly. Switching member shows history with no entrances |
+| `/demo` gate bar | run | 3 px progress: indeterminate sweep (32 % segment, 1.4 s) while the model works, then fills `n/6` per step over `--step-cadence`; status text rises 4 px on each state change |
+| `/demo` source | results | struck sentence fades in; each marker turns red and its line draws 320 ms, 120 ms apart |
+| `/demo` pipeline step | each cadence tick | number dot fills and grows from `scale(.7)` 320 ms; accent connector grows down 240 ms; result slides 6 px 240 ms; check draws 240 ms at +160 ms; attacker rounds rise one by one, their verdict chip pops at +360 ms; structured text wipes down 400 ms |
+| `/demo` gate | confirm / teammates | gate and buttons rise 400 ms; each new slot fills 320 ms at `n × 160 + 80` ms and the count steps with it (1/3 → 3/3); on release each filled slot sends one 2 px ring, 700 ms at +560 ms |
+| `/manager` theme card | first seen | rises 16 px, 400 ms, 60 ms apart |
+| `/manager` theme status | changes | chips and the sent reply rise in; outcome band wipes in from the left 400 ms, then "after" counts down from "before" (3 → 0) from +500 ms |
+| `/manager` metrics | value changes | sparkline draws 600 ms (rows 80 ms apart), area +360 ms, end dot pops +520 ms, delta +600 ms; value counts from the previous value (0 on first load) |
+| `/manager` gate stats | value changes | count from the previous value |
+| `/manager` live dot | each refresh (5 s) | one ring, `scale(2.75)` and fade, 900 ms |
+
+**Counting.** `countTo(el, to, { from, digits, delay })`: whole-number ranges of 12 or less step evenly (each step
+`duration / n`), so 3 → 0 reads as 3, 2, 1, 0; other ranges ease out (cubic). Fixed decimals while counting, so
+the width does not jitter. Never on a value that did not change.
+
+**Allowed properties.** `transform`, `opacity`, `clip-path` (reveals), `stroke-dashoffset` (draws), `color` and
+`background-color` (state), `box-shadow` on small controls only. Never animate layout (`width`, `height`, `top`,
+`left`, margins) and never the shadow of a whole panel (soft-shadow gradients band and block in H.264).
+Loops run only while something is in progress (spinner, sweep) or once per real event (live dot).
+
+**Reduced motion** (`prefers-reduced-motion: reduce`): no keyframes, no view transitions, counts jump to the value,
+smooth scroll becomes instant; state changes keep a 150 ms fade. `scripts/design_check.py` runs with reduced
+motion so it measures the final state.
 
 ## 8. Components
 
@@ -248,7 +309,7 @@ F-path: title + privacy promise → theme → voice → AI draft → reply; metr
 
 ## 10. Recording mode and video
 
-- `?rec=1` adds `body.rec`: `--step-cadence: 900ms`, inbox polling every 1 s, and `window.kjbSpotlight(selector)` which draws a 3 px `--accent` ring, 4 px offset, 8 px soft halo on the target for 1.2 s (Playwright video shows no cursor).
+- `?rec=1` adds `body.rec`: `--step-cadence: 900ms`, slower motion tokens (section 7), inbox polling every 1 s, and `window.kjbSpotlight(selector)` which draws a 3 px `--accent` ring, 4 px offset, 8 px soft halo on the target for 1.2 s (Playwright video shows no cursor).
 - Layout viewport for recording 1536 × 864, device scale 1.667 → 2560 × 1440 capture.
 - Critical content for each scene sits between y = 140 and y = 728; the bottom 136 px is the caption-safe band.
 - Captions: IBM Plex Sans Thai, EN 36 px / TH 32 px on a 1080p canvas, EN ≤ 42 chars, TH ≤ 35, one line each, 0.83–7 s per event, ≥ (EN + TH chars) ÷ 17 + 1 s.

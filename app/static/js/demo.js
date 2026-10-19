@@ -1,5 +1,5 @@
 import { api, post } from './api.js';
-import { shell, escapeHTML as e, list, number, percent, icon, showError, busy, toast, structuredHTML, kindLabel, isRec } from './ui.js';
+import { shell, escapeHTML as e, list, number, percent, icon, showError, busy, toast, structuredHTML, kindLabel, isRec, enter, countTo, cssTime, reducedMotion } from './ui.js';
 
 shell('demo');
 const stepNames = ['ลบข้อมูลระบุตัวตน', 'ปรับภาษาให้เป็นกลาง', 'ทดสอบการเดาตัวตน', 'จัดโครงสร้างความเห็น', 'รอประตูนิรนาม (k=3)', 'จัดกลุ่มประเด็น'];
@@ -14,6 +14,9 @@ let inboxPending = false;
 let signalsPending = false;
 let llmUnavailable = false;
 let pipelineFallback = false;
+let gateShown = 0;      // filled slots on screen, so a re-render animates only the new ones
+let chatMember = '';     // member whose inbox is on screen; a new member shows history without entrances
+const seenChat = new Set();
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const fallbackBadge = document.createElement('span');
@@ -38,6 +41,8 @@ async function loadHealth() {
 
 function resetSteps() {
   pipelineFallback = false;
+  gateShown = 0;
+  setProgress(0);
   renderFallback();
   document.querySelector('#pipeline-steps').innerHTML = stepNames.map((name, i) => `<li class="pipeline-step" data-step="${i + 1}"><span class="step-number">${i + 1}</span><div class="step-line"><h3>${name}</h3><p class="step-output">รอทดสอบ</p></div><span class="step-done"></span>${i === 2 ? '<div id="attacker-rounds" class="attacker-rounds" hidden></div>' : ''}${i === 3 ? '<div id="feedback-preview" hidden></div>' : ''}</li>`).join('');
   document.querySelector('#confirm-actions').hidden = true;
@@ -64,22 +69,35 @@ function unlockEditor() {
 
 function setPipelineStatus(text, className = '', state = 'idle') {
   const status = document.querySelector('#pipeline-status');
+  const bar = document.querySelector('.gate-bar');
   status.textContent = text;
   status.className = `pipeline-status ${className}`;
-  document.querySelector('.gate-bar').dataset.state = state;
+  if (bar.dataset.state !== state && !reducedMotion()) status.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: cssTime('--dur-med'), easing: 'cubic-bezier(.05, .7, .1, 1)' });
+  bar.dataset.state = state;
   const sent = state === 'sent' || state === 'released';
   document.querySelector('#gate').hidden = !sent;
   document.querySelector('#teammates').hidden = !sent;
+}
+
+// Gate bar progress: share of the 6 steps done (0-1), or 'waiting' while the model runs (indeterminate sweep).
+function setProgress(value) {
+  const bar = document.querySelector('.gate-bar');
+  bar.classList.toggle('waiting', value === 'waiting');
+  bar.style.setProperty('--progress', value === 'waiting' ? 0 : value);
 }
 
 function renderGate(gate) {
   if (!gate) return;
   const count = Number(gate.count) || 0;
   const k = Number(gate.k) || 3;
+  const from = Math.min(gateShown, count);
   currentTheme = gate.theme_slug || currentTheme;
-  document.querySelector('#gate-count').textContent = `${count}/${k}`;
+  // Slots fill one by one, 160 ms apart; the count steps with them (demo.css .kjb-fill).
+  document.querySelector('#gate-count').innerHTML = `<span>${from}</span>/${k}`;
+  countTo(document.querySelector('#gate-count span'), count, { from, duration: 160 * (count - from) });
   document.querySelector('#gate-label').textContent = gate.theme_label || `ต้องมีเสียงร่วมอย่างน้อย ${k} คน`;
-  document.querySelector('.gate-slots').innerHTML = Array.from({ length: k }, (_, i) => `<span class="gate-slot ${i < count ? 'full' : ''}">${icon('user', 'sm')}</span>`).join('');
+  document.querySelector('.gate-slots').innerHTML = Array.from({ length: k }, (_, i) => `<span class="gate-slot ${i < count ? 'full' : ''}${i >= from && i < count ? ' kjb-fill' : ''}" style="--i: ${i - from}">${icon('user', 'sm')}</span>`).join('');
+  gateShown = count;
   document.querySelector('#gate').classList.toggle('released', !!gate.released);
   const note = gate.released ? `ผ่านประตูนิรนามแล้ว · หัวหน้าเห็นจำนวนเป็นช่วง ${gate.count_range || '3–5 คน'}` : `รอเสียงร่วมอีก ${Math.max(0, k - count)} คน · หัวหน้ายังไม่เห็นความเห็นนี้`;
   document.querySelector('#gate-note').textContent = note;
@@ -96,6 +114,7 @@ function renderAttacker(rounds) {
     const member = members.find(m => m.member_id === round.guessed_member_id);
     return `<div class="attacker-chip" ${round.reason ? `title="${e(round.reason)}"` : ''}><strong>รอบ ${number(round.round)}</strong><span class="attacker-guess">เดา: ${e(member?.display_name || round.guessed_member_id || 'ระบุไม่ได้')} · มั่นใจ ${percent(round.confidence)}</span><span class="chip ${round.identified ? 'wait' : 'ok'}">${icon(round.identified ? 'refresh-cw' : 'shield-check', 'sm')}${round.identified ? 'เดาถูก · เขียนใหม่' : 'ระบุตัวตนไม่ได้'}</span></div>`;
   }).join('');
+  enter(el.children);
 }
 
 function highlightMarkers(text) {
@@ -104,7 +123,9 @@ function highlightMarkers(text) {
   document.querySelector('#feedback-text').hidden = true;
   document.querySelector('.preview-actions').hidden = true;
   // The source stays in browser memory only, never fixture storage.
-  el.innerHTML = `<p>${e(text).replace(/หนู|ค่ะ|ครับ|ดิฉัน|ผม|พี่/g, marker => `<del>${marker}</del>`)}</p>`;
+  let n = 0;
+  el.innerHTML = `<p>${e(text).replace(/หนู|ค่ะ|ครับ|ดิฉัน|ผม|พี่/g, marker => `<del style="--i: ${n++}">${marker}</del>`)}</p>`;
+  el.classList.add('kjb-strike');
 }
 
 async function loadTeam() {
@@ -128,6 +149,23 @@ async function loadTeam() {
   }
 }
 
+// One raised pill slides between tabs. It is re-attached at its old position after each render, so the move transitions.
+const tabIndicator = document.createElement('span');
+tabIndicator.className = 'tab-indicator';
+tabIndicator.setAttribute('aria-hidden', 'true');
+function placeIndicator() {
+  const track = document.querySelector('#member-tabs');
+  const tab = track.querySelector('[aria-selected="true"]');
+  track.classList.toggle('has-indicator', !!tab);
+  if (!tab) { tabIndicator.remove(); return; }
+  const first = !tabIndicator.style.transform;
+  track.prepend(tabIndicator);
+  void tabIndicator.offsetWidth;
+  tabIndicator.style.transition = first ? 'none' : '';
+  Object.assign(tabIndicator.style, { width: `${tab.offsetWidth}px`, height: `${tab.offsetHeight}px`, transform: `translate(${tab.offsetLeft}px, ${tab.offsetTop}px)` });
+}
+addEventListener('resize', placeIndicator);
+
 function renderTabs() {
   document.querySelector('#member-tabs').innerHTML = members.map(m => `<button id="tab-${e(m.member_id)}" role="tab" aria-selected="${m.member_id === selectedMember}" aria-controls="inbox" data-member="${e(m.member_id)}" tabindex="${m.member_id === selectedMember ? 0 : -1}">${e(m.display_name)}${m.line_linked ? '<span class="dot line" aria-label="เชื่อม LINE แล้ว"></span>' : ''}</button>`).join('');
   const member = members.find(m => m.member_id === selectedMember);
@@ -135,6 +173,7 @@ function renderTabs() {
   channel.innerHTML = !member ? 'ยังไม่ได้เลือกสมาชิก' : member.line_linked ? `<span class="dot line"></span>LINE · ${e(member.display_name)}` : `เว็บ · ${e(member.display_name)}`;
   channel.classList.toggle('on-line', !!member?.line_linked);
   if (member) document.querySelector('#inbox').setAttribute('aria-labelledby', `tab-${member.member_id}`);
+  placeIndicator();
 }
 
 // LINE look: the OA's message on the left with avatar and time; quick replies sit in LINE's pill bar at the bottom,
@@ -144,14 +183,15 @@ const chatTime = value => value ? new Date(value).toLocaleTimeString('th-TH', { 
 const oaAvatar = `<span class="chat-avatar" aria-hidden="true">${document.querySelector('.brand-mark svg').outerHTML}</span>`;
 function chatEntryHTML(message) {
   const answer = message.response ? list(message.buttons).find(b => b.action === message.response)?.label || 'ตอบกลับแล้ว' : '';
-  return `<article class="chat-entry" aria-label="เกรงใจบริดจ์ · ${e(kindLabel(message.kind))}"><div class="chat-row in">${oaAvatar}<div class="chat-line"><div class="chat-bubble">${e(message.text || 'ยังไม่มีข้อความ')}</div><time class="chat-time">${chatTime(message.created_at)}</time></div></div>${answer ? `<div class="chat-row out"><span class="chat-read">อ่านแล้ว</span><div class="chat-bubble">${e(answer)}</div></div>` : ''}</article>`;
+  return `<article class="chat-entry" aria-label="เกรงใจบริดจ์ · ${e(kindLabel(message.kind))}"><div class="chat-row in" data-key="${e(message.id)}">${oaAvatar}<div class="chat-line"><div class="chat-bubble">${e(message.text || 'ยังไม่มีข้อความ')}</div><time class="chat-time">${chatTime(message.created_at)}</time></div></div>${answer ? `<div class="chat-row out" data-key="${e(message.id)}:${e(message.response)}"><span class="chat-read">อ่านแล้ว</span><div class="chat-bubble">${e(answer)}</div></div>` : ''}</article>`;
 }
-function renderQuickReplies(messages) {
+function renderQuickReplies(messages, animate) {
   const latest = messages.at(-1);
   const buttons = latest && !latest.response ? list(latest.buttons) : [];
   const bar = document.querySelector('#quick-replies');
   bar.hidden = !buttons.length;
   bar.innerHTML = buttons.map(button => `<button data-outreach="${e(latest.id)}" data-action="${e(button.action)}">${e(button.label || 'ตอบกลับ')}</button>`).join('');
+  if (animate) enter(bar.children);
 }
 
 async function loadInbox() {
@@ -166,8 +206,15 @@ async function loadInbox() {
     inboxVersion = serialized;
     const inbox = document.querySelector('#inbox');
     inbox.innerHTML = data.length ? `<p class="chat-date"><span>วันนี้</span></p>${data.map(chatEntryHTML).join('')}` : '<div class="chat-empty">ยังไม่มีข้อความส่วนตัว · ลองเริ่มจากสถานการณ์ทางซ้าย</div>';
-    renderQuickReplies(data);
-    inbox.scrollTop = inbox.scrollHeight;
+    // Entrances only for rows that arrived while this inbox was on screen; switching members shows history as is.
+    const switched = memberID !== chatMember;
+    if (switched) seenChat.clear();
+    chatMember = memberID;
+    const arrived = [...inbox.querySelectorAll('[data-key]')].filter(row => !seenChat.has(row.dataset.key));
+    arrived.forEach(row => seenChat.add(row.dataset.key));
+    if (!switched) enter(arrived);
+    renderQuickReplies(data, !switched && arrived.some(row => row.classList.contains('in')));
+    inbox.scrollTo({ top: inbox.scrollHeight, behavior: switched || reducedMotion() ? 'instant' : 'smooth' });
   } catch (error) { showError(error); }
   finally {
     inboxPending = false;
@@ -205,18 +252,20 @@ document.querySelector('#feedback-form').addEventListener('submit', event => {
     document.querySelector('#feedback-text').readOnly = true;
     document.querySelector('#member-select').disabled = true;
     setPipelineStatus('กำลังทดสอบ… ขั้น 1/6', 'running', 'running');
+    setProgress('waiting');
     try {
       const data = await post('/api/feedback/preview', { member_id: memberID, text });
+      setProgress(0);
       draftID = data.draft_id || null;
       const result = data.result || {};
       const steps = list(result.steps);
       pipelineFallback = steps.some(step => list(step.notes).some(note => String(note).includes('โหมดสำรอง')));
       renderFallback();
       highlightMarkers(text);
-      const cadence = getComputedStyle(document.documentElement).getPropertyValue('--step-cadence').trim();
-      const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : parseFloat(cadence) * (cadence.endsWith('ms') ? 1 : 1000);
+      const delay = reducedMotion() ? 0 : cssTime('--step-cadence', document.documentElement);
       for (let i = 1; i <= 6; i++) {
         setPipelineStatus(`กำลังทดสอบ… ขั้น ${i}/6`, 'running', 'running');
+        setProgress(i / 6);
         const step = steps.find(s => Number(s.step) === i);
         const el = document.querySelector(`[data-step="${i}"]`);
         el.classList.add('active');

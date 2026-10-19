@@ -8,6 +8,68 @@ export const percent = value => value == null ? '—' : `${number(Number(value) 
 
 export const isRec = new URLSearchParams(location.search).get('rec') === '1';
 
+// Motion helpers (DESIGN.md section 7). Durations come from the CSS tokens, so ?rec=1 (body.rec) slows them in one place.
+export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+export function cssTime(name, el = document.body) {
+  const value = getComputedStyle(el).getPropertyValue(name).trim();
+  return (parseFloat(value) || 0) * (value.endsWith('ms') ? 1 : 1000);
+}
+
+// Marks freshly rendered nodes for their entrance (.kjb-enter in app.css); --i staggers siblings, capped at 6 steps.
+export function enter(nodes, cls = 'kjb-enter') {
+  [...nodes].forEach((node, i) => { node.style.setProperty('--i', Math.min(i, 6)); node.classList.add(...cls.split(' ')); });
+}
+
+// Counts an element's text from `from` to `to`. Small whole-number ranges step evenly (3 → 0 reads 3, 2, 1, 0 on
+// video); other ranges ease out. Reduced motion, a hidden tab or a missing start value jump straight to the result.
+const counting = new WeakMap();
+export function countTo(el, to, { from = 0, digits = 0, duration = cssTime('--dur-count'), delay = 0 } = {}) {
+  if (!el) return;
+  const final = number(to, digits);
+  const start = Number(from), end = Number(to);
+  if (from === null || to === null || !Number.isFinite(start) || !Number.isFinite(end) || start === end || !duration || reducedMotion() || document.hidden) {
+    counting.delete(el);
+    el.textContent = final;
+    return;
+  }
+  const fixed = final.includes('.') ? digits : 0;
+  const format = value => value.toLocaleString('th-TH', { minimumFractionDigits: fixed, maximumFractionDigits: fixed });
+  const whole = Number.isInteger(start) && Number.isInteger(end) && Math.abs(end - start) <= 12;
+  const begin = performance.now() + delay;
+  const token = {};
+  counting.set(el, token);
+  el.textContent = format(start);
+  const tick = now => {
+    if (counting.get(el) !== token) return;
+    const t = Math.min(1, Math.max(0, (now - begin) / duration));
+    if (t >= 1) { el.textContent = final; counting.delete(el); return; }
+    el.textContent = format(whole
+      ? start + Math.sign(end - start) * Math.floor(t * Math.abs(end - start))
+      : start + (end - start) * (1 - (1 - t) ** 3));
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// Playwright clicks last about 1 ms, so :active never reaches the video: keep the pressed look for --press-hold.
+function pressHold() {
+  let held = null;
+  document.addEventListener('pointerdown', event => {
+    const el = event.target.closest?.('button, .button');
+    if (!el || el.disabled) return;
+    held = { el, at: performance.now() };
+    el.classList.add('is-pressed');
+  });
+  const release = () => {
+    if (!held) return;
+    const { el, at } = held;
+    held = null;
+    setTimeout(() => el.classList.remove('is-pressed'), Math.max(0, cssTime('--press-hold') - (performance.now() - at)));
+  };
+  document.addEventListener('pointerup', release);
+  document.addEventListener('pointercancel', release);
+}
+
 // Lucide icons (ISC licence), 24 px grid. Injected once as a <symbol> sprite by shell(); stroke styles come from .icon in app.css.
 const symbols = {
   'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
@@ -72,6 +134,7 @@ function spotlight(target, ms = 1200) {
 
 export function shell(active) {
   injectIcons();
+  pressHold();
   document.querySelectorAll('#site-header [data-nav]').forEach(a => {
     if (a.dataset.nav === active) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');

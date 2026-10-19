@@ -35,6 +35,25 @@
 .result-number .icon { width: 32px; height: 32px; }
 .result-number em { font-style: normal; color: var(--accent); }
 
+/* Intro shot (DESIGN.md section 7): one voice travels the card once, about 3.4 s, then the page is still.
+   --at is when each step arrives; home.js starts the 3 → 0 count from the fourth step's --at. */
+.journey-step { animation: kjb-rise var(--dur-enter) var(--ease-enter) both; animation-delay: var(--at); }
+.journey-step:nth-child(1) { --at: 200ms; }
+.journey-step:nth-child(2) { --at: 1100ms; }
+.journey-step:nth-child(3) { --at: 1700ms; }
+.journey-step:nth-child(4) { --at: 2200ms; }
+.journey-step + .journey-step::before { transform-origin: top; animation: kjb-scale-y var(--dur-med) var(--ease-move) both; animation-delay: var(--at); }
+.journey-step q.kjb-strike { --delay: 600ms; }
+.journey-step q del:nth-of-type(2) { --i: 1; }
+.journey-step q del:nth-of-type(3) { --i: 2; }
+.journey-warning { animation: kjb-fade var(--dur-med) var(--ease-out) both; animation-delay: 1000ms; }
+.journey-chips .chip { animation: kjb-pop var(--dur-med) var(--ease-enter) both; animation-delay: calc(var(--at) + 200ms + var(--i, 0) * 90ms); }
+.journey-chips .chip:nth-child(2) { --i: 1; }
+.journey-chips .chip:nth-child(3) { --i: 2; }
+.journey-chips .chip .icon { --dash: 24; stroke-dasharray: 24; animation: kjb-draw var(--dur-med) var(--ease-move) both; animation-delay: calc(var(--at) + 320ms + var(--i, 0) * 90ms); }
+.journey-theme .chip { animation: kjb-pop var(--dur-med) var(--ease-enter) both; animation-delay: calc(var(--at) + 240ms); }
+.result-number .icon { animation: kjb-rise var(--dur-med) var(--ease-enter) both; animation-delay: calc(var(--at) + 120ms); --rise: 0; }
+
 .loop { border-top: 1px solid var(--rule); padding-top: 22px; }
 .loop ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0; margin: 0; list-style: none; }
 .loop li { padding-right: 28px; display: grid; gap: 6px; align-content: start; }

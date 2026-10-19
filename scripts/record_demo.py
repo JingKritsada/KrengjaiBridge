@@ -1,6 +1,9 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = ["playwright>=1.48"]
+#
+# [tool.ty.analysis]
+# allowed-unresolved-imports = ["playwright.**"]
 # ///
 """Record the web demo walkthrough (with EN/TH captions) to an MP4.
 
@@ -97,7 +100,7 @@ class Demo:
     def __init__(self, page: Page, base_url: str, captions: bool, mock: bool):
         self.p, self.base, self.captions, self.mock = page, base_url.rstrip("/"), captions, mock
         self.t0 = time.monotonic()  # the video starts when the page opens
-        self.cues: list[dict] = []    # caption events for the .srt
+        self.cues: list[dict] = []  # caption events for the .srt
         self.events: list[dict] = []  # clicks for events.json
 
     def now(self) -> float:
@@ -143,7 +146,8 @@ class Demo:
         await self.spot(locator)
         await self.wait(0.5)
         label = " ".join((await locator.inner_text()).split()) or await locator.evaluate(
-            "el => (el.closest('label')?.innerText || el.getAttribute('aria-label') || el.name || '').trim()")
+            "el => (el.closest('label')?.innerText || el.getAttribute('aria-label') || el.name || '').trim()"
+        )
         self.events.append({"time": self.now(), "selector": selector, "label": label})
         await locator.click()
 
@@ -153,23 +157,44 @@ class Demo:
     async def run(self):
         p = self.p
         await self.go("")
-        await self.cap("intro"); await self.wait(6)
+        await self.cap("intro")
+        await self.wait(6)
 
         await self.go("demo")
-        await self.click(p.get_by_text("ล้างข้อมูลเดโมและเริ่มใหม่"), "#reset"); await self.wait(2.5)
-        await self.click(p.locator(".member-tabs button", has_text="มิ้น"), '.member-tabs button:has-text("มิ้น")')
+        await self.click(p.get_by_text("ล้างข้อมูลเดโมและเริ่มใหม่"), "#reset")
+        await self.wait(2.5)
+        await self.click(
+            p.locator(".member-tabs button", has_text="มิ้น"), '.member-tabs button:has-text("มิ้น")'
+        )
         await self.cap("pr")
-        await self.click(p.locator('button[data-scenario="pr_stale"]'), 'button[data-scenario="pr_stale"]'); await self.wait(5)
-        await self.cap("ask"); await self.wait(2)
-        await self.click(p.locator(".inbox-panel button", has_text="ช่วยเตือนให้หน่อย").first, '.inbox-panel button:has-text("ช่วยเตือนให้หน่อย")'); await self.wait(3)
-        await self.click(p.locator(".member-tabs button", has_text="พี่สมชาย"), '.member-tabs button:has-text("พี่สมชาย")'); await self.wait(2)
-        await self.cap("nudge"); await self.wait(5)
-        await self.click(p.locator(".member-tabs button", has_text="มิ้น"), '.member-tabs button:has-text("มิ้น")'); await self.wait(1)
+        await self.click(
+            p.locator('button[data-scenario="pr_stale"]'), 'button[data-scenario="pr_stale"]'
+        )
+        await self.wait(5)
+        await self.cap("ask")
+        await self.wait(2)
+        await self.click(
+            p.locator(".inbox-panel button", has_text="ช่วยเตือนให้หน่อย").first,
+            '.inbox-panel button:has-text("ช่วยเตือนให้หน่อย")',
+        )
+        await self.wait(3)
+        await self.click(
+            p.locator(".member-tabs button", has_text="พี่สมชาย"),
+            '.member-tabs button:has-text("พี่สมชาย")',
+        )
+        await self.wait(2)
+        await self.cap("nudge")
+        await self.wait(5)
+        await self.click(
+            p.locator(".member-tabs button", has_text="มิ้น"), '.member-tabs button:has-text("มิ้น")'
+        )
+        await self.wait(1)
 
         await self.cap("share")
         box = p.locator("#feedback-form textarea").first
         await self.spot(box)
-        await box.fill(FEEDBACK); await self.wait(3)
+        await box.fill(FEEDBACK)
+        await self.wait(3)
         confirm = p.get_by_role("button", name="ยืนยันส่งความเห็น")
         # A slow fallback model can take a minute, and the attacker may block a rewrite; try up to 3 times.
         for attempt in range(3):
@@ -182,48 +207,73 @@ class Demo:
             except Exception:
                 if attempt == 2:
                     raise
-        await p.locator(".gate-bar").scroll_into_view_if_needed(); await self.wait(1)
+        await p.locator(".gate-bar").scroll_into_view_if_needed()
+        await self.wait(1)
         markers = p.locator("#removed-markers")
         if await markers.is_visible():
             await self.spot(markers)
-        await self.cap("markers"); await self.wait(3)
+        await self.cap("markers")
+        await self.wait(3)
         await self.spot(p.locator("#attacker-rounds"))
-        await self.cap("attacker"); await self.wait(3)
+        await self.cap("attacker")
+        await self.wait(3)
         await self.cap("confirm")
-        await self.button("ยืนยันส่งความเห็น"); await self.wait(2.5)
+        await self.button("ยืนยันส่งความเห็น")
+        await self.wait(2.5)
         await self.spot(p.locator(".gate-bar"))
-        await self.cap("gate"); await self.wait(3)
+        await self.cap("gate")
+        await self.wait(3)
         await self.button("เพื่อนร่วมทีมส่งความเห็นคล้ายกัน")
-        await self.cap("teammates"); await self.wait(8)
+        await self.cap("teammates")
+        await self.wait(8)
 
         await self.go("manager")
         await self.cap("manager")
         for _ in range(24):  # the agent loop releases the theme within ~30-50 s
             if await p.locator(".reply-form").count():
                 break
-            await self.wait(5); await p.reload(); await self.wait(1.5); await self.show("manager")
+            await self.wait(5)
+            await p.reload()
+            await self.wait(1.5)
+            await self.show("manager")
         await self.wait(4)
         box = p.locator(".reply-form textarea").first
         await self.spot(box)
         await box.press_sequentially(REPLY, delay=35)
-        await self.click(p.locator('.reply-form input[name="accept_proposal"]').first, '.reply-form input[name="accept_proposal"]')
-        await self.cap("reply"); await self.wait(2)
-        await self.click(p.locator('.reply-form button[type="submit"]').first, '.reply-form button[type="submit"]'); await self.wait(4)
+        await self.click(
+            p.locator('.reply-form input[name="accept_proposal"]').first,
+            '.reply-form input[name="accept_proposal"]',
+        )
+        await self.cap("reply")
+        await self.wait(2)
+        await self.click(
+            p.locator('.reply-form button[type="submit"]').first,
+            '.reply-form button[type="submit"]',
+        )
+        await self.wait(4)
 
         await self.go("demo")
-        await self.click(p.locator(".member-tabs button", has_text="มิ้น"), '.member-tabs button:has-text("มิ้น")')
+        await self.click(
+            p.locator(".member-tabs button", has_text="มิ้น"), '.member-tabs button:has-text("มิ้น")'
+        )
         await self.spot(p.locator(".inbox-panel"))
-        await self.cap("heard"); await self.wait(5)
-        await self.button("ข้ามเวลา 2 สัปดาห์"); await self.wait(4)
+        await self.cap("heard")
+        await self.wait(5)
+        await self.button("ข้ามเวลา 2 สัปดาห์")
+        await self.wait(4)
         await self.go("manager")
         followup = p.locator(".followup").first
         if await followup.count():
             await self.spot(followup)
-        await self.cap("followup"); await self.wait(7)
+        await self.cap("followup")
+        await self.wait(7)
 
-        await p.goto(ARCHITECTURE); await self.wait(1.5)
-        await self.cap("outro"); await self.wait(4)
-        await self.cap("line"); await self.wait(4)
+        await p.goto(ARCHITECTURE)
+        await self.wait(1.5)
+        await self.cap("outro")
+        await self.wait(4)
+        await self.cap("line")
+        await self.wait(4)
 
     def write_sidecars(self, out: Path):
         """<name>.srt: one event per caption, ending at the next one (max 7 s). <name>.events.json: the clicks."""
@@ -232,32 +282,57 @@ class Demo:
         for i, cue in enumerate(self.cues):
             stop = self.cues[i + 1]["start"] if i + 1 < len(self.cues) else end
             stop = max(cue["start"] + 0.83, min(stop, cue["start"] + MAX_CUE))
-            lines += [str(i + 1), f"{srt_time(cue['start'])} --> {srt_time(stop)}", cue["en"], *([cue["th"]] if cue["th"] else []), ""]
+            lines += [
+                str(i + 1),
+                f"{srt_time(cue['start'])} --> {srt_time(stop)}",
+                cue["en"],
+                *([cue["th"]] if cue["th"] else []),
+                "",
+            ]
         out.with_suffix(".srt").write_text("\n".join(lines), encoding="utf-8")
-        out.with_name(out.stem + ".events.json").write_text(json.dumps(self.events, ensure_ascii=False, indent=2), encoding="utf-8")
+        out.with_name(out.stem + ".events.json").write_text(
+            json.dumps(self.events, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
 
 async def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--base-url", help="default: the live server, or http://localhost:8099 with --mock")
-    ap.add_argument("--mock", action="store_true", help="static server pages (/demo.html …) with ?mock=1 data")
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--base-url", help="default: the live server, or http://localhost:8099 with --mock"
+    )
+    ap.add_argument(
+        "--mock", action="store_true", help="static server pages (/demo.html …) with ?mock=1 data"
+    )
     ap.add_argument("--size", default="1536x864", help="layout viewport WIDTHxHEIGHT")
-    ap.add_argument("--scale", type=float, default=1.667, help="device scale factor (headless only; --headed keeps the screen's own)")
+    ap.add_argument(
+        "--scale",
+        type=float,
+        default=1.667,
+        help="device scale factor (headless only; --headed keeps the screen's own)",
+    )
     ap.add_argument("--out", default=str(ROOT / "demo.mp4"))
-    ap.add_argument("--no-captions", action="store_true", help="clean video; captions still go to the .srt")
+    ap.add_argument(
+        "--no-captions", action="store_true", help="clean video; captions still go to the .srt"
+    )
     ap.add_argument("--headed", action="store_true", help="show the browser while recording")
     args = ap.parse_args()
-    base_url = args.base_url or ("http://localhost:8099" if args.mock else "https://119-13-81-32.sslip.io")
+    base_url = args.base_url or (
+        "http://localhost:8099" if args.mock else "https://119-13-81-32.sslip.io"
+    )
     width, height = (int(v) for v in args.size.lower().split("x"))
-    out = Path(args.out).resolve()
+    out = Path(args.out).resolve()  # noqa: ASYNC240 - One-off recording script.
 
     with tempfile.TemporaryDirectory() as tmp:
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(headless=not args.headed)
             ctx = await browser.new_context(
-                viewport={"width": width, "height": height}, screen={"width": width, "height": height},
+                viewport={"width": width, "height": height},
+                screen={"width": width, "height": height},
                 device_scale_factor=None if args.headed else args.scale,
-                record_video_dir=tmp, record_video_size={"width": width, "height": height},
+                record_video_dir=tmp,
+                record_video_size={"width": width, "height": height},
             )
             page = await ctx.new_page()
             demo = Demo(page, base_url, not args.no_captions, args.mock)
@@ -271,8 +346,28 @@ async def main():
                 await browser.close()
             webm = Path(await video.path())
         if shutil.which("ffmpeg") and out.suffix == ".mp4":
-            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(webm), "-c:v", "libx264", "-preset", "medium",
-                            "-crf", "18", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(out)], check=True)
+            subprocess.run(  # noqa: ASYNC221 - Offline conversion after the browser closes.
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-loglevel",
+                    "error",
+                    "-i",
+                    str(webm),
+                    "-c:v",
+                    "libx264",
+                    "-preset",
+                    "medium",
+                    "-crf",
+                    "18",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-movflags",
+                    "+faststart",
+                    str(out),
+                ],
+                check=True,
+            )
         else:
             out = out.with_suffix(".webm")
             shutil.copy(webm, out)

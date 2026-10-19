@@ -25,6 +25,7 @@ def aware(value: datetime) -> datetime:
 
 def actor_hash(member_id: str, salt: str = "") -> str:
     from app.config import get_settings
+
     # The public demo salt is only for local fixtures; cloud uses its secret encryption key.
     salt = salt or get_settings().token_enc_key or "kreng-jai-local-demo"
     return hashlib.sha256((salt + member_id).encode()).hexdigest()[:16]

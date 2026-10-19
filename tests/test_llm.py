@@ -14,9 +14,16 @@ from app.config import get_settings
 def settings(monkeypatch):
     s = get_settings()
     monkeypatch.setattr(llm, "_cooldown_until", {})
-    for name, value in {"llm_base_url": "https://proxy.example/v1", "llm_api_key": "k", "llm_model": "qwen3.5",
-                        "llm_api_style": "auto", "llm_fallback_base_url": "", "llm_fallback_api_key": "",
-                        "llm_fallback_model": "", "llm_fallback_api_style": "auto"}.items():
+    for name, value in {
+        "llm_base_url": "https://proxy.example/v1",
+        "llm_api_key": "k",
+        "llm_model": "qwen3.5",
+        "llm_api_style": "auto",
+        "llm_fallback_base_url": "",
+        "llm_fallback_api_key": "",
+        "llm_fallback_model": "",
+        "llm_fallback_api_style": "auto",
+    }.items():
         monkeypatch.setattr(s, name, value)
     return s
 
@@ -38,7 +45,10 @@ async def test_native_ollama_api(settings, monkeypatch):
     monkeypatch.setattr(settings, "llm_api_key", "")
     with respx.mock(assert_all_called=True) as mock:
         route = mock.post("http://gpu-box:11434/api/chat").mock(
-            return_value=httpx.Response(200, json={"message": {"role": "assistant", "content": " สวัสดี "}}))
+            return_value=httpx.Response(
+                200, json={"message": {"role": "assistant", "content": " สวัสดี "}}
+            )
+        )
         assert await llm.chat([{"role": "user", "content": "hi"}]) == "สวัสดี"
     sent = route.calls[0].request
     body = json.loads(sent.content)
@@ -53,11 +63,16 @@ async def test_failover_to_lmstudio_and_cooldown(settings, monkeypatch):
     monkeypatch.setattr(settings, "llm_fallback_api_style", "lmstudio")
     with respx.mock(assert_all_called=True) as mock:
         primary = mock.post("https://proxy.example/v1/chat/completions").mock(
-            return_value=httpx.Response(422, json={"error": "Budget has been exceeded"}))
-        secondary = mock.post("https://gpu.example/v1/chat/completions").mock(return_value=ok("จาก GPU"))
+            return_value=httpx.Response(422, json={"error": "Budget has been exceeded"})
+        )
+        secondary = mock.post("https://gpu.example/v1/chat/completions").mock(
+            return_value=ok("จาก GPU")
+        )
         assert await llm.chat([{"role": "user", "content": "hi"}]) == "จาก GPU"
         assert await llm.chat([{"role": "user", "content": "hi"}]) == "จาก GPU"
-    assert primary.call_count == 1  # quota error: primary cooled down, second call goes straight to GPU
+    assert (
+        primary.call_count == 1
+    )  # quota error: primary cooled down, second call goes straight to GPU
     body = json.loads(secondary.calls[0].request.content)
     assert body["reasoning_effort"] == "none" and body["model"] == "qwen/qwen3.5-9b"
     assert secondary.calls[0].request.headers["authorization"] == "Bearer sk-lm"
@@ -68,8 +83,12 @@ async def test_all_backends_down_raises_fast(settings, monkeypatch):
     monkeypatch.setattr(settings, "llm_fallback_base_url", "https://gpu.example")
     monkeypatch.setattr(settings, "llm_fallback_api_style", "lmstudio")
     with respx.mock() as mock:
-        mock.post("https://proxy.example/v1/chat/completions").mock(return_value=httpx.Response(503))
-        gpu = mock.post("https://gpu.example/v1/chat/completions").mock(side_effect=httpx.ConnectError("down"))
+        mock.post("https://proxy.example/v1/chat/completions").mock(
+            return_value=httpx.Response(503)
+        )
+        gpu = mock.post("https://gpu.example/v1/chat/completions").mock(
+            side_effect=httpx.ConnectError("down")
+        )
         with pytest.raises(llm.LLMError):
             await llm.chat([{"role": "user", "content": "hi"}])
         assert not llm.is_available()

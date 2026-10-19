@@ -8,13 +8,20 @@ from app.triggers.mockdata import evaluate_engine, generate_history
 from app.triggers.rules import BANGKOK, detect
 
 NOW = datetime(2026, 10, 19, 6, tzinfo=UTC)
-ROSTER = [SimpleNamespace(actor_hash="junior", seniority="junior"),
-          SimpleNamespace(actor_hash="senior", seniority="senior")]
+ROSTER = [
+    SimpleNamespace(actor_hash="junior", seniority="junior"),
+    SimpleNamespace(actor_hash="senior", seniority="senior"),
+]
 
 
 def event(kind, days=0, **kwargs):
-    return MetadataEvent(type=kind, actor_hash=kwargs.pop("actor_hash", "junior"),
-                         timestamp=kwargs.pop("timestamp", NOW - timedelta(days=days)), ref=kwargs.pop("ref", "REF"), **kwargs)
+    return MetadataEvent(
+        type=kind,
+        actor_hash=kwargs.pop("actor_hash", "junior"),
+        timestamp=kwargs.pop("timestamp", NOW - timedelta(days=days)),
+        ref=kwargs.pop("ref", "REF"),
+        **kwargs,
+    )
 
 
 def test_pr_boundary_seniority_and_completed_work():
@@ -33,7 +40,9 @@ def test_judge_rejects_wip_and_leave_without_llm(backend_settings):
     signal = detect([request], ROSTER, now=NOW)[0]
     assert not asyncio.run(judge_signal(signal, [request])).judge_ok
     request.meta = {}
-    leave = event("leave", days=4, actor_hash="senior", meta={"until": (NOW + timedelta(days=1)).isoformat()})
+    leave = event(
+        "leave", days=4, actor_hash="senior", meta={"until": (NOW + timedelta(days=1)).isoformat()}
+    )
     signal = detect([request, leave], ROSTER, now=NOW)[0]
     assert not context_check(signal, [request, leave])[0]
     leave.meta["until"] = (NOW - timedelta(days=1)).isoformat()
@@ -49,16 +58,28 @@ def test_blocked_and_reopened_thresholds():
     reopened = [event("ticket_reopened", days=i) for i in range(3)]
     assert len(detect(reopened, now=NOW)) == 1
     assert detect(reopened[:2], now=NOW) == []
-    assert detect(reopened + [event("ticket_status", status="Closed")], now=NOW) == []
+    assert detect([*reopened, event("ticket_status", status="Closed")], now=NOW) == []
 
 
 def test_bangkok_friday_window_and_late_night_distinct_days():
     friday = datetime(2026, 10, 16, 18, tzinfo=BANGKOK)
-    urgent = [event("task_assigned", timestamp=friday - timedelta(weeks=i), target_hash="junior") for i in range(3)]
+    urgent = [
+        event("task_assigned", timestamp=friday - timedelta(weeks=i), target_hash="junior")
+        for i in range(3)
+    ]
     assert detect(urgent, now=NOW)[0].kind == "friday_urgent"
     assert detect(urgent[:2], now=NOW) == []
-    assert detect([e.model_copy(update={"timestamp": e.timestamp - timedelta(hours=2)}) for e in urgent], now=NOW) == []
-    late = [event("commit", timestamp=(NOW - timedelta(days=d)).astimezone(BANGKOK).replace(hour=23)) for d in range(1, 5)]
+    assert (
+        detect(
+            [e.model_copy(update={"timestamp": e.timestamp - timedelta(hours=2)}) for e in urgent],
+            now=NOW,
+        )
+        == []
+    )
+    late = [
+        event("commit", timestamp=(NOW - timedelta(days=d)).astimezone(BANGKOK).replace(hour=23))
+        for d in range(1, 5)
+    ]
     signals = detect(late, now=NOW)
     assert len(signals) == 1 and signals[0].evidence["self_only"] is True
     assert detect([late[0]] * 8, now=NOW) == []
@@ -81,7 +102,13 @@ def test_d3_deterministic_12_week_history_and_offline_eval():
     assert len(first["events"]) > 250 and len(first["decoys"]) >= 12
     assert (first["end"] - first["events"][0].timestamp).days >= 80
     assert {g["kind"] for g in first["ground_truth"]} == {
-        "pr_stale", "ticket_blocked", "friday_urgent", "late_night", "review_concentration", "sprint_end"}
+        "pr_stale",
+        "ticket_blocked",
+        "friday_urgent",
+        "late_night",
+        "review_concentration",
+        "sprint_end",
+    }
     metrics = evaluate_engine(42)
-    assert metrics["recall"] >= .9 and metrics["precision"] >= .8
+    assert metrics["recall"] >= 0.9 and metrics["precision"] >= 0.8
     assert metrics["median_detection_delay_minutes"] >= 0

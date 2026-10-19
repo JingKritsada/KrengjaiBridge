@@ -32,6 +32,18 @@ uv run pytest -q
 ```
 Open http://localhost:8000/demo.
 
+## Code quality
+Ruff formats (the Prettier of this repo) and lints (the ESLint); ty type-checks (the `tsc`). All three are dev
+dependencies pinned in `uv.lock` and configured in `pyproject.toml`.
+```bash
+uv run ruff format .        # format          (check only: --check)
+uv run ruff check --fix .   # lint + safe fixes (check only: drop --fix)
+uv run ty check             # types (ty is beta: 0.0.x)
+uv run pre-commit install   # once per clone: runs the three on every commit
+uv run pre-commit run --all-files
+```
+VS Code: install the recommended extensions (`.vscode/extensions.json`); Python files format and fix on save.
+
 ## Deploy (Huawei Cloud)
 - Today: one pay-per-use ECS in CN-Hong Kong running `deploy/docker-compose.yml` (app + PostgreSQL + Redis) behind Caddy.
   `deploy/deploy.sh` syncs and rebuilds.

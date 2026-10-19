@@ -15,16 +15,18 @@ import httpx
 
 from app.config import get_settings
 
-_JSON_BLOCK = re.compile(r"\{.*\}|\[.*\]", re.S)
+_JSON_BLOCK = re.compile(r"\{.*\}|\[.*\]", re.DOTALL)
 _cooldown_until: dict[str, float] = {}
-_last_error: dict[str, str] = {}  # status code or exception type only, never request/response content
+_last_error: dict[
+    str, str
+] = {}  # status code or exception type only, never request/response content
 _last_backend: str | None = None
 # Quota/auth failures do not heal on their own; transient errors get a short pause.
 _PERSISTENT_STATUS = {401, 402, 403, 404, 422}
 
 
 class LLMError(RuntimeError):
-    pass
+    status: int
 
 
 class LLMOutputError(LLMError):
@@ -58,12 +60,25 @@ def _style(style: str, base_url: str) -> str:
 
 def backends() -> list[Backend]:
     s = get_settings()
-    found = [Backend("primary", s.llm_base_url.rstrip("/"), s.llm_api_key, s.llm_model,
-                     _style(s.llm_api_style, s.llm_base_url))]
+    found = [
+        Backend(
+            "primary",
+            s.llm_base_url.rstrip("/"),
+            s.llm_api_key,
+            s.llm_model,
+            _style(s.llm_api_style, s.llm_base_url),
+        )
+    ]
     if s.llm_fallback_base_url:
-        found.append(Backend("secondary", s.llm_fallback_base_url.rstrip("/"), s.llm_fallback_api_key,
-                             s.llm_fallback_model or s.llm_model,
-                             _style(s.llm_fallback_api_style, s.llm_fallback_base_url)))
+        found.append(
+            Backend(
+                "secondary",
+                s.llm_fallback_base_url.rstrip("/"),
+                s.llm_fallback_api_key,
+                s.llm_fallback_model or s.llm_model,
+                _style(s.llm_fallback_api_style, s.llm_fallback_base_url),
+            )
+        )
     return found
 
 
@@ -75,21 +90,37 @@ def is_available() -> bool:
 
 def status() -> dict[str, Any]:
     now = monotonic()
-    return {"last_backend": _last_backend,
-            "backends": [{"name": b.name, "model": b.model, "style": b.style,
-                          "cooldown_s": max(0, round(_cooldown_until.get(b.name, 0) - now)),
-                          "last_error": _last_error.get(b.name)}
-                         for b in backends()]}
+    return {
+        "last_backend": _last_backend,
+        "backends": [
+            {
+                "name": b.name,
+                "model": b.model,
+                "style": b.style,
+                "cooldown_s": max(0, round(_cooldown_until.get(b.name, 0) - now)),
+                "last_error": _last_error.get(b.name),
+            }
+            for b in backends()
+        ],
+    }
 
 
 def _request(b: Backend, messages, temperature, max_tokens) -> tuple[str, dict[str, Any]]:
     if b.style == "ollama":
         # Native Ollama API: the only reliable way to switch Qwen3.x thinking off there.
         return f"{b.base_url.removesuffix('/v1')}/api/chat", {
-            "model": b.model, "messages": messages, "stream": False, "think": False,
-            "options": {"temperature": temperature, "num_predict": max_tokens}}
-    body: dict[str, Any] = {"model": b.model, "messages": messages, "temperature": temperature,
-                            "max_tokens": max_tokens}
+            "model": b.model,
+            "messages": messages,
+            "stream": False,
+            "think": False,
+            "options": {"temperature": temperature, "num_predict": max_tokens},
+        }
+    body: dict[str, Any] = {
+        "model": b.model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
     if b.style == "lmstudio":
         # LM Studio OpenAI-compatible endpoint: reasoning_effort "none" turns thinking off.
         body["reasoning_effort"] = "none"
@@ -143,7 +174,9 @@ async def chat(
             text = await _call(b, messages, temperature, max_tokens)
         except LLMError as e:
             long = getattr(e, "status", None) in _PERSISTENT_STATUS
-            _cooldown_until[b.name] = monotonic() + (s.llm_cooldown_long_s if long else s.llm_cooldown_s)
+            _cooldown_until[b.name] = monotonic() + (
+                s.llm_cooldown_long_s if long else s.llm_cooldown_s
+            )
             _last_error[b.name] = str(e)
             failures.append(str(e))
             continue
@@ -155,13 +188,13 @@ async def chat(
 async def chat_json(messages: list[dict[str, str]], **kw: Any) -> Any:
     """Ask for JSON and parse the first JSON object/array in the reply."""
     text = await chat(messages, **kw)
-    text = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.M).strip()
+    text = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         m = _JSON_BLOCK.search(text)
         if not m:
-            raise LLMOutputError("no JSON object in reply")
+            raise LLMOutputError("no JSON object in reply") from None
         try:
             return json.loads(m.group(0))
         except json.JSONDecodeError as e:

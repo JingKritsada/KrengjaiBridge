@@ -1,4 +1,5 @@
 """FastAPI application with local demo startup and periodic agent work."""
+
 import asyncio
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
@@ -20,6 +21,7 @@ STATIC = Path(__file__).parent / "static"
 async def agent_loop(app):
     from app.manager.loop import follow_up, release_themes
     from app.triggers.engine import run_engine
+
     while True:
         await asyncio.sleep(30)
         # One short transaction per stage so a slow LLM call never holds locks other requests need.
@@ -38,7 +40,9 @@ async def agent_loop(app):
 def create_app(*, database_url=None, redis=None, background=True):
     @asynccontextmanager
     async def lifespan(application):
-        application.state.session_factory = make_session_factory(database_url or get_settings().database_url)
+        application.state.session_factory = make_session_factory(
+            database_url or get_settings().database_url
+        )
         application.state.redis = redis if redis is not None else get_redis()
         with application.state.session_factory() as session:
             seed_demo(session)
@@ -71,7 +75,9 @@ def create_app(*, database_url=None, redis=None, background=True):
         path = STATIC / filename
         if path.is_file():
             return FileResponse(path)
-        return HTMLResponse("<!doctype html><html lang='th'><meta charset='utf-8'><title>Kreng-jai Bridge</title><body><h1>Kreng-jai Bridge</h1><p>หน้าสาธิตกำลังเตรียมพร้อม</p></body></html>")
+        return HTMLResponse(
+            "<!doctype html><html lang='th'><meta charset='utf-8'><title>Kreng-jai Bridge</title><body><h1>Kreng-jai Bridge</h1><p>หน้าสาธิตกำลังเตรียมพร้อม</p></body></html>"
+        )
 
     @application.get("/", include_in_schema=False)
     def index():

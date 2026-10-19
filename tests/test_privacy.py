@@ -1,5 +1,6 @@
 import asyncio
 import json
+from typing import Any
 
 import fakeredis
 import pytest
@@ -30,10 +31,25 @@ def offline(monkeypatch):
     monkeypatch.setattr(identifiers, "_local_ner", lambda: None)
 
 
-@pytest.mark.parametrize("particle", [
-    "ครับ", "ค่ะ", "คะ", "นะคะ", "จ้ะ", "คับ", "ค้าบ", "งับ", "ฮะ", "ค่า",
-    "จ้า", "นะครับ", "เจ้าค่ะ", "ครับผม",
-])
+@pytest.mark.parametrize(
+    "particle",
+    [
+        "ครับ",
+        "ค่ะ",
+        "คะ",
+        "นะคะ",
+        "จ้ะ",
+        "คับ",
+        "ค้าบ",
+        "งับ",
+        "ฮะ",
+        "ค่า",
+        "จ้า",
+        "นะครับ",
+        "เจ้าค่ะ",
+        "ครับผม",
+    ],
+)
 def test_particles(particle):
     assert neutralize("ช่วยวางแผนงานล่วงหน้า" + particle) == "ช่วยวางแผนงานล่วงหน้า"
 
@@ -45,22 +61,25 @@ def test_pronouns(pronoun):
     assert leak_markers(result) == []
 
 
-@pytest.mark.parametrize("sentence", [
-    DEMO_TEXT,
-    "ผมอยากให้รีวิว PR เร็วขึ้นครับ",
-    "ดิฉันขอให้ประชุมสั้นลงค่ะ",
-    "กระผมติดงานด่วนคับ",
-    "หนูทำงานจนดึกนะคะ",
-    "เค้าอยากขอเวลาทดสอบเพิ่มจ้ะ",
-    "ฉันต้องเข้าเวรทุกคืนค้าบ",
-    "ขอ requirement ที่ชัดเจนงับ",
-    "พี่สมชายช่วยรีวิวให้น้องมิ้นด้วยครับ",
-    "ช่วยลดประชุมด้วยคะ",
-    "หนูขอเลื่อนส่งงานเจ้าค่ะ",
-    "ผมติดงานค่าใช้จ่ายนะครับ",
-    "ค่าใช้จ่ายสูง คะแนนลดลง คณะกรรมการต้องทบทวน",
-    "ห้องทำงานคับแคบมากค่ะ",
-])
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        DEMO_TEXT,
+        "ผมอยากให้รีวิว PR เร็วขึ้นครับ",
+        "ดิฉันขอให้ประชุมสั้นลงค่ะ",
+        "กระผมติดงานด่วนคับ",
+        "หนูทำงานจนดึกนะคะ",
+        "เค้าอยากขอเวลาทดสอบเพิ่มจ้ะ",
+        "ฉันต้องเข้าเวรทุกคืนค้าบ",
+        "ขอ requirement ที่ชัดเจนงับ",
+        "พี่สมชายช่วยรีวิวให้น้องมิ้นด้วยครับ",
+        "ช่วยลดประชุมด้วยคะ",
+        "หนูขอเลื่อนส่งงานเจ้าค่ะ",
+        "ผมติดงานค่าใช้จ่ายนะครับ",
+        "ค่าใช้จ่ายสูง คะแนนลดลง คณะกรรมการต้องทบทวน",
+        "ห้องทำงานคับแคบมากค่ะ",
+    ],
+)
 def test_no_markers_after_cleanup(sentence):
     cleaned = neutralize(sentence)
     assert cleaned
@@ -78,7 +97,14 @@ def test_demo_roster():
     roster = demo_roster()
     assert len(roster) == len({m.member_id for m in roster}) == 6
     assert all(len(m.style_samples) == 3 for m in roster)
-    assert {m.member_id for m in roster} == {"m-mint", "m-somchai", "m-wan", "m-boat", "m-fon", "m-ton"}
+    assert {m.member_id for m in roster} == {
+        "m-mint",
+        "m-somchai",
+        "m-wan",
+        "m-boat",
+        "m-fon",
+        "m-ton",
+    }
 
 
 def test_identifier_exact_fuzzy_and_non_identifier_words():
@@ -130,9 +156,15 @@ def test_missing_ner_model_never_attempts_download(monkeypatch):
     LOCAL_NER.cache_clear()
 
 
-@pytest.mark.parametrize("confidence,guessed,expected", [
-    (0.5, "m-mint", True), (0.49, "m-mint", False), (0.99, "m-boat", False), (1 / 6, None, False),
-])
+@pytest.mark.parametrize(
+    "confidence,guessed,expected",
+    [
+        (0.5, "m-mint", True),
+        (0.49, "m-mint", False),
+        (0.99, "m-boat", False),
+        (1 / 6, None, False),
+    ],
+)
 def test_attacker_threshold(monkeypatch, confidence, guessed, expected):
     async def mock_json(messages, **kwargs):
         assert "author_id" not in messages[-1]["content"]
@@ -149,7 +181,9 @@ def test_small_roster_threshold(monkeypatch):
         return {"guessed_member_id": "m-mint", "confidence": 0.8}
 
     monkeypatch.setattr(llm, "chat_json", mock_json)
-    assert not asyncio.run(guess_author(NEUTRAL_TEXT, demo_roster()[:2], author_id="m-mint")).identified
+    assert not asyncio.run(
+        guess_author(NEUTRAL_TEXT, demo_roster()[:2], author_id="m-mint")
+    ).identified
 
 
 def fake_pipeline_llm(monkeypatch, *, identified_rounds=0, malformed=False):
@@ -166,12 +200,17 @@ def fake_pipeline_llm(monkeypatch, *, identified_rounds=0, malformed=False):
         if "privacy attacker" in prompt:
             attacks.append(json.loads(messages[-1]["content"])["feedback"])
             assert leak_markers(attacks[-1]) == []
-            return {"guessed_member_id": "m-mint", "confidence": 0.9 if len(attacks) <= identified_rounds else 0.2}
+            return {
+                "guessed_member_id": "m-mint",
+                "confidence": 0.9 if len(attacks) <= identified_rounds else 0.2,
+            }
         if malformed:
             return {"situation": None}
         return {
-            "situation": "มีงานด่วนเย็นวันศุกร์ครับ", "impact": "กระทบแผนส่วนตัวค่ะ",
-            "request": "ขอให้วางแผนงานล่วงหน้านะคะ", "theme_slug": "friday-urgent-work",
+            "situation": "มีงานด่วนเย็นวันศุกร์ครับ",
+            "impact": "กระทบแผนส่วนตัวค่ะ",
+            "request": "ขอให้วางแผนงานล่วงหน้านะคะ",
+            "theme_slug": "friday-urgent-work",
             "theme_label": "งานด่วนเย็นวันศุกร์ครับ",
         }
 
@@ -192,6 +231,7 @@ def test_pipeline_six_step_trace_and_call_budget(monkeypatch):
     assert len(calls) == 2 + 2 * len(attacks)
     assert [g.identified for g in result.attacker_rounds] == [True, False]
     assert leak_markers(result.final_text) == []
+    assert result.structured is not None
     assert all(not leak_markers(value) for value in result.structured.model_dump().values())
     assert not any("โหมดสำรอง" in note for step in result.steps for note in step.notes)
 
@@ -234,7 +274,9 @@ def test_pipeline_llm_error_does_not_echo_source(monkeypatch):
     assert result.structured and all(result.structured.model_dump().values())
     assert not leak_markers(result.final_text)
     assert all(not leak_markers(value) for value in result.structured.model_dump().values())
-    assert all("โหมดสำรอง" in " ".join(step.notes) for step in result.steps if step.step in (1, 3, 4, 6))
+    assert all(
+        "โหมดสำรอง" in " ".join(step.notes) for step in result.steps if step.step in (1, 3, 4, 6)
+    )
     assert all(LOCAL_ATTACKER_REASON in guess.reason for guess in result.attacker_rounds)
     assert DEMO_TEXT not in result.model_dump_json()
 
@@ -251,17 +293,26 @@ def test_identifier_fallback_retains_roster_and_ner_scrub(monkeypatch):
     monkeypatch.setattr(identifiers, "_local_ner", lambda: LocalNER())
     monkeypatch.setattr(llm, "chat_json", unavailable)
     notes = []
-    cleaned = asyncio.run(identifiers.remove_identifiers("พี่สมชายส่งข้อมูลเฉพาะ", demo_roster(), fallback_notes=notes))
+    cleaned = asyncio.run(
+        identifiers.remove_identifiers("พี่สมชายส่งข้อมูลเฉพาะ", demo_roster(), fallback_notes=notes)
+    )
     assert cleaned == "[ข้อมูลระบุตัวตน]งานเย็นวันศุกร์"
     assert notes == ["โหมดสำรอง: LLM ไม่พร้อมใช้งาน"]
 
 
-@pytest.mark.parametrize("text,slug", [
-    ("งานเย็นวันศุกร์", "friday-urgent-work"), ("งานหลังเลิกงาน", "friday-urgent-work"),
-    ("PR รอ review", "pr-review-delay"), ("งานบล็อก", "blocked-tickets"),
-    ("เวร on-call ดึก", "workload-oncall"), ("สเปกไม่ชัด", "unclear-requirements"),
-    ("ประชุมหลายรอบ", "meeting-overload"), ("ขอปรับกระบวนการ", "general-feedback"),
-])
+@pytest.mark.parametrize(
+    "text,slug",
+    [
+        ("งานเย็นวันศุกร์", "friday-urgent-work"),
+        ("งานหลังเลิกงาน", "friday-urgent-work"),
+        ("PR รอ review", "pr-review-delay"),
+        ("งานบล็อก", "blocked-tickets"),
+        ("เวร on-call ดึก", "workload-oncall"),
+        ("สเปกไม่ชัด", "unclear-requirements"),
+        ("ประชุมหลายรอบ", "meeting-overload"),
+        ("ขอปรับกระบวนการ", "general-feedback"),
+    ],
+)
 def test_theme_fallback_keywords(monkeypatch, text, slug):
     async def unavailable(*args, **kwargs):
         raise llm.LLMError("unavailable")
@@ -269,7 +320,10 @@ def test_theme_fallback_keywords(monkeypatch, text, slug):
     monkeypatch.setattr(llm, "chat_json", unavailable)
     actual_slug, label = asyncio.run(assign_theme(text))
     assert actual_slug == slug and label
-    assert asyncio.run(assign_theme("ปรับกระบวนการ", [("existing", "ประเด็นเดิม")])) == ("existing", "ประเด็นเดิม")
+    assert asyncio.run(assign_theme("ปรับกระบวนการ", [("existing", "ประเด็นเดิม")])) == (
+        "existing",
+        "ประเด็นเดิม",
+    )
 
 
 @pytest.mark.parametrize("connector", ["ทำให้", "เพราะ", "จึง", "ส่งผลให้"])
@@ -286,8 +340,16 @@ def test_structure_fallback_splits_without_inventing_impact(monkeypatch, connect
 
 
 def test_local_attacker_training_and_threshold():
-    roster = [MemberProfile(member_id=str(i), display_name=f"member {i}", style_samples=[text] * 40)
-              for i, text in enumerate(["uniquely recognizable alpha writing", "different beta vocabulary", "third gamma phrasing"])]
+    roster = [
+        MemberProfile(member_id=str(i), display_name=f"member {i}", style_samples=[text] * 40)
+        for i, text in enumerate(
+            [
+                "uniquely recognizable alpha writing",
+                "different beta vocabulary",
+                "third gamma phrasing",
+            ]
+        )
+    ]
     guess = guess_author_local(roster[0].style_samples[0], roster, author_id="0")
     assert guess.guessed_member_id == "0" and guess.identified
     assert guess.confidence >= 2 / 3
@@ -298,8 +360,10 @@ def test_local_attacker_training_and_threshold():
 
 @pytest.mark.parametrize("samples", [[], ["one style sample"]])
 def test_local_attacker_insufficient_samples(samples):
-    roster = [MemberProfile(member_id="a", display_name="a", style_samples=samples),
-              MemberProfile(member_id="b", display_name="b")]
+    roster = [
+        MemberProfile(member_id="a", display_name="a", style_samples=samples),
+        MemberProfile(member_id="b", display_name="b"),
+    ]
     guess = guess_author_local("feedback", roster, author_id="a")
     assert not guess.identified and guess.guessed_member_id is None
     assert "training skipped" in guess.reason
@@ -316,15 +380,26 @@ def test_local_rewrite_generalizes_once_then_passes_or_blocks(monkeypatch, still
 
     def local_guess(text, roster, *, author_id, round):
         attacked.append(text)
-        return AttackerGuess(round=round, guessed_member_id=author_id, confidence=.9,
-                             identified=len(attacked) == 1 or still_identified, reason=LOCAL_ATTACKER_REASON)
+        return AttackerGuess(
+            round=round,
+            guessed_member_id=author_id,
+            confidence=0.9,
+            identified=len(attacked) == 1 or still_identified,
+            reason=LOCAL_ATTACKER_REASON,
+        )
 
     monkeypatch.setattr(llm, "chat_json", unavailable)
     monkeypatch.setattr(rewrite, "guess_author_local", local_guess)
     notes = []
-    text, guesses, safe = asyncio.run(rewrite_with_attacker(
-        "งาน PR นะ!!! 😀  ต้องแก้ไข", "m-mint", demo_roster(), max_rounds=1, fallback_notes=notes,
-    ))
+    text, guesses, safe = asyncio.run(
+        rewrite_with_attacker(
+            "งาน PR นะ!!! 😀  ต้องแก้ไข",
+            "m-mint",
+            demo_roster(),
+            max_rounds=1,
+            fallback_notes=notes,
+        )
+    )
     assert safe is (not still_identified)
     assert len(guesses) == len(attacked) == 2
     assert text == "งาน pr ต้องแก้ไข"
@@ -343,12 +418,21 @@ def test_attacker_only_failure_uses_local_check(monkeypatch):
     monkeypatch.setattr(llm, "chat_json", attacker_unavailable)
     result = asyncio.run(run_pipeline(DEMO_TEXT, "m-mint", demo_roster()))
     assert result.ok
-    assert [step.step for step in result.steps if any("โหมดสำรอง" in note for note in step.notes)] == [3]
+    assert [
+        step.step for step in result.steps if any("โหมดสำรอง" in note for note in step.notes)
+    ] == [3]
 
 
-@pytest.mark.parametrize("kwargs", [{"max_rounds": 0}, {"author_id": "unknown"}, {"roster": []}, {"text": " "}])
+@pytest.mark.parametrize(
+    "kwargs", [{"max_rounds": 0}, {"author_id": "unknown"}, {"roster": []}, {"text": " "}]
+)
 def test_pipeline_invalid_inputs_do_not_call_llm(kwargs):
-    args = {"text": DEMO_TEXT, "author_id": "m-mint", "roster": demo_roster(), **kwargs}
+    args: dict[str, Any] = {
+        "text": DEMO_TEXT,
+        "author_id": "m-mint",
+        "roster": demo_roster(),
+        **kwargs,
+    }
     assert not asyncio.run(run_pipeline(**args)).ok
 
 
@@ -365,7 +449,8 @@ def test_assign_theme_reuses_existing_label(monkeypatch):
 
     monkeypatch.setattr(llm, "chat_json", mock_json)
     assert asyncio.run(assign_theme("ขั้นตอนปล่อยระบบ", [("release-process", "ขั้นตอนปล่อยระบบ")])) == (
-        "release-process", "ขั้นตอนปล่อยระบบ",
+        "release-process",
+        "ขั้นตอนปล่อยระบบ",
     )
 
 

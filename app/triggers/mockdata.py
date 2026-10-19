@@ -1,8 +1,9 @@
 """D3: reproducible 12-week SDLC history and labelled friction episodes."""
+
 import random
 from datetime import UTC, datetime, timedelta
 
-from app.contracts import MemberProfile, MetadataEvent
+from app.contracts import MemberProfile, MetadataEvent, Seniority
 from app.db import actor_hash, aware
 from app.triggers.judge import context_check
 from app.triggers.rules import BANGKOK, detect
@@ -13,22 +14,44 @@ def generate_history(seed=42, *, now=None):
     now = aware(now or datetime(2026, 10, 19, 5, tzinfo=UTC))
     monday = now.astimezone(BANGKOK).replace(hour=9, minute=0, second=0, microsecond=0)
     monday -= timedelta(days=monday.weekday(), weeks=12)
-    people = [("m-mint", "junior"), ("m-somchai", "senior"), ("m-wan", "lead"),
-              ("m-boat", "mid"), ("m-fon", "junior"), ("m-ton", "mid")]
-    profiles = [MemberProfile(member_id=mid, display_name=mid, seniority=rank) for mid, rank in people]
+    people: list[tuple[str, Seniority]] = [
+        ("m-mint", "junior"),
+        ("m-somchai", "senior"),
+        ("m-wan", "lead"),
+        ("m-boat", "mid"),
+        ("m-fon", "junior"),
+        ("m-ton", "mid"),
+    ]
+    profiles = [
+        MemberProfile(member_id=mid, display_name=mid, seniority=rank) for mid, rank in people
+    ]
     from types import SimpleNamespace
+
     roster = [SimpleNamespace(actor_hash=actor_hash(mid), seniority=rank) for mid, rank in people]
     events, truth, decoys = [], [], []
 
     def event(kind, who, when, ref, *, target=None, status="", **meta):
-        e = MetadataEvent(type=kind, actor_hash=actor_hash(who), target_hash=actor_hash(target) if target else None,
-                          timestamp=when, ref=ref, status=status, meta=meta)
+        e = MetadataEvent(
+            type=kind,
+            actor_hash=actor_hash(who),
+            target_hash=actor_hash(target) if target else None,
+            timestamp=when,
+            ref=ref,
+            status=status,
+            meta=meta,
+        )
         events.append(e)
         return e
 
     def friction(kind, who, ref, when):
-        truth.append({"kind": kind, "affected_hash": actor_hash(who) if who != "team" else "team",
-                      "ref": ref, "detectable_at": when.isoformat()})
+        truth.append(
+            {
+                "kind": kind,
+                "affected_hash": actor_hash(who) if who != "team" else "team",
+                "ref": ref,
+                "detectable_at": when.isoformat(),
+            }
+        )
 
     for week in range(12):
         start = monday + timedelta(weeks=week)
@@ -36,8 +59,19 @@ def generate_history(seed=42, *, now=None):
         for person in ("m-somchai", "m-wan", "m-boat", "m-ton"):
             event("pr_reviewed", person, start, f"BASE-{week}-{person}")
         for day in range(5):
-            event("commit", rng.choice(people)[0], start + timedelta(days=day, hours=6), f"COMMIT-{week}-{day}")
-            event("task_assigned", "m-wan", start + timedelta(days=day, hours=2), f"TASK-{week}-{day}", target="m-mint")
+            event(
+                "commit",
+                rng.choice(people)[0],
+                start + timedelta(days=day, hours=6),
+                f"COMMIT-{week}-{day}",
+            )
+            event(
+                "task_assigned",
+                "m-wan",
+                start + timedelta(days=day, hours=2),
+                f"TASK-{week}-{day}",
+                target="m-mint",
+            )
         ref = f"PR #{100 + week}"
         opened = start + timedelta(hours=1)
         event("pr_review_requested", "m-mint", opened, ref, target="m-somchai")
@@ -52,7 +86,9 @@ def generate_history(seed=42, *, now=None):
             event("ticket_status", "m-boat", start, ref, status="Blocked")
             event("ticket_status", "m-boat", start + timedelta(days=5), ref, status="Done")
             friction("ticket_blocked", "m-boat", ref, start + timedelta(days=2, seconds=1))
-        event("sprint_ended", "m-mint", start + timedelta(days=11), f"Sprint {week // 2}") if week % 2 == 0 else None
+        event(
+            "sprint_ended", "m-mint", start + timedelta(days=11), f"Sprint {week // 2}"
+        ) if week % 2 == 0 else None
         if week % 2 == 0:
             friction("sprint_end", "m-mint", f"Sprint {week // 2}", start + timedelta(days=11))
         # Negative cases exceed the timer but must be rejected by the context judge.
@@ -63,7 +99,13 @@ def generate_history(seed=42, *, now=None):
         ref = f"LEAVE-{week}"
         leave_start = start + timedelta(days=4)
         event("pr_review_requested", "m-fon", leave_start, ref, target="m-wan")
-        event("leave", "m-wan", leave_start, f"Leave-{week}", until=(leave_start + timedelta(days=4)).isoformat())
+        event(
+            "leave",
+            "m-wan",
+            leave_start,
+            f"Leave-{week}",
+            until=(leave_start + timedelta(days=4)).isoformat(),
+        )
         event("pr_reviewed", "m-wan", leave_start + timedelta(days=4), ref)
         decoys.append(ref)
     for week in (9, 10, 11):
@@ -87,8 +129,14 @@ def generate_history(seed=42, *, now=None):
     for index in range(40):
         event("pr_reviewed", "m-somchai", when, f"CONCENTRATED-{index}")
     friction("review_concentration", "team", "Team review distribution", when)
-    return {"events": sorted(events, key=lambda e: aware(e.timestamp)), "ground_truth": truth,
-            "decoys": decoys, "roster": roster, "profiles": profiles, "end": now}
+    return {
+        "events": sorted(events, key=lambda e: aware(e.timestamp)),
+        "ground_truth": truth,
+        "decoys": decoys,
+        "roster": roster,
+        "profiles": profiles,
+        "end": now,
+    }
 
 
 generate_mock_data = generate_history
@@ -101,6 +149,7 @@ def evaluate_engine(seed=42, *, tick_minutes=15):
     Repeated observations of the same episode count once, including false alerts.
     """
     from statistics import median
+
     if tick_minutes <= 0:
         raise ValueError("tick_minutes must be positive")
     data = generate_history(seed)
@@ -112,10 +161,16 @@ def evaluate_engine(seed=42, *, tick_minutes=15):
             if context_check(signal, observed)[0]:
                 first_seen.setdefault((signal.kind, signal.affected_hash, signal.ref), cursor)
         cursor += timedelta(minutes=tick_minutes)
-    expected = {(g["kind"], g["affected_hash"], g["ref"]): datetime.fromisoformat(g["detectable_at"])
-                for g in data["ground_truth"]}
+    expected = {
+        (g["kind"], g["affected_hash"], g["ref"]): datetime.fromisoformat(g["detectable_at"])
+        for g in data["ground_truth"]
+    }
     matched = set(first_seen) & set(expected)
-    delays = [max(0, (first_seen[key] - aware(expected[key])).total_seconds() / 60) for key in matched]
-    return {"recall": len(matched) / len(expected) if expected else 1.0,
-            "precision": len(matched) / len(first_seen) if first_seen else 1.0,
-            "median_detection_delay_minutes": median(delays) if delays else 0.0}
+    delays = [
+        max(0, (first_seen[key] - aware(expected[key])).total_seconds() / 60) for key in matched
+    ]
+    return {
+        "recall": len(matched) / len(expected) if expected else 1.0,
+        "precision": len(matched) / len(first_seen) if first_seen else 1.0,
+        "median_detection_delay_minutes": median(delays) if delays else 0.0,
+    }

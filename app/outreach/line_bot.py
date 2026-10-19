@@ -1,22 +1,39 @@
 """LINE SDK v3 integration. All synchronous SDK I/O runs in a thread pool."""
+
 import json
 import re
+from contextlib import suppress
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.messaging import (ApiClient, Configuration, FlexContainer, FlexMessage,
-                                  MessagingApi, PostbackAction, PushMessageRequest,
-                                  QuickReply, QuickReplyItem, ReplyMessageRequest, ShowLoadingAnimationRequest,
-                                  TextMessage)
+from linebot.v3.messaging import (
+    ApiClient,
+    Configuration,
+    FlexContainer,
+    FlexMessage,
+    MessagingApi,
+    PostbackAction,
+    PushMessageRequest,
+    QuickReply,
+    QuickReplyItem,
+    ReplyMessageRequest,
+    ShowLoadingAnimationRequest,
+    TextMessage,
+)
 from linebot.v3.webhook import WebhookParser
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 
-from app.api import (check_draft_recipient, confirm_feedback, get_member, preview_feedback,
-                     redis_client)
+from app.api import (
+    check_draft_recipient,
+    confirm_feedback,
+    get_member,
+    preview_feedback,
+    redis_client,
+)
 from app.config import get_settings
 from app.db import Member, Outreach
-from app.outreach.channel import deliver
 from app.privacy.neutralize import leak_markers
 from app.triggers.engine import respond
 
@@ -28,13 +45,17 @@ MIN_FEEDBACK_CHARS = 15
 CONFIRM_WORDS = {"ยืนยัน", "ยืนยันส่ง", "ส่ง", "confirm"}
 CANCEL_WORDS = {"ยกเลิก", "cancel"}
 HELP_WORDS = {"ช่วยเหลือ", "วิธีใช้", "เมนู", "help"}
-HELP_TEXT = ("วิธีใช้: พิมพ์ความเห็นที่อยากสะท้อนได้เลย (อย่างน้อยหนึ่งประโยค) ระบบจะให้ดูฉบับไม่ระบุตัวตนก่อนส่ง\n"
-             "พิมพ์ \"ยืนยัน\" หรือ \"ยกเลิก\" สำหรับฉบับร่างล่าสุด\n"
-             "ตอบข้อความเตือนได้ด้วยการพิมพ์: ช่วยเตือนให้หน่อย / ยังไม่ต้อง / ไม่มีประโยชน์ / ปิดแจ้งเตือนแบบนี้")
-ACTION_REPLIES = {"nudge:accept": "ส่งข้อความเตือนตามข้อตกลงของทีมแล้ว ในข้อความไม่มีชื่อคุณ",
-                  "nudge:decline": "รับทราบ ยังไม่ส่งข้อความเตือน",
-                  "nudge:useless": "ขอบคุณ ระบบจะปรับเกณฑ์การแจ้งเตือน",
-                  "mute": "ปิดการแจ้งเตือนประเภทนี้แล้ว"}
+HELP_TEXT = (
+    "วิธีใช้: พิมพ์ความเห็นที่อยากสะท้อนได้เลย (อย่างน้อยหนึ่งประโยค) ระบบจะให้ดูฉบับไม่ระบุตัวตนก่อนส่ง\n"
+    'พิมพ์ "ยืนยัน" หรือ "ยกเลิก" สำหรับฉบับร่างล่าสุด\n'
+    "ตอบข้อความเตือนได้ด้วยการพิมพ์: ช่วยเตือนให้หน่อย / ยังไม่ต้อง / ไม่มีประโยชน์ / ปิดแจ้งเตือนแบบนี้"
+)
+ACTION_REPLIES = {
+    "nudge:accept": "ส่งข้อความเตือนตามข้อตกลงของทีมแล้ว ในข้อความไม่มีชื่อคุณ",
+    "nudge:decline": "รับทราบ ยังไม่ส่งข้อความเตือน",
+    "nudge:useless": "ขอบคุณ ระบบจะปรับเกณฑ์การแจ้งเตือน",
+    "mute": "ปิดการแจ้งเตือนประเภทนี้แล้ว",
+}
 
 
 def _norm(text):
@@ -43,13 +64,20 @@ def _norm(text):
 
 def quick_reply(buttons):
     # display_text echoes the choice into the chat, so a screen recording shows what was tapped.
-    return QuickReply(items=[QuickReplyItem(action=PostbackAction(label=b["label"][:20], data=b["action"],
-                                                                  display_text=b["label"][:300]))
-                             for b in buttons[:13]])
+    return QuickReply(
+        items=[
+            QuickReplyItem(
+                action=PostbackAction(
+                    label=b["label"][:20], data=b["action"], displayText=b["label"][:300]
+                )
+            )
+            for b in buttons[:13]
+        ]
+    )
 
 
 def text_message(text, buttons=None):
-    return TextMessage(text=text[:5000], quick_reply=quick_reply(buttons) if buttons else None)
+    return TextMessage(text=text[:5000], quickReply=quick_reply(buttons) if buttons else None)
 
 
 # Flex has no shadows, so the card stays flat but uses the web palette (DESIGN.md section 11).
@@ -59,26 +87,89 @@ INK, INK_3, DANGER, ACCENT, ACCENT_INK = "#142022", "#566264", "#A8231B", "#0B6A
 def preview_message(draft_id, result, markers=()):
     """Preview card for a LINE draft. `markers` are the removed words (leak_markers of the incoming text); never stored."""
     structured = result.get("structured") or {}
-    rows = [{"type": "text", "text": "ตรวจสอบก่อนส่งแบบนิรนาม", "weight": "bold", "size": "lg", "color": INK, "wrap": True}]
+    rows: list[dict[str, Any]] = [
+        {
+            "type": "text",
+            "text": "ตรวจสอบก่อนส่งแบบนิรนาม",
+            "weight": "bold",
+            "size": "lg",
+            "color": INK,
+            "wrap": True,
+        }
+    ]
     if markers:
         spans = []
         for i, marker in enumerate(markers):
             if i:
                 spans.append({"type": "span", "text": " · ", "color": INK_3})
-            spans.append({"type": "span", "text": marker, "decoration": "line-through", "color": DANGER})
-        rows += [{"type": "text", "text": "ร่องรอยที่ตัดออก", "size": "xs", "color": INK_3, "margin": "md"},
-                 {"type": "text", "text": " · ".join(markers), "contents": spans, "size": "sm", "wrap": True}]
+            spans.append(
+                {"type": "span", "text": marker, "decoration": "line-through", "color": DANGER}
+            )
+        rows += [
+            {"type": "text", "text": "ร่องรอยที่ตัดออก", "size": "xs", "color": INK_3, "margin": "md"},
+            {
+                "type": "text",
+                "text": " · ".join(markers),
+                "contents": spans,
+                "size": "sm",
+                "wrap": True,
+            },
+        ]
     rows.append({"type": "separator", "margin": "md"})
     for key, label in (("situation", "สถานการณ์"), ("impact", "ผลกระทบ"), ("request", "สิ่งที่ขอ")):
-        rows += [{"type": "text", "text": label, "size": "xs", "color": INK_3, "margin": "md"},
-                 {"type": "text", "text": structured.get(key) or "—", "size": "sm", "color": INK, "wrap": True}]
+        rows += [
+            {"type": "text", "text": label, "size": "xs", "color": INK_3, "margin": "md"},
+            {
+                "type": "text",
+                "text": structured.get(key) or "—",
+                "size": "sm",
+                "color": INK,
+                "wrap": True,
+            },
+        ]
     rounds = len(result.get("attacker_rounds", []))
-    rows.append({"type": "text", "text": f"ทดสอบเดาตัวตน {rounds} รอบ · ระบุตัวตนไม่ได้", "size": "xs", "color": ACCENT_INK, "margin": "md", "wrap": True})
-    buttons = [{"type": "button", "style": "primary", "color": ACCENT, "action": {"type": "postback", "label": "ยืนยันส่ง", "data": f"fb:confirm:{draft_id}", "displayText": "ยืนยันส่ง"}},
-               {"type": "button", "style": "secondary", "action": {"type": "postback", "label": "ยกเลิก", "data": f"fb:cancel:{draft_id}", "displayText": "ยกเลิก"}}]
-    bubble = {"type": "bubble", "body": {"type": "box", "layout": "vertical", "contents": rows},
-              "footer": {"type": "box", "layout": "vertical", "spacing": "sm", "contents": buttons}}
-    return FlexMessage(alt_text="ตรวจสอบความเห็นแบบไม่ระบุตัวตนก่อนส่ง", contents=FlexContainer.from_json(json.dumps(bubble, ensure_ascii=False)))
+    rows.append(
+        {
+            "type": "text",
+            "text": f"ทดสอบเดาตัวตน {rounds} รอบ · ระบุตัวตนไม่ได้",
+            "size": "xs",
+            "color": ACCENT_INK,
+            "margin": "md",
+            "wrap": True,
+        }
+    )
+    buttons = [
+        {
+            "type": "button",
+            "style": "primary",
+            "color": ACCENT,
+            "action": {
+                "type": "postback",
+                "label": "ยืนยันส่ง",
+                "data": f"fb:confirm:{draft_id}",
+                "displayText": "ยืนยันส่ง",
+            },
+        },
+        {
+            "type": "button",
+            "style": "secondary",
+            "action": {
+                "type": "postback",
+                "label": "ยกเลิก",
+                "data": f"fb:cancel:{draft_id}",
+                "displayText": "ยกเลิก",
+            },
+        },
+    ]
+    bubble = {
+        "type": "bubble",
+        "body": {"type": "box", "layout": "vertical", "contents": rows},
+        "footer": {"type": "box", "layout": "vertical", "spacing": "sm", "contents": buttons},
+    }
+    return FlexMessage(
+        altText="ตรวจสอบความเห็นแบบไม่ระบุตัวตนก่อนส่ง",
+        contents=FlexContainer.from_json(json.dumps(bubble, ensure_ascii=False)),
+    )
 
 
 def _send_sync(method, payload):
@@ -91,7 +182,11 @@ async def push_text(user_id, text, buttons=None):
     if not get_settings().line_enabled:
         return False
     try:
-        await run_in_threadpool(_send_sync, "push_message", PushMessageRequest(to=user_id, messages=[text_message(text, buttons)]))
+        await run_in_threadpool(
+            _send_sync,
+            "push_message",
+            PushMessageRequest(to=user_id, messages=[text_message(text, buttons)]),
+        )
         return True
     except Exception:
         # SDK exceptions can include request data; do not log them.
@@ -99,33 +194,47 @@ async def push_text(user_id, text, buttons=None):
 
 
 async def reply_message(reply_token, message):
-    await run_in_threadpool(_send_sync, "reply_message", ReplyMessageRequest(reply_token=reply_token, messages=[message]))
+    await run_in_threadpool(
+        _send_sync,
+        "reply_message",
+        ReplyMessageRequest(replyToken=reply_token, messages=[message]),
+    )
 
 
 async def show_loading(user_id, seconds=60):
     """Typing dots in the user's chat while the privacy pipeline runs (can take 20-40 s on a local GPU)."""
-    try:
-        await run_in_threadpool(_send_sync, "show_loading_animation",
-                                ShowLoadingAnimationRequest(chat_id=user_id, loading_seconds=seconds))
-    except Exception:
-        pass
+    with suppress(Exception):
+        await run_in_threadpool(
+            _send_sync,
+            "show_loading_animation",
+            ShowLoadingAnimationRequest(chatId=user_id, loadingSeconds=seconds),
+        )
 
 
 async def linking_prompt(session, reply_token):
-    buttons = [{"label": m.display_name, "action": f"link:{m.id}"} for m in session.scalars(select(Member))]
+    buttons = [
+        {"label": m.display_name, "action": f"link:{m.id}"} for m in session.scalars(select(Member))
+    ]
     await reply_message(reply_token, text_message("คุณคือใครในทีมเดโม", buttons))
 
 
 def action_reply(action):
-    return ACTION_REPLIES.get("mute" if action.startswith("mute:") else action.rsplit(":", 1)[0], "รับทราบแล้ว")
+    return ACTION_REPLIES.get(
+        "mute" if action.startswith("mute:") else action.rsplit(":", 1)[0], "รับทราบแล้ว"
+    )
 
 
 def typed_member(session, typed):
     """Match a typed name ("มิ้น", "สมชาย", "Mint") to a demo member while linking."""
     from app.privacy.pipeline import demo_roster
+
     nicknames = {p.member_id: p.nicknames for p in demo_roster()}
     for target in session.scalars(select(Member)):
-        names = {target.display_name, re.sub(r"^(?:พี่|น้อง)", "", target.display_name), *nicknames.get(target.id, [])}
+        names = {
+            target.display_name,
+            re.sub(r"^(?:พี่|น้อง)", "", target.display_name),
+            *nicknames.get(target.id, []),
+        }
         if typed in {_norm(n) for n in names if n}:
             return target
     return None
@@ -133,8 +242,14 @@ def typed_member(session, typed):
 
 def typed_button(session, member, typed):
     """Typed equivalent of a quick-reply button on the member's latest unanswered messages."""
-    recent = list(session.scalars(select(Outreach).where(Outreach.member_id == member.id, Outreach.response.is_(None))
-                                  .order_by(Outreach.created_at.desc()).limit(5)))
+    recent = list(
+        session.scalars(
+            select(Outreach)
+            .where(Outreach.member_id == member.id, Outreach.response.is_(None))
+            .order_by(Outreach.created_at.desc())
+            .limit(5)
+        )
+    )
     # Newest first; among messages sent together, reminders the agent can act on come first.
     actionable = {"pr_stale": 0, "ticket_blocked": 1}
     recent.sort(key=lambda o: (-int(o.created_at.timestamp()), actionable.get(o.kind, 9)))
@@ -152,14 +267,24 @@ async def link_member(session, member, target, user_id, reply_token):
         member.line_user_id = None
         session.flush()
     target.line_user_id, target.opted_in = user_id, True
-    await reply_message(reply_token, text_message(f"เชื่อมต่อเป็น {target.display_name} แล้ว ส่งความเห็นได้ที่แชตนี้ ข้อความจะผ่านการตรวจความเป็นส่วนตัวก่อนส่ง\n\n" + HELP_TEXT))
+    await reply_message(
+        reply_token,
+        text_message(
+            f"เชื่อมต่อเป็น {target.display_name} แล้ว ส่งความเห็นได้ที่แชตนี้ ข้อความจะผ่านการตรวจความเป็นส่วนตัวก่อนส่ง\n\n"
+            + HELP_TEXT
+        ),
+    )
 
 
 async def finish_draft(session, redis, user_id, draft_id, kind, reply_token):
     check_draft_recipient(redis, draft_id, user_id)
     if kind == "confirm":
         result = await confirm_feedback(session, redis, draft_id)
-        text = "ยืนยันแล้ว รอครบกลุ่มก่อนส่งให้หัวหน้าทีม" if not result["gate"]["released"] else "ยืนยันแล้ว ประเด็นนี้พร้อมแสดงแบบไม่ระบุตัวตน"
+        text = (
+            "ยืนยันแล้ว รอครบกลุ่มก่อนส่งให้หัวหน้าทีม"
+            if not result["gate"]["released"]
+            else "ยืนยันแล้ว ประเด็นนี้พร้อมแสดงแบบไม่ระบุตัวตน"
+        )
     else:
         redis.delete(f"kjb:draft:{draft_id}")
         text = "ยกเลิกและลบฉบับร่างแล้ว"
@@ -186,7 +311,13 @@ async def handle_event(session, redis, event):
     elif event.type == "postback":
         action = event.postback.data
         if action.startswith("link:"):
-            await link_member(session, member, get_member(session, action.split(":", 1)[1]), user_id, event.reply_token)
+            await link_member(
+                session,
+                member,
+                get_member(session, action.split(":", 1)[1]),
+                user_id,
+                event.reply_token,
+            )
         elif not member:
             await linking_prompt(session, event.reply_token)
         elif action.startswith("fb:"):
@@ -195,8 +326,16 @@ async def handle_event(session, redis, event):
                 raise HTTPException(400, "Invalid feedback action")
             await finish_draft(session, redis, user_id, parts[2], parts[1], event.reply_token)
         elif action.startswith(("nudge:", "mute:")):
-            candidates = list(session.scalars(select(Outreach).where(Outreach.member_id == member.id).order_by(Outreach.created_at.desc())))
-            outreach = next((r for r in candidates if action in {b["action"] for b in r.buttons}), None)
+            candidates = list(
+                session.scalars(
+                    select(Outreach)
+                    .where(Outreach.member_id == member.id)
+                    .order_by(Outreach.created_at.desc())
+                )
+            )
+            outreach = next(
+                (r for r in candidates if action in {b["action"] for b in r.buttons}), None
+            )
             if not outreach:
                 raise HTTPException(404, "Action not found for this recipient")
             await respond(session, redis, outreach, action)
@@ -213,13 +352,18 @@ async def handle_event(session, redis, event):
             else:
                 await linking_prompt(session, event.reply_token)
         elif typed == _norm("ความเห็น"):
-            await reply_message(event.reply_token, text_message("พิมพ์ความเห็นที่อยากสะท้อนได้เลย ระบบจะให้ตรวจฉบับไม่ระบุตัวตนก่อนยืนยัน"))
+            await reply_message(
+                event.reply_token,
+                text_message("พิมพ์ความเห็นที่อยากสะท้อนได้เลย ระบบจะให้ตรวจฉบับไม่ระบุตัวตนก่อนยืนยัน"),
+            )
         elif typed in {_norm(w) for w in HELP_WORDS}:
             await reply_message(event.reply_token, text_message(HELP_TEXT))
         elif typed in {_norm(w) for w in CONFIRM_WORDS | CANCEL_WORDS}:
             draft_id = redis.get(f"kjb:line-draft:{user_id}")
             if not draft_id:
-                await reply_message(event.reply_token, text_message("ไม่มีฉบับร่างที่รอยืนยัน พิมพ์ความเห็นใหม่ได้เลย"))
+                await reply_message(
+                    event.reply_token, text_message("ไม่มีฉบับร่างที่รอยืนยัน พิมพ์ความเห็นใหม่ได้เลย")
+                )
                 return
             kind = "confirm" if typed in {_norm(w) for w in CONFIRM_WORDS} else "cancel"
             await finish_draft(session, redis, user_id, draft_id, kind, event.reply_token)
@@ -228,23 +372,39 @@ async def handle_event(session, redis, event):
             await respond(session, redis, outreach, action)
             await reply_message(event.reply_token, text_message(action_reply(action)))
         elif len(text.strip()) < MIN_FEEDBACK_CHARS:
-            await reply_message(event.reply_token, text_message("ช่วยเล่ารายละเอียดเพิ่มอีกนิด (อย่างน้อยหนึ่งประโยค) ระบบจะเรียบเรียงแบบไม่ระบุตัวตนได้ถูกต้อง\n\n" + HELP_TEXT))
+            await reply_message(
+                event.reply_token,
+                text_message(
+                    "ช่วยเล่ารายละเอียดเพิ่มอีกนิด (อย่างน้อยหนึ่งประโยค) ระบบจะเรียบเรียงแบบไม่ระบุตัวตนได้ถูกต้อง\n\n"
+                    + HELP_TEXT
+                ),
+            )
         else:
             if len(text) > 10000:
-                await reply_message(event.reply_token, text_message("กรุณาส่งความเห็นไม่เกิน 10,000 ตัวอักษร"))
+                await reply_message(
+                    event.reply_token, text_message("กรุณาส่งความเห็นไม่เกิน 10,000 ตัวอักษร")
+                )
                 return
             await show_loading(user_id)
             result = await preview_feedback(session, redis, member, text)
             if result["draft_id"]:
                 redis.set(f"kjb:line-draft:{user_id}", result["draft_id"], ex=3600)
-                await reply_message(event.reply_token, preview_message(result["draft_id"], result["result"], leak_markers(text)))
+                await reply_message(
+                    event.reply_token,
+                    preview_message(result["draft_id"], result["result"], leak_markers(text)),
+                )
             else:
-                await reply_message(event.reply_token, text_message("ยังไม่ผ่านการตรวจความเป็นส่วนตัว กรุณาปรับข้อความแล้วลองใหม่"))
+                await reply_message(
+                    event.reply_token,
+                    text_message("ยังไม่ผ่านการตรวจความเป็นส่วนตัว กรุณาปรับข้อความแล้วลองใหม่"),
+                )
 
 
-APOLOGIES = {409: "ตัวละครนี้ผูกกับบัญชี LINE อื่นแล้ว ลองเลือกคนอื่น",
-             404: "ฉบับร่างหมดอายุหรือยืนยันไปแล้ว พิมพ์ความเห็นใหม่ได้เลย",
-             403: "ฉบับร่างนี้ไม่ใช่ของบัญชีนี้"}
+APOLOGIES = {
+    409: "ตัวละครนี้ผูกกับบัญชี LINE อื่นแล้ว ลองเลือกคนอื่น",
+    404: "ฉบับร่างหมดอายุหรือยืนยันไปแล้ว พิมพ์ความเห็นใหม่ได้เลย",
+    403: "ฉบับร่างนี้ไม่ใช่ของบัญชีนี้",
+}
 
 
 async def process_events(session_factory, redis, events):
@@ -265,10 +425,11 @@ async def process_events(session_factory, redis, events):
                 token = getattr(event, "reply_token", None)
                 if token:
                     status = getattr(error, "status_code", None)
-                    try:
-                        await reply_message(token, text_message(APOLOGIES.get(status, "ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง")))
-                    except Exception:
-                        pass
+                    with suppress(Exception):
+                        await reply_message(
+                            token,
+                            text_message(APOLOGIES.get(status, "ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง")),
+                        )
 
 
 @router.post("/line/webhook")
@@ -280,7 +441,9 @@ async def webhook(request: Request, background: BackgroundTasks, redis=Depends(r
     if len(body) > 1000000:
         raise HTTPException(413, "Webhook too large")
     try:
-        events = WebhookParser(settings.line_channel_secret).parse(body.decode("utf-8"), request.headers.get("X-Line-Signature", ""))
+        events = WebhookParser(settings.line_channel_secret).parse(
+            body.decode("utf-8"), request.headers.get("X-Line-Signature", "")
+        )
     except InvalidSignatureError:
         raise HTTPException(403, "Invalid signature") from None
     except (ValueError, UnicodeError, KeyError, TypeError):

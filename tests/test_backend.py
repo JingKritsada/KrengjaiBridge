@@ -66,7 +66,9 @@ def test_full_http_story(backend_client, pipeline_mock, monkeypatch, llm_down):
     draft = preview(c)
     assert draft["result"]["ok"] and draft["result"]["structured"]
     if llm_down:
-        assert any("โหมดสำรอง" in note for step in draft["result"]["steps"] for note in step["notes"])
+        assert any(
+            "โหมดสำรอง" in note for step in draft["result"]["steps"] for note in step["notes"]
+        )
         assert c.get("/api/health").json()["llm_available"] is False
     gate = confirm(c, draft)["gate"]
     assert gate["count"] == 1 and not gate["released"]
@@ -79,7 +81,9 @@ def test_full_http_story(backend_client, pipeline_mock, monkeypatch, llm_down):
     assert "15:00" in theme["proposal"]
     assert summary["metrics"]["friday_after17_assignments_4w"] == 3
     reply = "ตกลง จะกำหนด cut-off งานด่วนก่อน 15:00 วันศุกร์"
-    responded = post(c, f"/api/manager/themes/{theme['id']}/reply", {"text": reply, "accept_proposal": True})
+    responded = post(
+        c, f"/api/manager/themes/{theme['id']}/reply", {"text": reply, "accept_proposal": True}
+    )
     assert responded["status"] == "responded"
     inbox = c.get("/api/outreach", params={"member_id": "m-mint"}).json()
     assert any(reply in item["text"] and item["kind"] == "manager_reply" for item in inbox)
@@ -113,7 +117,14 @@ def test_source_never_persisted_and_no_author_column(backend_client):
     confirm(c, draft)
     with c.app.state.session_factory() as session:
         columns = {column["name"] for column in inspect(session.bind).get_columns("feedback_items")}
-        assert not columns & {"author", "author_id", "member_id", "actor_hash", "line_user_id", "recipient"}
+        assert not columns & {
+            "author",
+            "author_id",
+            "member_id",
+            "actor_hash",
+            "line_user_id",
+            "recipient",
+        }
         assert columns == {"id", "theme_id", "text", "structured", "attacker_rounds"}
         dump = "\n".join(session.connection().connection.driver_connection.iterdump())
         assert original not in dump and "SOURCE-DO-NOT-SAVE-93817" not in dump
@@ -131,7 +142,9 @@ def test_repeat_author_does_not_open_gate_and_private_theme_cannot_be_replied_to
     with c.app.state.session_factory() as session:
         theme_id = session.scalar(select(Theme)).id
         assert len(list(session.scalars(select(FeedbackItem)))) == 1
-    assert c.post(f"/api/manager/themes/{theme_id}/reply", json={"text": "reply"}).status_code == 404
+    assert (
+        c.post(f"/api/manager/themes/{theme_id}/reply", json={"text": "reply"}).status_code == 404
+    )
 
 
 def test_cancel_expiry_and_failed_pipeline(backend_client, pipeline_mock, monkeypatch):
@@ -143,8 +156,10 @@ def test_cancel_expiry_and_failed_pipeline(backend_client, pipeline_mock, monkey
     c.app.state.redis.delete(f"kjb:draft:{draft['draft_id']}")
     assert c.post("/api/feedback/confirm", json={"draft_id": draft["draft_id"]}).status_code == 404
     from app.contracts import PipelineResult
+
     async def blocked(*args, **kwargs):
         return PipelineResult(ok=False, reason_blocked="unsafe")
+
     monkeypatch.setattr(pipeline_mock, "run_pipeline", blocked)
     assert preview(c)["draft_id"] is None
     assert c.get("/api/manager/summary").json()["pipeline"]["blocked_by_attacker"] == 1
@@ -184,7 +199,9 @@ def test_mute_blocks_future_nudges(backend_client):
 def test_advance_without_accepted_proposal_keeps_observed_friday_work(backend_client):
     c = backend_client
     theme = release_friday(c)
-    post(c, f"/api/manager/themes/{theme['id']}/reply", {"text": "ขอดูต่อไป", "accept_proposal": False})
+    post(
+        c, f"/api/manager/themes/{theme['id']}/reply", {"text": "ขอดูต่อไป", "accept_proposal": False}
+    )
     followed = post(c, "/api/demo/advance", {"weeks": 2})["themes"][0]
     assert followed["followup"]["after"] >= 2
 
@@ -198,13 +215,18 @@ def test_release_delay_hides_theme_until_due(backend_client, backend_settings, m
     assert gate["count"] == 3 and not gate["released"]
     assert c.get("/api/manager/summary").json()["themes"] == []
     from app.demo import demo_now
-    c.app.state.redis.set("kjb:demo-clock", (demo_now(c.app.state.redis) + timedelta(seconds=21)).isoformat())
+
+    c.app.state.redis.set(
+        "kjb:demo-clock", (demo_now(c.app.state.redis) + timedelta(seconds=21)).isoformat()
+    )
     assert len(c.get("/api/manager/summary").json()["themes"]) == 1
 
 
 def test_inputs_reset_and_static_routes(backend_client):
     c = backend_client
-    assert c.post("/api/feedback/preview", json={"member_id": "m-mint", "text": ""}).status_code == 422
+    assert (
+        c.post("/api/feedback/preview", json={"member_id": "m-mint", "text": ""}).status_code == 422
+    )
     assert c.post("/api/demo/advance", json={"weeks": -1}).status_code == 422
     assert c.post("/api/demo/scenario/unknown").status_code == 404
     for path in ("/", "/manager", "/demo"):
@@ -216,22 +238,44 @@ def test_inputs_reset_and_static_routes(backend_client):
 
 
 def line_event(c, secret, events, *, signature=None):
-    events = [{"webhookEventId": uuid.uuid4().hex, "deliveryContext": {"isRedelivery": False}, **event} for event in events]
+    events = [
+        {"webhookEventId": uuid.uuid4().hex, "deliveryContext": {"isRedelivery": False}, **event}
+        for event in events
+    ]
     body = json.dumps({"destination": "Ubot", "events": events}, ensure_ascii=False).encode()
     computed = base64.b64encode(hmac.new(secret.encode(), body, hashlib.sha256).digest()).decode()
-    return c.post("/line/webhook", content=body, headers={"Content-Type": "application/json", "X-Line-Signature": computed if signature is None else signature})
+    return c.post(
+        "/line/webhook",
+        content=body,
+        headers={
+            "Content-Type": "application/json",
+            "X-Line-Signature": computed if signature is None else signature,
+        },
+    )
 
 
-def test_line_signature_follow_link_preview_confirm_and_push(backend_client, backend_settings, monkeypatch):
+def test_line_signature_follow_link_preview_confirm_and_push(
+    backend_client, backend_settings, monkeypatch
+):
     c = backend_client
     backend_settings.line_channel_secret = "test-channel-secret"
     backend_settings.line_channel_access_token = "test-access-token"
     replies, pushes, loading = [], [], []
     from linebot.v3.messaging import MessagingApi
-    monkeypatch.setattr(MessagingApi, "reply_message", lambda self, payload: replies.append(payload))
+
+    monkeypatch.setattr(
+        MessagingApi, "reply_message", lambda self, payload: replies.append(payload)
+    )
     monkeypatch.setattr(MessagingApi, "push_message", lambda self, payload: pushes.append(payload))
-    monkeypatch.setattr(MessagingApi, "show_loading_animation", lambda self, payload: loading.append(payload))
-    base = {"replyToken": "reply-token", "timestamp": 1720000000000, "source": {"type": "user", "userId": "Umint"}, "mode": "active"}
+    monkeypatch.setattr(
+        MessagingApi, "show_loading_animation", lambda self, payload: loading.append(payload)
+    )
+    base = {
+        "replyToken": "reply-token",
+        "timestamp": 1720000000000,
+        "source": {"type": "user", "userId": "Umint"},
+        "mode": "active",
+    }
     secret = backend_settings.line_channel_secret
     follow = {**base, "type": "follow", "follow": {"isUnblocked": False}}
     assert line_event(c, secret, [follow], signature="invalid").status_code == 403
@@ -239,16 +283,40 @@ def test_line_signature_follow_link_preview_confirm_and_push(backend_client, bac
     prompt = replies[-1].messages[0]
     assert "คุณคือใคร" in prompt.text and len(prompt.quick_reply.items) == 6
     assert any(item.action.data == "link:m-mint" for item in prompt.quick_reply.items)
-    assert line_event(c, secret, [{**base, "type": "postback", "postback": {"data": "link:m-mint"}}]).status_code == 200
-    text_event = {**base, "type": "message", "message": {"id": "message1", "type": "text", "quoteToken": "quote-token", "text": "หนูไม่สะดวกรับงานศุกร์เย็นค่ะ"}}
+    assert (
+        line_event(
+            c, secret, [{**base, "type": "postback", "postback": {"data": "link:m-mint"}}]
+        ).status_code
+        == 200
+    )
+    text_event = {
+        **base,
+        "type": "message",
+        "message": {
+            "id": "message1",
+            "type": "text",
+            "quoteToken": "quote-token",
+            "text": "หนูไม่สะดวกรับงานศุกร์เย็นค่ะ",
+        },
+    }
     assert line_event(c, secret, [text_event]).status_code == 200
     flex = replies[-1].messages[0]
     assert flex.type == "flex"
-    struck = [span["text"] for item in flex.contents.to_dict()["body"]["contents"] for span in item.get("contents", []) if span.get("decoration") == "line-through"]
+    struck = [
+        span["text"]
+        for item in flex.contents.to_dict()["body"]["contents"]
+        for span in item.get("contents", [])
+        if span.get("decoration") == "line-through"
+    ]
     assert {"หนู", "ค่ะ"} <= set(struck)  # markers from the incoming text, shown struck through
     action = flex.contents.footer.contents[0].action.data
     assert action.startswith("fb:confirm:")
-    assert line_event(c, secret, [{**base, "type": "postback", "postback": {"data": action}}]).status_code == 200
+    assert (
+        line_event(
+            c, secret, [{**base, "type": "postback", "postback": {"data": action}}]
+        ).status_code
+        == 200
+    )
     result = post(c, "/api/demo/scenario/pr_stale")
     line_outreach = next(o for o in result["outreach"] if o["kind"] == "pr_stale")
     assert line_outreach["channel"] == "line" and pushes[-1].to == "Umint"
@@ -257,7 +325,15 @@ def test_line_signature_follow_link_preview_confirm_and_push(backend_client, bac
 
 def test_line_preview_card_shape():
     from app.outreach.line_bot import preview_message
-    result = {"structured": {"situation": "งานด่วนเย็นวันศุกร์", "impact": "ยกเลิกนัด", "request": "ตัดรอบ 15:00"}, "attacker_rounds": [{}, {}]}
+
+    result = {
+        "structured": {
+            "situation": "งานด่วนเย็นวันศุกร์",
+            "impact": "ยกเลิกนัด",
+            "request": "ตัดรอบ 15:00",
+        },
+        "attacker_rounds": [{}, {}],
+    }
     card = preview_message("d-1", result, ["หนู", "ค่ะ"]).contents.to_dict()
     body = card["body"]["contents"]
     assert body[0]["text"] == "ตรวจสอบก่อนส่งแบบนิรนาม" and body[0]["weight"] == "bold"
@@ -265,7 +341,10 @@ def test_line_preview_card_shape():
     assert [s["text"] for s in spans if s.get("decoration") == "line-through"] == ["หนู", "ค่ะ"]
     assert all(s["color"] == "#A8231B" for s in spans if s.get("decoration") == "line-through")
     assert any(item.get("text") == "ทดสอบเดาตัวตน 2 รอบ · ระบุตัวตนไม่ได้" for item in body)
-    assert [b["action"]["data"] for b in card["footer"]["contents"]] == ["fb:confirm:d-1", "fb:cancel:d-1"]
+    assert [b["action"]["data"] for b in card["footer"]["contents"]] == [
+        "fb:confirm:d-1",
+        "fb:cancel:d-1",
+    ]
     plain = preview_message("d-2", result).contents.to_dict()["body"]["contents"]
     assert not any(item.get("contents") for item in plain)  # no markers, no struck row
 
@@ -275,8 +354,10 @@ def test_line_push_failure_falls_back_to_web(backend_client, backend_settings, m
     backend_settings.line_channel_secret = "secret"
     backend_settings.line_channel_access_token = "token"
     from linebot.v3.messaging import MessagingApi
+
     def unavailable(*args, **kwargs):
         raise RuntimeError("offline")
+
     monkeypatch.setattr(MessagingApi, "push_message", unavailable)
     with c.app.state.session_factory() as session:
         session.get(Member, "m-mint").line_user_id = "Umint"
@@ -292,14 +373,28 @@ def test_line_typed_text_works_without_quick_replies(backend_client, backend_set
     backend_settings.line_channel_access_token = "test-access-token"
     replies, pushes, loading = [], [], []
     from linebot.v3.messaging import MessagingApi
-    monkeypatch.setattr(MessagingApi, "reply_message", lambda self, payload: replies.append(payload))
+
+    monkeypatch.setattr(
+        MessagingApi, "reply_message", lambda self, payload: replies.append(payload)
+    )
     monkeypatch.setattr(MessagingApi, "push_message", lambda self, payload: pushes.append(payload))
-    monkeypatch.setattr(MessagingApi, "show_loading_animation", lambda self, payload: loading.append(payload))
+    monkeypatch.setattr(
+        MessagingApi, "show_loading_animation", lambda self, payload: loading.append(payload)
+    )
     secret = backend_settings.line_channel_secret
-    base = {"replyToken": "reply-token", "timestamp": 1720000000000, "source": {"type": "user", "userId": "Upc"}, "mode": "active"}
+    base = {
+        "replyToken": "reply-token",
+        "timestamp": 1720000000000,
+        "source": {"type": "user", "userId": "Upc"},
+        "mode": "active",
+    }
 
     def say(text):
-        event = {**base, "type": "message", "message": {"id": uuid.uuid4().hex, "type": "text", "quoteToken": "q", "text": text}}
+        event = {
+            **base,
+            "type": "message",
+            "message": {"id": uuid.uuid4().hex, "type": "text", "quoteToken": "q", "text": text},
+        }
         assert line_event(c, secret, [event]).status_code == 200
         return replies[-1].messages[0]
 
@@ -311,7 +406,9 @@ def test_line_typed_text_works_without_quick_replies(backend_client, backend_set
 
     post(c, "/api/demo/scenario/pr_stale")
     assert "ไม่มีชื่อคุณ" in say("ช่วยเตือนให้หน่อย").text
-    nudge = next(o for o in c.get("/api/outreach?member_id=m-mint").json() if o["kind"] == "pr_stale")
+    nudge = next(
+        o for o in c.get("/api/outreach?member_id=m-mint").json() if o["kind"] == "pr_stale"
+    )
     assert nudge["response"].startswith("nudge:accept:")
     assert any(o["kind"] != "pr_stale" for o in c.get("/api/outreach?member_id=m-somchai").json())
 
@@ -327,11 +424,22 @@ def test_line_errors_become_short_replies(backend_client, backend_settings, monk
     backend_settings.line_channel_access_token = "t"
     replies = []
     from linebot.v3.messaging import MessagingApi
-    monkeypatch.setattr(MessagingApi, "reply_message", lambda self, payload: replies.append(payload))
+
+    monkeypatch.setattr(
+        MessagingApi, "reply_message", lambda self, payload: replies.append(payload)
+    )
     with c.app.state.session_factory() as session:
         session.get(Member, "m-mint").line_user_id = "Uother"
         session.commit()
-    event = {"replyToken": "r", "timestamp": 1720000000000, "source": {"type": "user", "userId": "Unew"}, "mode": "active",
-             "type": "postback", "postback": {"data": "link:m-mint"}}
-    assert line_event(c, "s", [event]).status_code == 200  # LINE always gets 200; the user gets the reason
+    event = {
+        "replyToken": "r",
+        "timestamp": 1720000000000,
+        "source": {"type": "user", "userId": "Unew"},
+        "mode": "active",
+        "type": "postback",
+        "postback": {"data": "link:m-mint"},
+    }
+    assert (
+        line_event(c, "s", [event]).status_code == 200
+    )  # LINE always gets 200; the user gets the reason
     assert "ผูกกับบัญชี LINE อื่น" in replies[-1].messages[0].text

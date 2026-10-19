@@ -62,8 +62,17 @@ class MetadataEvent(BaseModel):
     """Normalized SDLC metadata. Identities are hashed at ingest."""
 
     type: Literal[
-        "pr_opened", "pr_review_requested", "pr_reviewed", "pr_merged", "pr_labeled",
-        "ticket_status", "ticket_reopened", "task_assigned", "commit", "leave", "sprint_ended",
+        "pr_opened",
+        "pr_review_requested",
+        "pr_reviewed",
+        "pr_merged",
+        "pr_labeled",
+        "ticket_status",
+        "ticket_reopened",
+        "task_assigned",
+        "commit",
+        "leave",
+        "sprint_ended",
     ]
     actor_hash: str
     target_hash: str | None = None
@@ -73,7 +82,14 @@ class MetadataEvent(BaseModel):
     meta: dict = Field(default_factory=dict)
 
 
-SignalKind = Literal["pr_stale", "ticket_blocked", "friday_urgent", "late_night", "review_concentration", "sprint_end"]
+SignalKind = Literal[
+    "pr_stale",
+    "ticket_blocked",
+    "friday_urgent",
+    "late_night",
+    "review_concentration",
+    "sprint_end",
+]
 
 
 class Signal(BaseModel):

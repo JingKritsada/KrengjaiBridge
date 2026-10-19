@@ -1,6 +1,9 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["playwright>=1.47"]
+#
+# [tool.ty.analysis]
+# allowed-unresolved-imports = ["playwright.**"]
 # ///
 """Check the web UI against DESIGN.md and save screenshots of each page and key demo scenes.
 
@@ -18,6 +21,7 @@ Usage:
   uv run scripts/design_check.py --base-url http://localhost:8000 --no-mock   # FastAPI server, real data
 First run only: uv run --with playwright playwright install chromium
 """
+
 import argparse
 import asyncio
 import sys
@@ -71,25 +75,37 @@ async def settle(page):
 
 
 async def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--base-url", default="http://localhost:8099")
-    ap.add_argument("--no-mock", action="store_true", help="use live data (needs the FastAPI server and LLM)")
+    ap.add_argument(
+        "--no-mock", action="store_true", help="use live data (needs the FastAPI server and LLM)"
+    )
     ap.add_argument("--out", default="design-check")
     args = ap.parse_args()
     static, mock = args.base_url.endswith(":8099"), not args.no_mock
-    out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)  # noqa: ASYNC240 - One-off screenshot script.
     failures = 0
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
-        ctx = await browser.new_context(viewport={"width": W, "height": H}, device_scale_factor=SCALE)
+        ctx = await browser.new_context(
+            viewport={"width": W, "height": H}, device_scale_factor=SCALE
+        )
         page = await ctx.new_page()
         for name in ("", "manager", "demo"):
-            await page.goto(url(args.base_url, name, static, mock)); await settle(page)
+            await page.goto(url(args.base_url, name, static, mock))
+            await settle(page)
             await page.screenshot(path=str(out / f"{name or 'home'}.png"))
             res = await page.evaluate(AUDIT_JS, [FONT_FLOOR, CONTAINERS])
             label = f"/{name}"
-            problems = [("font < 13px", res["small"]), ("contrast", res["low"]), ("max-width", res["capped"])]
+            problems = [
+                ("font < 13px", res["small"]),
+                ("contrast", res["low"]),
+                ("max-width", res["capped"]),
+            ]
             if res["overflow"] > 0:
                 problems.append(("overflow", [f"page scrolls sideways by {res['overflow']}px"]))
             for kind, items in problems:
@@ -103,8 +119,10 @@ async def main():
 
         # demo scene: run the mock pipeline and check that the outcome sits above the caption band
         if mock:
-            await page.goto(url(args.base_url, "demo", static, mock)); await settle(page)
-            await page.get_by_text("ล้างข้อมูลเดโมและเริ่มใหม่").click(); await page.wait_for_timeout(800)
+            await page.goto(url(args.base_url, "demo", static, mock))
+            await settle(page)
+            await page.get_by_text("ล้างข้อมูลเดโมและเริ่มใหม่").click()
+            await page.wait_for_timeout(800)
             await page.get_by_role("button", name="ทดสอบการปกป้องตัวตน").click()
             await page.get_by_role("button", name="ยืนยันส่งความเห็น").wait_for(timeout=20000)
             await page.wait_for_timeout(1200)
@@ -115,7 +133,9 @@ async def main():
                 bottom = (box["y"] + box["height"]) if box else None
                 if bottom is None or bottom > limit:
                     failures += 1
-                    print(f"FAIL /demo fold: {sel} ends at y={bottom and round(bottom)} (limit {limit})")
+                    print(
+                        f"FAIL /demo fold: {sel} ends at y={bottom and round(bottom)} (limit {limit})"
+                    )
                 else:
                     print(f"ok   /demo fold: {sel} ends at y={round(bottom)}")
         await browser.close()

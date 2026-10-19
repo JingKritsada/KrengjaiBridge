@@ -24,14 +24,57 @@ dependencies = [
 [dependency-groups]
 dev = [
     "matplotlib>=3.11.2",
+    "pre-commit>=4.7.0",
     "pytest>=8",
     "pytest-asyncio>=0.23",
     "respx>=0.21",
+    "ruff>=0.17.1",
+    "ty>=0.0.89",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+# Ruff = formatter (the Prettier of this repo) + linter (the ESLint). Commands are in README.md, "Code quality".
+[tool.ruff]
+line-length = 100
+extend-exclude = ["eval/cache", "data/runtime"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes: undefined names, unused imports
+    "I",        # import order
+    "UP",       # newer Python syntax (3.12)
+    "B",        # bugbear: likely bugs
+    "C4",       # comprehensions
+    "SIM",      # simplifications
+    "RET",      # return statements
+    "PIE",      # misc. lints
+    "PERF",     # performance anti-patterns
+    "FURB",     # refurb: modern idioms
+    "ASYNC",    # blocking calls in async code
+    "RUF",      # Ruff-specific
+]
+ignore = [
+    "E501",     # line length belongs to the formatter; long Thai strings stay on one line
+    "RUF001",   # Thai text and typographic dashes/quotes are intentional
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"eval/run_all.py" = ["E402"]  # The script adds the repository root before project imports.
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Header"]
+
+[tool.ty.environment]
+python-version = "3.12"
 
 [tool.uv]
 package = false

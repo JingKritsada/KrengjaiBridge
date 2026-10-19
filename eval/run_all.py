@@ -15,7 +15,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import numpy as np
-from sklearn.cluster import AgglomerativeClustering
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, adjusted_rand_score
@@ -61,10 +60,28 @@ class CachedLLM:
 
     def __init__(self):
         self.original = llm.chat
+        self.original_json = llm.chat_json
         self.semaphore = asyncio.Semaphore(4)
         self.locks = defaultdict(asyncio.Lock)
         self.calls = self.hits = self.retries = 0
         self.settings = get_settings()
+
+    async def chat_json(self, messages, **kwargs):
+        for attempt in range(3):
+            try:
+                return await self.original_json(messages, **kwargs)
+            except (json.JSONDecodeError, llm.LLMError):
+                if attempt == 2:
+                    raise
+                self.retries += 1
+                correction = (
+                    f"JSON format retry {attempt + 1}: return strictly valid JSON only. "
+                    "Escape any newline inside a JSON string as \\n; never place a literal line break inside a quoted string."
+                )
+                if messages[0]["role"] == "system":
+                    messages = [{**messages[0], "content": messages[0]["content"] + "\n" + correction}, *messages[1:]]
+                else:
+                    messages = [{"role": "system", "content": correction}, *messages]
 
     async def chat(self, messages, *, temperature=0.3, max_tokens=800):
         request = {"model": self.settings.llm_model, "endpoint": self.settings.llm_base_url,
@@ -318,10 +335,22 @@ async def privacy(cards, train, test):
                                for stage in ("before", "after")}
     metrics["llm_attacker"].update({"chance": .05, "baseline": .05})
     scores = [j["judge"]["score"] for j in judged]
+    released_indices = [i for i, out in enumerate(outputs) if out.ok]
+    released = classical_metrics(train, [test[i] for i in released_indices], [after[i] for i in released_indices]) if released_indices else {}
+    if released_indices:
+        released["llm_attacker"] = {"after": sum(judged[i]["after_guess"]["persona_id"] == test[i]["persona_id"]
+                                                  for i in released_indices) / len(released_indices)}
+    blocked_by_attacker = sum(not out.ok and bool(out.attacker_rounds) and out.attacker_rounds[-1].identified
+                              for out in outputs)
     return {"n_train": len(train), "n_test": len(test), "attackers": metrics,
+            "released_only": {"n": len(released_indices), "attackers": released,
+                              "meaning_mean": float(np.mean([scores[i] for i in released_indices])) if released_indices else None,
+                              "meaning_fraction_ge_4": sum(scores[i] >= 4 for i in released_indices) / len(released_indices) if released_indices else None},
             "meaning": {"mean": float(np.mean(scores)), "fraction_ge_4": sum(s >= 4 for s in scores) / len(scores), "scores": scores},
             "pipeline": {"ok_rate": sum(o.ok for o in outputs) / len(outputs),
                          "blocked": sum(not o.ok for o in outputs),
+                         "blocked_by_attacker": blocked_by_attacker,
+                         "blocked_validation_or_model_error": sum(not o.ok for o in outputs) - blocked_by_attacker,
                          "mean_attacker_rounds": float(np.mean([len(o.attacker_rounds) for o in outputs])),
                          "latency": latency}}, outputs
 
@@ -339,18 +368,31 @@ async def theme_metrics(test, outputs):
     texts = [o.final_text for o in outputs]
     truth = [r["theme"] for r in test]
     native = cluster.cluster_offline(texts)
+    released_indices = [i for i, out in enumerate(outputs) if out.ok]
+    released_texts = [texts[i] for i in released_indices]
+    released_truth = [truth[i] for i in released_indices]
+    released_native = cluster.cluster_offline(released_texts)
     original = cluster.AgglomerativeClustering
     def six_clusters(**kwargs):
         return original(**{**kwargs, "n_clusters": 6, "distance_threshold": None})
     cluster.AgglomerativeClustering = six_clusters
     try:
         fixed = cluster.cluster_offline(texts)
+        released_fixed = cluster.cluster_offline(released_texts) if len(released_texts) >= 6 else None
     finally:
         cluster.AgglomerativeClustering = original
     assigned = await asyncio.gather(*(cluster.assign_theme(text) for text in texts))
     save(RESULTS / "theme_assignments.json", [{"truth": t, "fixed_cluster": int(f), "native_cluster": int(n), "assigned_slug": a[0]}
                                              for t, f, n, a in zip(truth, fixed, native, assigned)])
+    released_metrics = None if released_fixed is None else {
+        "n": len(released_texts), "k": 6, "ari": float(adjusted_rand_score(released_truth, released_fixed)),
+        "purity": purity(released_truth, released_fixed), "native_cluster_count": len(set(released_native)),
+        "native_ari": float(adjusted_rand_score(released_truth, released_native)),
+        "native_purity": purity(released_truth, released_native),
+        "assign_theme_accuracy": sum(assigned[i][0] == truth[i] for i in released_indices) / len(released_indices)}
     return {"n": len(texts), "k": 6, "ari": float(adjusted_rand_score(truth, fixed)),
+            "released_only": released_metrics,
+            "cluster_sizes": dict(Counter(fixed)),
             "purity": purity(truth, fixed), "native_cluster_count": len(set(native)),
             "native_ari": float(adjusted_rand_score(truth, native)), "native_purity": purity(truth, native),
             "assign_theme_accuracy": sum(a[0] == t for a, t in zip(assigned, truth)) / len(truth)}
@@ -365,7 +407,7 @@ def engine_metrics():
     aggregate = {key: {"mean": float(np.mean([r[key] for r in runs])),
                        "std": float(np.std([r[key] for r in runs], ddof=1))}
                  for key in ("recall", "precision", "median_detection_delay_minutes")}
-    return {"tick_minutes": 15, "runs": runs, **aggregate}
+    return {"tick_minutes": 15, "runs": runs, "six_hour_seed1_reference": evaluate_engine(1, tick_minutes=360), **aggregate}
 
 
 def artifacts(results):
@@ -383,13 +425,14 @@ def artifacts(results):
         fig, ax = plt.subplots(figsize=(14, 7), layout="constrained")
         for offset, stage, color in ((-.19, "before", "#d56a43"), (.19, "after", "#258d90")):
             bars = ax.bar(x + offset, [p["attackers"][n][stage] * 100 for n in names], .36, label=stage.title(), color=color)
-            ax.bar_label(bars, fmt="%.1f%%", padding=4, fontsize=14)
+            ax.bar_label(bars, fmt="%.1f%%", padding=4, fontsize=14,
+                         bbox={"facecolor": "white", "edgecolor": "none", "alpha": .95, "pad": 1})
         for i, name in enumerate(names[:-1]):
             chance = p["attackers"][name]["chance"] * 100
             ax.plot([i - .4, i + .4], [chance, chance], "k--", linewidth=2,
                     label="Uniform chance (5 / 50 / 25%)" if i == 0 else None)
         ax.set(xticks=x, xticklabels=labels, ylim=(0, 115), ylabel="Accuracy / texts with markers (%)",
-               title="SYNTHETIC D1: attacker performance before and after\n80 held-out texts; lower is better for privacy")
+               title=f"SYNTHETIC D1: attacker performance before and after\n80 held-out texts ({p['pipeline']['blocked']} blocked); lower is better for privacy")
         ax.legend(loc="upper center", bbox_to_anchor=(.5, -.16), ncol=3)
         ax.spines[["top", "right"]].set_visible(False)
         fig.savefig(RESULTS / "attacker_before_after.png", dpi=180)
@@ -422,19 +465,44 @@ def artifacts(results):
                            ("gender", "Gender accuracy"), ("seniority", "Seniority accuracy"), ("marker_leak", "Texts containing gender/seniority markers")):
             value = p["attackers"][key]
             baseline = f"{value['baseline']:.1%}" if key != "marker_leak" else "0% target (no chance model)"
-            lines.append(f"| {label} | {value['before']:.1%} | {value['after']:.1%} | {baseline} |")
+            lines.append(f"| {label} | {value['before']:.2%} | {value['after']:.2%} | {baseline} |")
         lines += ["", "| Utility / operational metric (SYNTHETIC D1) | Measured |", "|---|---:|",
                   f"| Mean meaning score (1–5) | {p['meaning']['mean']:.3f} |",
                   f"| Meaning score ≥ 4 | {p['meaning']['fraction_ge_4']:.1%} |",
                   f"| Pipeline ok rate | {p['pipeline']['ok_rate']:.1%} ({80 - p['pipeline']['blocked']}/80) |",
+                  f"| Blocked: attacker / validation or model error | {p['pipeline'].get('blocked_by_attacker', 'pending')} / {p['pipeline'].get('blocked_validation_or_model_error', 'pending')} |",
                   f"| Mean internal attacker rounds | {p['pipeline']['mean_attacker_rounds']:.3f} |",
                   f"| Fresh pipeline latency p50 / p95 | {p['pipeline']['latency']['p50_seconds']:.2f} / {p['pipeline']['latency']['p95_seconds']:.2f} s |", ""]
+        if p.get("released_only", {}).get("n"):
+            released = p["released_only"]
+            lines += [f"For the {released['n']} released texts only: stylometric author accuracy "
+                      f"{released['attackers']['stylometric']['after']:.1%}, LLM author accuracy "
+                      f"{released['attackers']['llm_attacker']['after']:.1%}, gender accuracy "
+                      f"{released['attackers']['gender']['after']:.1%}, seniority accuracy "
+                      f"{released['attackers']['seniority']['after']:.1%}; meaning mean "
+                      f"{released['meaning_mean']:.3f}, with {released['meaning_fraction_ge_4']:.1%} scoring ≥ 4.", ""]
+        lines += [f"Measured interpretation: author attribution drops substantially after rewriting, but the independent "
+                  f"LLM attacker still identifies {round(p['attackers']['llm_attacker']['after'] * 80)}/80 authors "
+                  f"({p['attackers']['llm_attacker']['after']:.1%}, versus 5% chance). This pilot does not establish anonymity. "
+                  f"Meaning preservation is incomplete: {sum(s < 4 for s in p['meaning']['scores'])}/80 outputs score below 4, "
+                  f"including the {p['pipeline']['blocked']} empty blocked outputs.", ""]
     if theme:
         lines += ["## Theme evaluation (SYNTHETIC D4)", "", "| Metric on AFTER text | Measured |", "|---|---:|",
                   f"| Six-cluster adjusted Rand index | {theme['ari']:.4f} |", f"| Six-cluster purity | {theme['purity']:.1%} |",
                   f"| assign_theme slug accuracy | {theme['assign_theme_accuracy']:.1%} |",
                   f"| Native threshold clustering: cluster count | {theme['native_cluster_count']} |",
                   f"| Native threshold clustering: ARI / purity | {theme['native_ari']:.4f} / {theme['native_purity']:.1%} |", ""]
+        if theme.get("released_only"):
+            released = theme["released_only"]
+            lines += [f"On the {released['n']} released texts only: six-cluster ARI {released['ari']:.4f}, "
+                      f"purity {released['purity']:.1%}, assign_theme accuracy {released['assign_theme_accuracy']:.1%}. "
+                      f"Native threshold clustering produces {released['native_cluster_count']} clusters, with ARI "
+                      f"{released['native_ari']:.4f} and purity {released['native_purity']:.1%}.", "",
+                      "The all-output fixed-k result includes empty blocked texts. Empty vectors can consume separate "
+                      "clusters and force unrelated nonempty texts into one group; the released-only result measures "
+                      "the content actually available downstream. High purity from many near-singleton native clusters "
+                      "is fragmentation rather than recovery of the six themes. Fixed-k grouping is substantially better "
+                      "on released text, but still imperfect; native threshold clustering fragments the data.", ""]
     if engine:
         lines += ["## Friction detection (SYNTHETIC D3)", "", "| Metric | Mean ± sample SD across seeds 1–5 |", "|---|---:|"]
         for key, label in (("recall", "Recall"), ("precision", "Precision"), ("median_detection_delay_minutes", "Median detection delay (minutes)")):
@@ -444,13 +512,18 @@ def artifacts(results):
         lines += ["", "| Seed | Truth episodes | Recall | Precision | Median delay (min) |", "|---|---:|---:|---:|---:|"]
         lines += [f"| {r['seed']} | {r['ground_truth_episodes']} | {r['recall']:.1%} | {r['precision']:.1%} | {r['median_detection_delay_minutes']:.3f} |" for r in engine["runs"]]
         lines.append("")
+        if engine.get("six_hour_seed1_reference"):
+            lines += [f"The retained six-hour replay on seed 1 gives a median delay of "
+                      f"{engine['six_hour_seed1_reference']['median_detection_delay_minutes']:.1f} minutes, "
+                      "showing the scheduler artifact. A zero median at 15-minute resolution does not mean every "
+                      "episode is detected instantly; these medians combine timer-based and event-driven episodes.", ""]
     lines += ["## Method and reproducibility", "",
               "- D1 contains 240 LLM-generated Thai messages: 20 personas × 12 messages, two per each of six architecture seed themes. There are 10 female and 10 male cards, and five cards per seniority level. D2 is the gender/seniority fields; D4 is the theme field in d1.jsonl. All are synthetic labels, not self-reported attributes.",
               "- The deterministic split holds out one message from four rotating themes per persona (8 train / 4 test). All six themes occur in that persona's training set. Test text is disjoint from train; personas are intentionally shared for closed-set author attribution. split.json records the exact split. The pipeline roster contains all 20 MemberProfiles with three training samples each.",
               "- Classical attackers fit TF-IDF character 2–5 grams + LogisticRegression(max_iter=2000, random_state=42) on training originals only, then predict on raw test text and run_pipeline.final_text. Author chance is 5%; gender majority is 50%; seniority majority is 25%. A single percent step on 80 tests is 1.25 percentage points.",
               "- The separate forced-choice LLM attacker receives all 20 style cards and two training samples per card. It sees neither test labels nor the original when attacking AFTER, and must pick an author even without evidence. This differs from the internal pipeline attacker, which may abstain and only blocks correct guesses above its confidence threshold.",
               "- A separate LLM call judges each original/final pair on an anchored 1–5 concern/impact/request scale. Blocked outputs remain empty and are included in every metric; release status and individual judgments are saved. Accuracy is closed-set top-1; marker leakage uses the production leak_markers function.",
-              "- The first ten held-out texts from ten distinct personas are timed in serial with LLM response cache reads disabled. Every response is still saved. p50/p95 use numpy percentiles on those ten end-to-end durations; dated first-run measurements are reused on cached reruns. Endpoint load and small n affect these numbers.",
+              "- The first ten held-out texts from ten distinct personas are timed in serial with LLM response cache reads disabled. Every response is still saved. p50/p95 use numpy percentiles on those ten end-to-end durations; dated first-run measurements are reused on cached reruns. This ordered subset contains the first ten (female) personas, so timing is not a balanced demographic sample; endpoint load and small n also affect these numbers.",
               "- cluster_offline has no k parameter. The evaluation temporarily substitutes its AgglomerativeClustering constructor in process to set n_clusters=6 and distance_threshold=None, leaving its production Thai tokenizer, TF-IDF, cosine distances and average linkage intact. Native threshold-based results are also reported; no production clustering source is edited. assign_theme is called separately on final text, not read from the pipeline's joint structure/classify output.",
               "- D3 replays generate_history(seed) every 15 minutes, with deterministic context_check filtering. Episodes match unique (kind, affected_hash, ref), and delay is first detection minus injected detectable_at, clipped to zero. Metrics measure rules plus deterministic context filtering, not the LLM judge, outreach delivery, rate limits or human usefulness. tick_minutes=360 retains six-hour replay.",
               "- Run `uv run python eval/run_all.py`; optional `--only gen|privacy|theme|engine` resumes a stage. All LLM calls go through app.llm.chat/chat_json with a global semaphore of four, error retries and SHA-256 request caches under eval/cache. Pipeline snapshots include production source hashes and roster inputs. No API keys are written to cache. Cached data is synthetic and is an explicit offline-evaluation exception to the live product's no-original-persistence rule.", "",
@@ -467,9 +540,11 @@ async def main(only=None):
     results_path = RESULTS / "results.json"
     results = read(results_path) if results_path.exists() else {}
     results.update({"synthetic": True, "version": VERSION, "model": get_settings().llm_model,
+                    "evaluation_source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                     "source_hashes": source_hashes(), "updated_at": datetime.now(UTC).isoformat()})
     cached = CachedLLM()
     llm.chat = cached.chat
+    llm.chat_json = cached.chat_json
     try:
         engine_task = asyncio.create_task(asyncio.to_thread(engine_metrics)) if only in (None, "engine") else None
         if only != "engine":
@@ -489,12 +564,14 @@ async def main(only=None):
             results["engine"] = await engine_task
         results["last_run_llm"] = {"new_calls": cached.calls, "cache_hits": cached.hits,
                                    "outer_retries": cached.retries,
+                                   "retained_llm_response_files": sum(not p.name.startswith("pipeline-") for p in CACHE.glob("*.json")),
                                    "note": "app.llm.chat may internally retry HTTP transport errors; these are not counted separately"}
         save(results_path, results)
         artifacts(results)
         print(json.dumps({"synthetic": True, "results": str(results_path.relative_to(ROOT)), "llm": results["last_run_llm"]}), flush=True)
     finally:
         llm.chat = cached.original
+        llm.chat_json = cached.original_json
 
 
 if __name__ == "__main__":

@@ -151,7 +151,10 @@ def health(session=Depends(db_session), redis=Depends(redis_client)):
 @router.get("/team")
 def team(session=Depends(db_session)):
     row = session.get(Team, TEAM_ID)
-    members = session.scalars(select(Member).where(Member.team_id == TEAM_ID))
+    from app.privacy.pipeline import demo_roster
+    order = {person.member_id: i for i, person in enumerate(demo_roster())}
+    # Stable roster order (Postgres returns recently updated rows last), so the UI opens on Mint.
+    members = sorted(session.scalars(select(Member).where(Member.team_id == TEAM_ID)), key=lambda m: order.get(m.id, 99))
     return {"team": {"id": row.id, "name": row.name}, "members": [
         {"member_id": m.id, "display_name": m.display_name, "role": m.role, "seniority": m.seniority,
          "gender": m.gender, "line_linked": bool(m.line_user_id)} for m in members]}

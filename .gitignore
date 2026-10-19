@@ -14,3 +14,4 @@ deploy/.env
 eval/cache/
 demo.mp4
 *.webm
+*.mp4

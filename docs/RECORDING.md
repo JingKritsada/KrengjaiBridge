@@ -22,7 +22,10 @@ uv run scripts/record_demo.py --base-url http://localhost:8000  # อัดจ�
 uv run scripts/record_demo.py --no-captions --headed            # ไม่มีคำบรรยาย และเปิดหน้าต่างให้ดูระหว่างอัด
 ```
 
-- ใช้เวลาประมาณ 2.5 นาที ได้คลิปยาวประมาณ 2:10
+- เก็บไฟล์วิดีโอไว้นอก repo ที่ `../LiveDemo_Videos/` (โฟลเดอร์ข้าง repo) ตั้งชื่อตามวันที่ เช่น
+  `uv run scripts/record_demo.py --size 1920x1080 --out ../LiveDemo_Videos/2026-10-20_web_walkthrough_1080p.mp4`
+  ไฟล์ `.mp4`/`.webm` ถูก ignore ใน git เพราะขนาดใหญ่
+- ใช้เวลาประมาณ 2.5 นาทีเมื่อใช้ endpoint ของคอร์ส และประมาณ 4–5 นาทีเมื่อสลับไปเครื่อง GPU ของทีม (โมเดล 9B ช้ากว่า) ได้คลิปยาวประมาณ 2–3 นาที
 - **สคริปต์จะกด "ล้างข้อมูลเดโม" บน server ที่ระบุ** อย่ารันระหว่างที่คนอื่นกำลัง demo อยู่บน server เดียวกัน
 - ถ้าหน้า `/demo` ขึ้นป้าย "โหมดสำรอง (ไม่มี LLM)" ในคลิปก็จะเห็นป้ายนั้นด้วย ตรวจ `https://<server>/api/health` ก่อนอัด ช่อง `llm_available` ต้องเป็น `true`
 

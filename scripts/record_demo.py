@@ -93,6 +93,7 @@ class Demo:
         await self.go("/demo")
         await p.get_by_text("ล้างข้อมูลเดโมและเริ่มใหม่").click(); await self.wait(2.5)
         await self.cap("pr")
+        await p.locator(".member-tabs button", has_text="มิ้น").click()
         await p.locator('button[data-scenario="pr_stale"]').click(); await self.wait(5)
         await self.cap("ask"); await self.wait(4)
         await p.locator(".inbox-panel button", has_text="ช่วยเตือนให้หน่อย").first.click(); await self.wait(3)
@@ -103,10 +104,18 @@ class Demo:
         await self.cap("markers")
         await p.locator("#feedback-form textarea").first.fill(FEEDBACK)
         await p.locator(".live-pipeline").scroll_into_view_if_needed(); await self.wait(4.5)
-        await p.get_by_role("button", name="ทดสอบการปกป้องตัวตน").click()
         await self.cap("pipeline")
         confirm = p.get_by_role("button", name="ยืนยันส่งความเห็น")
-        await confirm.wait_for(timeout=90_000); await self.wait(4)
+        # A slow fallback model can take a minute, and the attacker may block a rewrite; try up to 3 times.
+        for attempt in range(3):
+            await p.get_by_role("button", name="ทดสอบการปกป้องตัวตน").click()
+            try:
+                await confirm.wait_for(timeout=150_000)
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
+        await self.wait(4)
         await p.mouse.wheel(0, 450); await self.wait(3.5)
         await self.cap("attacker")
         await p.mouse.wheel(0, 450); await self.wait(5.5)

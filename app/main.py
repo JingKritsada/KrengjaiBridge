@@ -20,12 +20,13 @@ STATIC = Path(__file__).parent / "static"
 
 async def agent_loop(app):
     from app.manager.loop import follow_up, release_themes
-    from app.triggers.engine import run_engine
 
     while True:
         await asyncio.sleep(30)
+        # Detection runs when a demo scenario adds events. Running it here too would nudge
+        # from the seed's Friday history every time the demo is reset.
         # One short transaction per stage so a slow LLM call never holds locks other requests need.
-        for stage in (run_engine, release_themes, follow_up):
+        for stage in (release_themes, follow_up):
             try:
                 with app.state.session_factory() as session:
                     result = stage(session, app.state.redis, TEAM_ID)

@@ -1,4 +1,4 @@
-import { api, post } from './api.js';
+import { api, post, isMock } from './api.js';
 import { shell, escapeHTML as e, list, number, percent, icon, showError, busy, toast, structuredHTML, kindLabel, isRec, enter, countTo, cssTime, reducedMotion } from './ui.js';
 
 shell('demo');
@@ -178,12 +178,12 @@ function renderTabs() {
 
 // LINE look: the OA's message on the left with avatar and time; quick replies sit in LINE's pill bar at the bottom,
 // for the latest message only. A tapped reply comes back as the member's own green bubble on the right (LINE posts
-// the button's display text the same way) and the bar empties.
+// the button's display text the same way) and the bar empties. The OA's reply to that choice follows, as LINE sends it.
 const chatTime = value => value ? new Date(value).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
 const oaAvatar = `<span class="chat-avatar" aria-hidden="true">${document.querySelector('.brand-mark svg').outerHTML}</span>`;
 function chatEntryHTML(message) {
   const answer = message.response ? list(message.buttons).find(b => b.action === message.response)?.label || 'ตอบกลับแล้ว' : '';
-  return `<article class="chat-entry" aria-label="เกรงใจบริดจ์ · ${e(kindLabel(message.kind))}"><div class="chat-row in" data-key="${e(message.id)}">${oaAvatar}<div class="chat-line"><div class="chat-bubble">${e(message.text || 'ยังไม่มีข้อความ')}</div><time class="chat-time">${chatTime(message.created_at)}</time></div></div>${answer ? `<div class="chat-row out" data-key="${e(message.id)}:${e(message.response)}"><span class="chat-read">อ่านแล้ว</span><div class="chat-bubble">${e(answer)}</div></div>` : ''}</article>`;
+  return `<article class="chat-entry" aria-label="เกรงใจบริดจ์ · ${e(kindLabel(message.kind))}"><div class="chat-row in" data-key="${e(message.id)}">${oaAvatar}<div class="chat-line"><div class="chat-bubble">${e(message.text || 'ยังไม่มีข้อความ')}</div><time class="chat-time">${chatTime(message.created_at)}</time></div></div>${answer ? `<div class="chat-row out" data-key="${e(message.id)}:${e(message.response)}"><span class="chat-read">อ่านแล้ว</span><div class="chat-bubble">${e(answer)}</div></div>` : ''}${answer && message.reply ? `<div class="chat-row in" data-key="${e(message.id)}:reply">${oaAvatar}<div class="chat-line"><div class="chat-bubble">${e(message.reply)}</div></div></div>` : ''}</article>`;
 }
 function renderQuickReplies(messages, animate) {
   const latest = messages.at(-1);
@@ -192,6 +192,18 @@ function renderQuickReplies(messages, animate) {
   bar.hidden = !buttons.length;
   bar.innerHTML = buttons.map(button => `<button data-outreach="${e(latest.id)}" data-action="${e(button.action)}">${e(button.label || 'ตอบกลับ')}</button>`).join('');
   if (animate) enter(bar.children);
+}
+
+// Feedback confirmed in LINE reaches the same gate; show it here while no web draft is open.
+let gatePending = false;
+async function loadGate() {
+  if (isMock || gatePending || pendingPreview || draftID) return;
+  gatePending = true;
+  try {
+    const gate = await api('/api/demo/gate');
+    const shownReleased = document.querySelector('#gate').classList.contains('released');
+    if (gate?.theme_slug && (Number(gate.count) > gateShown || (gate.released && !shownReleased))) renderGate(gate);
+  } catch { /* the inbox poll already reports connection problems */ } finally { gatePending = false; }
 }
 
 async function loadInbox() {
@@ -386,6 +398,6 @@ document.querySelector('.line-chat').addEventListener('click', event => {
 resetSteps();
 loadHealth();
 loadTeam().then(() => Promise.all([loadInbox(), loadSignals()]));
-setInterval(() => { if (!document.hidden) loadInbox(); }, isRec ? 1000 : 3000);
+setInterval(() => { if (!document.hidden) { loadInbox(); loadGate(); } }, isRec ? 1000 : 3000);
 setInterval(() => { if (!document.hidden) { loadTeam(); loadSignals(); loadHealth(); } }, 15000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { loadTeam().then(loadInbox); loadSignals(); loadHealth(); } });

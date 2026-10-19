@@ -2,6 +2,20 @@
 
 from app.db import Outreach
 
+# The agent's answer to a tapped button: LINE sends it as a reply, the web inbox shows it under the member's choice.
+ACTION_REPLIES = {
+    "nudge:accept": "ส่งข้อความเตือนตามข้อตกลงของทีมแล้ว ในข้อความไม่มีชื่อคุณ",
+    "nudge:decline": "รับทราบ ยังไม่ส่งข้อความเตือน",
+    "nudge:useless": "ขอบคุณ ระบบจะปรับเกณฑ์การแจ้งเตือน",
+    "mute": "ปิดการแจ้งเตือนประเภทนี้แล้ว",
+}
+
+
+def action_reply(action):
+    return ACTION_REPLIES.get(
+        "mute" if action.startswith("mute:") else action.rsplit(":", 1)[0], "รับทราบแล้ว"
+    )
+
 
 def outreach_view(row, member):
     return {
@@ -14,6 +28,7 @@ def outreach_view(row, member):
         "channel": row.channel,
         "created_at": row.created_at.isoformat(),
         "response": row.response,
+        "reply": action_reply(row.response) if row.response else None,
     }
 
 

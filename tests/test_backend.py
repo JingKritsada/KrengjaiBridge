@@ -58,7 +58,11 @@ def test_full_http_story(backend_client, pipeline_mock, monkeypatch, llm_down):
     signal = next(s for s in result["signals"] if s["kind"] == "pr_stale")
     outreach = next(o for o in result["outreach"] if o["kind"] == "pr_stale")
     assert signal["judge_ok"]
-    post(c, f"/api/outreach/{outreach['id']}/respond", {"action": f"nudge:accept:{signal['id']}"})
+    answered = post(
+        c, f"/api/outreach/{outreach['id']}/respond", {"action": f"nudge:accept:{signal['id']}"}
+    )
+    # The web inbox shows the same acknowledgement LINE replies with.
+    assert answered["reply"] == "ส่งข้อความเตือนตามข้อตกลงของทีมแล้ว ในข้อความไม่มีชื่อคุณ"
     reviewer_inbox = c.get("/api/outreach", params={"member_id": "m-somchai"}).json()
     reminder = next(o for o in reviewer_inbox if o["kind"] == "reminder")
     assert "PR #123" in reminder["text"] and "ข้อตกลงของทีม" in reminder["text"]
@@ -185,6 +189,17 @@ def test_weekly_limit_idempotence_and_self_only(backend_client):
     assert post(c, "/api/demo/scenario/pr_stale")["outreach"] == []
 
 
+@pytest.mark.parametrize(
+    "name", ["pr_stale", "ticket_blocked", "friday_urgent", "late_night", "sprint_end"]
+)
+def test_scenario_sends_only_its_own_nudge(backend_client, name):
+    # The seed already holds three Friday-evening tasks for the dashboard baseline;
+    # they must not ride along with every other scenario.
+    result = post(backend_client, f"/api/demo/scenario/{name}")
+    assert [s["kind"] for s in result["signals"]] == [name]
+    assert [o["kind"] for o in result["outreach"]] == [name]
+
+
 def test_mute_blocks_future_nudges(backend_client):
     c = backend_client
     with c.app.state.session_factory() as session:
@@ -220,6 +235,16 @@ def test_release_delay_hides_theme_until_due(backend_client, backend_settings, m
         "kjb:demo-clock", (demo_now(c.app.state.redis) + timedelta(seconds=21)).isoformat()
     )
     assert len(c.get("/api/manager/summary").json()["themes"]) == 1
+
+
+def test_demo_gate_follows_confirmed_feedback(backend_client, pipeline_mock):
+    c = backend_client
+    assert c.get("/api/demo/gate").json() is None
+    confirm(c, preview(c))
+    gate = c.get("/api/demo/gate").json()
+    assert gate["count"] == 1 and gate["theme_slug"] == "friday-urgent-work"
+    post(c, "/api/demo/reset")
+    assert c.get("/api/demo/gate").json() is None
 
 
 def test_inputs_reset_and_static_routes(backend_client):

@@ -332,6 +332,15 @@ async def teammates(
     return {"added": added, "gate": gate_view(redis, theme)}
 
 
+@router.get("/demo/gate")
+def demo_gate(session=Depends(db_session), redis=Depends(redis_client)):
+    # Demo console only: the gate bar follows feedback confirmed in LINE, not just on the web.
+    theme = session.scalar(
+        select(Theme).where(Theme.team_id == TEAM_ID).order_by(Theme.id.desc()).limit(1)
+    )
+    return gate_view(redis, theme) if theme else None
+
+
 @router.post("/demo/advance")
 async def advance_demo(body: AdvanceBody, session=Depends(db_session), redis=Depends(redis_client)):
     return {"themes": await advance(session, redis, body.weeks)}

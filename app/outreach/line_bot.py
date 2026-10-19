@@ -34,6 +34,7 @@ from app.api import (
 )
 from app.config import get_settings
 from app.db import Member, Outreach
+from app.outreach.channel import action_reply
 from app.privacy.neutralize import leak_markers
 from app.triggers.engine import respond
 
@@ -50,12 +51,6 @@ HELP_TEXT = (
     'พิมพ์ "ยืนยัน" หรือ "ยกเลิก" สำหรับฉบับร่างล่าสุด\n'
     "ตอบข้อความเตือนได้ด้วยการพิมพ์: ช่วยเตือนให้หน่อย / ยังไม่ต้อง / ไม่มีประโยชน์ / ปิดแจ้งเตือนแบบนี้"
 )
-ACTION_REPLIES = {
-    "nudge:accept": "ส่งข้อความเตือนตามข้อตกลงของทีมแล้ว ในข้อความไม่มีชื่อคุณ",
-    "nudge:decline": "รับทราบ ยังไม่ส่งข้อความเตือน",
-    "nudge:useless": "ขอบคุณ ระบบจะปรับเกณฑ์การแจ้งเตือน",
-    "mute": "ปิดการแจ้งเตือนประเภทนี้แล้ว",
-}
 
 
 def _norm(text):
@@ -216,12 +211,6 @@ async def linking_prompt(session, reply_token):
         {"label": m.display_name, "action": f"link:{m.id}"} for m in session.scalars(select(Member))
     ]
     await reply_message(reply_token, text_message("คุณคือใครในทีมเดโม", buttons))
-
-
-def action_reply(action):
-    return ACTION_REPLIES.get(
-        "mute" if action.startswith("mute:") else action.rsplit(":", 1)[0], "รับทราบแล้ว"
-    )
 
 
 def typed_member(session, typed):

@@ -32,6 +32,7 @@
 .chat-entry + .chat-entry { margin-top: 14px; }
 .chat-row { display: flex; align-items: flex-start; gap: 12px; }
 .chat-row.out { justify-content: flex-end; align-items: flex-end; gap: 6px; margin-top: 8px; padding-left: 15%; padding-right: 7px; }
+.chat-row.out + .chat-row.in { margin-top: 8px; }
 .chat-avatar { display: grid; place-items: center; flex: 0 0 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; }
 .chat-avatar svg { width: 22px; height: 14px; }
 .chat-line { display: flex; align-items: flex-end; gap: 6px; min-width: 0; max-width: 88%; }
@@ -127,6 +128,7 @@ body.rec .line-chat { padding-bottom: 120px; }
 .chat-row.in.kjb-enter .chat-time { animation: kjb-fade var(--dur-med) var(--ease-out) both; animation-delay: 240ms; }
 .chat-row.out.kjb-enter { animation-name: kjb-bubble; animation-duration: var(--dur-slow); transform-origin: right bottom; }
 .chat-row.out.kjb-enter .chat-read { animation: kjb-fade var(--dur-med) var(--ease-out) both; animation-delay: 600ms; }
+.chat-row.out + .chat-row.in.kjb-enter { --delay: 700ms; }
 .quick-reply-bar > .kjb-enter { --rise: 12px; --delay: 280ms; animation-duration: var(--dur-slow); }
 /* Gate bar: determinate progress per step, an indeterminate sweep while the model works. */
 .gate-progress { position: absolute; left: 12px; right: 12px; bottom: 3px; height: 3px; overflow: hidden; border-radius: 2px; background: var(--rule); opacity: 0; transition: opacity var(--dur-med) var(--ease-out) var(--dur-slow); }

@@ -163,7 +163,8 @@ async def scenario(session, redis, name):
         if not exists:
             ingest(session, TEAM_ID, event)
     session.flush()
-    return await run_engine(session, redis, TEAM_ID, now=now)
+    # Only the chosen scenario may nudge; the seed's Friday history alone crosses its threshold.
+    return await run_engine(session, redis, TEAM_ID, now=now, kinds={name})
 
 
 async def advance(session, redis, weeks):

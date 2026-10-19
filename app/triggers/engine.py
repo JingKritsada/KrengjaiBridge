@@ -59,7 +59,7 @@ def reserve_nudge(redis, member, now):
     return count <= get_settings().nudge_weekly_limit
 
 
-async def run_engine(session, redis, team_id, *, now=None):
+async def run_engine(session, redis, team_id, *, now=None, kinds=None):
     now = aware(now or utcnow())
     members = list(session.scalars(select(Member).where(Member.team_id == team_id)))
     member_map = {m.actor_hash: m for m in members}
@@ -67,6 +67,8 @@ async def run_engine(session, redis, team_id, *, now=None):
     rows, outreach = [], []
     fresh = []
     for signal in detect(events, members, now=now):
+        if kinds is not None and signal.kind not in kinds:
+            continue
         period = (
             now.strftime("%G-%V")
             if signal.kind in ("friday_urgent", "late_night", "review_concentration")

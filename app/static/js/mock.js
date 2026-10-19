@@ -25,11 +25,14 @@ const metric = {
 // Before the 2-week skip: the series ends at the current values, so sparklines and deltas agree with the numbers shown.
 const seriesBefore = { weeks: ['17 ส.ค.', '24 ส.ค.', '31 ส.ค.', '7 ก.ย.', '14 ก.ย.', '21 ก.ย.', '28 ก.ย.', '5 ต.ค.'], pr_wait_hours: [44, 51, 47, 53, 49, 52, 46, 48], friday_after17: [2, 3, 2, 3, 3, 2, 3, 3], blocked_days: [2.9, 3.3, 3.1, 3.6, 3.2, 3.5, 3.3, 3.4] };
 const stamp = () => new Date().toISOString();
+// Same text as ACTION_REPLIES in app/outreach/channel.py.
+const actionReplies = { 'nudge:accept': 'ส่งข้อความเตือนตามข้อตกลงของทีมแล้ว ในข้อความไม่มีชื่อคุณ', 'nudge:decline': 'รับทราบ ยังไม่ส่งข้อความเตือน', 'nudge:useless': 'ขอบคุณ ระบบจะปรับเกณฑ์การแจ้งเตือน', mute: 'ปิดการแจ้งเตือนประเภทนี้แล้ว' };
+const actionReply = action => actionReplies[action.startsWith('mute:') ? 'mute' : action.split(':').slice(0, 2).join(':')] || 'รับทราบแล้ว';
 function theme(status = 'open') {
   return { id: 'theme-friday', slug: 'friday-urgent-work', label: 'งานด่วนเย็นวันศุกร์', count_range: '3–5 คน', status, samples: [sample], proposal, manager_reply: status === 'open' ? null : 'ขอบคุณที่ช่วยสะท้อนเรื่องนี้ ตกลงใช้เวลา 15:00 เป็นจุดรับงานสุดท้ายของวันศุกร์ เริ่มสัปดาห์นี้ และกลับมาดูผลด้วยกัน', followup: status === 'resolved' ? { due_at: stamp(), metric_name: 'งานหลัง 17:00 วันศุกร์ (ครั้ง)', before: 3, after: 0, improved: true } : null, released_at: stamp() };
 }
 function outreach(id, memberID, kind, text, buttons = []) {
-  return { id, member_id: memberID, display_name: team.members.find(m => m.member_id === memberID)?.display_name, kind, text, buttons, channel: memberID === 'm-mint' ? 'line' : 'web', created_at: stamp(), response: null };
+  return { id, member_id: memberID, display_name: team.members.find(m => m.member_id === memberID)?.display_name, kind, text, buttons, channel: memberID === 'm-mint' ? 'line' : 'web', created_at: stamp(), response: null, reply: null };
 }
 function initialState(empty = false) {
   return {
@@ -163,6 +166,7 @@ export async function mockRequest(path, method = 'GET', body = {}) {
     if (!found) throw new Error('ไม่พบข้อความ');
     if (found.response) return found;
     found.response = body.action;
+    found.reply = actionReply(body.action);
     const signalID = String(body.action || '').split(':').slice(2).join(':');
     const signal = state.signals.find(s => s.id === signalID);
     if (signal) signal.state = body.action.startsWith('nudge:accept:') ? 'accepted' : 'dismissed';

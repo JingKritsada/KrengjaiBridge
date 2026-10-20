@@ -335,7 +335,7 @@ def footer(slide, text):
     textbox(slide, text, 0.55, 6.45, 12.05, 0.35, 12, color="4C5570")
 
 
-def build_deck(template, data, deck_source):
+def build_deck(template, data, deck_source, video):
     prs = Presentation(template)
     # Retain original title slide; drop the three unused original slides and relationships.
     for sid in list(prs.slides._sldIdLst)[1:]:
@@ -344,7 +344,7 @@ def build_deck(template, data, deck_source):
     layout = next(candidate for candidate in prs.slide_layouts if candidate.name == "自定义版式")
     end_layout = next(candidate for candidate in prs.slide_layouts if candidate.name == "结束页")
     specifications = re.split(r"^\d+\. \*\*", deck_source, flags=re.MULTILINE)[1:]
-    assert len(specifications) == 15, "Expected the 15-slide source specification"
+    assert len(specifications) == 16, "Expected the 16-slide source specification"
 
     def content(title):
         s = prs.slides.add_slide(layout)
@@ -440,6 +440,23 @@ def build_deck(template, data, deck_source):
         textbox(s, title, x + 1, 2.45, 2.5, 0.6, 28, BLUE, True)
         textbox(s, body, x + 0.3, 3.4, 3.2, 1.0, 22)
     footer(s, "A bot has no seniority, no face to lose, no debt to anyone.")
+
+    s = content("Live demo: Mint’s story in 2:16")
+    # 16:9 video centred in the content area; PowerPoint plays it on click from the poster frame.
+    w, h = 5.1 * 16 / 9, 5.1
+    s.shapes.add_movie(
+        str(video),
+        Inches(0.55 + (12.2 - w) / 2),
+        Inches(1.2),
+        Inches(w),
+        Inches(h),
+        poster_frame_image=str(ASSETS / "demo-poster.jpg"),
+        mime_type="video/mp4",
+    )
+    footer(
+        s,
+        "Live Huawei Cloud server + real LINE chat · two teammates simulated · waits cut · https://youtu.be/f4Op2MmzrTY",
+    )
 
     s = content("Demo story: two weeks of Mint")
     events = [
@@ -577,7 +594,7 @@ def build_deck(template, data, deck_source):
         "Individual signals stay private",
         "Originals deleted",
         "Hashed identities; encrypted tokens",
-        "Honest limits for small teams",
+        "Nothing below 3 people",
     ]
     for i, line in enumerate(rules):
         x, y = 0.55 + (i % 3) * 4.22, 1.6 + (i // 3) * 2.15
@@ -669,7 +686,7 @@ def build_deck(template, data, deck_source):
     textbox(s, "Kreng-jai Bridge", 0.65, 2.8, 7.3, 0.7, 32, bold=True)
     textbox(
         s,
-        "Live demo\nhttps://119-13-81-32.sslip.io\n\nLINE @075bvvrs",
+        "Live demo\nhttps://119-13-81-32.sslip.io\n\nVideo https://youtu.be/f4Op2MmzrTY\nLINE @075bvvrs",
         0.65,
         3.75,
         7.3,
@@ -687,7 +704,7 @@ def build_deck(template, data, deck_source):
                 "Current measurements do not establish anonymity."
             )
         )
-    assert len(prs.slides) == 15
+    assert len(prs.slides) == 16
     output = HERE / "Slides_KrengjaiBridge.pptx"
     prs.save(output)
     print(f"DECK slides={len(prs.slides)}")
@@ -768,6 +785,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--template-dir", type=Path, default=ROOT.parent)
     parser.add_argument("--render", action="store_true")
+    parser.add_argument(
+        "--video",
+        type=Path,
+        default=ROOT.parent / "LiveDemo_Videos/2026-10-20_demo_edit.mp4",
+        help="demo video embedded as slide 5",
+    )
     parser.add_argument("--scratch", type=Path)
     args = parser.parse_args()
     data = json.loads((EVAL / "results.json").read_text())
@@ -776,7 +799,10 @@ def main():
     deck_source = (HERE / "deck.md").read_text()
     doc_template = next(args.template_dir.glob("_Template_1*.docx"))
     ppt_template = next(args.template_dir.glob("_Template_2*.pptx"))
-    outputs = [build_form(doc_template, source, data), build_deck(ppt_template, data, deck_source)]
+    outputs = [
+        build_form(doc_template, source, data),
+        build_deck(ppt_template, data, deck_source, args.video),
+    ]
     active_placeholders = set(re.findall(r"\{\{(\w+)\}\}", raw_source))
     for key, (path, kind) in MAPPING.items():
         if key in active_placeholders:

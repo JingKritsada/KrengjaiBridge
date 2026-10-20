@@ -3,7 +3,7 @@
 อัปเดต: 20 ต.ค. 2026 · ระบบ live: https://119-13-81-32.sslip.io · LINE OA: @075bvvrs
 
 เสร็จแล้ว: Huawei Cloud (VPC, SG, EIP, ECS ใน CN-Hong Kong), LINE webhook และโปรไฟล์ OA, วิดีโอ demo 2:16
-(`../LiveDemo_Videos/2026-10-20_demo_edit.mp4` ฝังเป็น slide 5), `Entry_Form_KrengjaiBridge.docx` และ
+(`../LiveDemo_Videos/2026-10-20_demo_edit.mp4` ฝังเป็น slide 5, YouTube https://youtu.be/f4Op2MmzrTY), `Entry_Form_KrengjaiBridge.docx` และ
 `Slides_KrengjaiBridge.pptx` สร้างใหม่วันที่ 20 ต.ค. ด้วย `uv run docs/submission/build_submission.py --render`
 
 ไฟล์ลับ (ห้าม commit, ห้ามส่งต่อ): `.env`, `.env.line`, `.env.cloud` (รหัส root ECS), `.env.server`, `deploy/.env`
@@ -15,7 +15,6 @@
 - ชื่อนักศึกษา 3 คนเป็นภาษาอังกฤษ — ผมใส่ชื่อจากไฟล์ Excel แถว HC-2026a-02 ไว้ก่อน (กฤษฎา / ชิติพัฒน์ / ภาณุพงษ์) ช่วยยืนยันว่าถูก
 - เบอร์โทรและอีเมลหัวหน้าทีม
 - รูปทีม ~2 MB
-- ลิงก์วิดีโอหลังอัปโหลด `LiveDemo_Videos/2026-10-20_demo_edit.mp4` และลิงก์ repo (ถ้าจะเปิดเผย)
 
 ## 2. ขอสิทธิ์จากอาจารย์/ผู้ดูแลบัญชี (5 นาที) — ข้อ 4) เรื่อง budget LLM ด่วนที่สุด
 

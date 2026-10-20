@@ -24,47 +24,52 @@ Assets in `docs/submission/assets/` and `eval/results/`.
    Three steps horizontally: Observe (SDLC metadata only) → Ask (private LINE message, the person decides) →
    Act (neutral reminder or anonymous feedback). Line: "A bot has no seniority, no face to lose, no debt to anyone."
 
-5. **Demo story: two weeks of Mint**
+5. **Live demo (video, 2:16)**
+   Embedded `../LiveDemo_Videos/2026-10-20_demo_edit.mp4` (outside the repo; `--video` overrides), poster
+   `assets/demo-poster.jpg`, click to play. Recorded on the live ECS server with Mint's real LINE chat.
+   Footer: the two teammates are simulated; waits are cut; YouTube link https://youtu.be/f4Op2MmzrTY. Slides 6 and 10 repeat what the video shows.
+
+6. **Demo story: two weeks of Mint**
    Timeline (8 steps from the concept: Tue PR #123 → Thu 48 h trigger → LINE ask → neutral reminder w/o name →
    Fri feedback → k=3 reached → Mon manager accepts 15:00 cut-off → +2 weeks Friday after-17 work 3 → 0).
    Screenshot: `assets/screen-inbox.png` (LINE-style inbox).
 
-6. **Privacy pipeline: 6 steps, tested by an attacker**
+7. **Privacy pipeline: 6 steps, tested by an attacker**
    Diagram of 6 steps (remove identifiers → neutralize Thai markers → rewrite ⇄ attacker → situation/impact/request
    → k-gate (k=3) → themes). Before/after example: original (red markers) → "สถานการณ์: มีการมอบหมายงานในช่วงเย็นวันศุกร์ ·
    ผลกระทบ: ต้องยกเลิกนัดหมายส่วนตัวอย่างต่อเนื่อง · สิ่งที่ขอ: พิจารณาปรับกระบวนการวางแผนงาน". Screenshot `assets/screen-pipeline.png`.
 
-7. **Results: anonymity you can measure**
+8. **Results: anonymity you can measure**
    Chart `eval/results/attacker_before_after.png` large. Callouts with the 3 strongest numbers from
    results.json (author attribution before→after vs 5% chance; gender inference; marker leak). Footnote:
    "Synthetic Thai dataset, 20 personas × 12 messages; pilot with real volunteers next."
 
-8. **Results: detection and meaning**
+9. **Results: detection and meaning**
    `eval/results/engine.png` + meaning stat (% judged ≥ 4/5) + theme clustering ARI + pipeline latency.
 
-9. **Manager loop closes the circle**
+10. **Manager loop closes the circle**
    Screenshot `assets/screen-manager.png`. Bullets: themes as ranges (3–5 people), AI proposal, reply via
    anonymous token, follow-up metric before → after.
 
-10. **Architecture on Huawei Cloud**
+11. **Architecture on Huawei Cloud**
     `assets/architecture.png` full width.
 
-11. **Built with AI agents on Huawei Cloud**
+12. **Built with AI agents on Huawei Cloud**
     Lifecycle row: Requirement → Code generation → Build → Troubleshoot → Deploy, each with 1 line from entry-form §2
     (contract-first; parallel coding agents; one FastAPI + Docker; region/IAM fixes; ECS + Caddy + LINE webhook).
     Callout: "Agent skill provisions VPC · ECS · RDS · DCS in one command (`skills/huawei-cloud-provision`)".
 
-12. **Privacy by design (PDPA)**
+13. **Privacy by design (PDPA)**
     6 rules as icon grid: metadata only · opt-in · individual signals only to the person · originals deleted ·
-    identities hashed, tokens encrypted · honest limits (tells you when the team is too small).
+    identities hashed, tokens encrypted · nothing reaches the manager below 3 people.
 
-13. **Why we win** — comparison table (rows: survey tools Officevibe/TINYpulse/Lattice; burnout analytics
+14. **Why we win** — comparison table (rows: survey tools Officevibe/TINYpulse/Lattice; burnout analytics
     Viva Insights/Uplevel; engineering metrics LinearB/Swarmia; Thai HR systems) × columns (acts for the employee,
     tested anonymity, Thai language/LINE, closes the loop with metrics). Kreng-jai Bridge row all ✓.
 
-14. **Roadmap**
+15. **Roadmap**
     Now (demo) → Next 4 weeks: pilot with 2 real teams, real-volunteer D1 dataset, MaaS DeepSeek/Typhoon 2,
     RDS/DCS via skill, CodeArts CI → Later: Lark, multi-tenant, calendar signals.
     Business: buyer = HR / CTO of Thai software houses & banks; uses existing engagement-survey budget.
 
-15. **End** (template end slide): "Thank you · Live demo: https://119-13-81-32.sslip.io · LINE @075bvvrs".
+16. **End** (template end slide): "Thank you · Live demo: https://119-13-81-32.sslip.io · Video https://youtu.be/f4Op2MmzrTY · LINE @075bvvrs".

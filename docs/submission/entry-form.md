@@ -38,11 +38,11 @@ Value. Juniors get a safe go-between; managers see real problems early with a co
 
 ### 2. Huawei Cloud across the development lifecycle (≤ 1,000 words)
 
-We built the prototype in about one day with AI agents doing most of the hands-on work and humans owning decisions. Huawei Cloud carried the runtime, and an agent skill makes the infrastructure reproducible. We list what was used and what is still pending, without overstating either.
+We built the prototype in under two days with AI agents doing most of the hands-on work and humans owning decisions. Huawei Cloud carried the runtime, and an agent skill makes the infrastructure reproducible. We list what was used and what is still pending, without overstating either.
 
 **Requirement analysis.** We started from a concept study (problem evidence, users, risks, competitors) and converted it into a one-page build contract (`docs/ARCHITECTURE.md`): hard privacy rules, module boundaries, the HTTP API, view shapes, LINE postback actions and one end-to-end demo story. An LLM helped turn the research into user stories and acceptance criteria; the team fixed the scope for a one-day MVP (LINE 1:1 bot, three SDLC signals, full privacy pipeline, manager loop, evaluation). We checked Huawei Cloud capabilities early in the console: ModelArts Studio MaaS in CN-Hong Kong lists DeepSeek-V4.1-Flash, GLM-5.x and DeepSeek-V4 with OpenAI-compatible endpoints (`/v2/chat/completions`), which is why the app talks to LLMs only through an OpenAI-compatible client.
 
-**Code generation.** An orchestrating coding agent wrote the shared contracts (`app/contracts.py`, LLM client, settings) and then dispatched parallel coding agents with disjoint file scopes: (A) the Thai privacy pipeline, (B) backend, trigger engine, LINE bot and manager loop, (C) the Thai web UI, then (D) evaluation and (E) the Huawei Cloud provisioning skill. Each worker received only goal, scope and verification commands; the orchestrator reviewed every diff and re-ran the tests itself. The result is about 2,000 lines of Python and a static web UI with 74 automated tests.
+**Code generation.** An orchestrating coding agent wrote the shared contracts (`app/contracts.py`, LLM client, settings) and then dispatched parallel coding agents with disjoint file scopes: (A) the Thai privacy pipeline, (B) backend, trigger engine, LINE bot and manager loop, (C) the Thai web UI, then (D) evaluation, (E) the Huawei Cloud provisioning skill and (F) a light redesign of the web UI from a written design system (`DESIGN.md`). Each worker received only goal, scope and verification commands; the orchestrator reviewed every diff and re-ran the tests itself. The result is about 3,400 lines of application Python, a static web UI of about 1,900 lines and 108 automated tests.
 
 **Project building.** One FastAPI service (Python 3.12, `uv`), PostgreSQL and Redis, packaged with a Dockerfile and `docker compose`. Local development uses SQLite and in-process Redis, so tests run offline in seconds; the same code runs on PostgreSQL/Redis in the cloud by changing `DATABASE_URL` and `REDIS_URL`.
 
@@ -57,7 +57,7 @@ We built the prototype in about one day with AI agents doing most of the hands-o
 
 **AI agent skill for provisioning RDS and Redis.** `skills/huawei-cloud-provision/` contains a `SKILL.md` that a coding agent loads and a Huawei Cloud SDK v3 script with `plan`, `apply`, `env` and `destroy`. It checks credentials and permissions first, finds resources by name (idempotent), creates VPC/subnet/security group, ECS, RDS for PostgreSQL and DCS for Redis in the team's enterprise project, waits until they are ACTIVE and prints the connection lines for `.env.server`. Switching the demo from containers to managed RDS/DCS is then one command plus a redeploy.
 
-**Efficient practices.** (1) Write the contract first, then parallelize; (2) keep every external dependency behind an environment variable (LLM endpoint, DB, cache, LINE); (3) offline tests with mocked LLM calls plus a separate live smoke test; (4) cache LLM calls in evaluation so experiments are cheap to rerun; (5) never store secrets in git (`.env*` ignored; passwords generated per resource).
+**Efficient practices.** (1) Write the contract first, then parallelize; (2) keep every external dependency behind an environment variable (LLM endpoint, DB, cache, LINE); (3) offline tests with mocked LLM calls plus a separate live smoke test; (4) cache LLM calls in evaluation so experiments are cheap to rerun; (5) never store secrets in git (`.env*` ignored; passwords generated per resource); (6) a pre-commit hook runs Ruff and the ty type checker on every commit, and a Playwright script checks the UI with a Playwright script against `DESIGN.md` (font floor, contrast, no sideways scroll); (7) script the demo video against the live ECS server and the real LINE chat (`scripts/record_live.py`), so it can be re-recorded after any change.
 
 **Next on Huawei Cloud.** Move inference to ModelArts Studio MaaS (DeepSeek-V4.1-Flash is already subscribed in the tenant; needs an API key) and evaluate a Thai model (Typhoon 2) on ModelArts; create RDS/DCS with the skill; keep reply-token keys in DEW/KMS; move logs to LTS without user content; run CI/CD on CodeArts Repo/Pipeline.
 
@@ -88,5 +88,5 @@ Expected impact (to validate in a pilot): shorter PR wait and blocked time, high
 ## Entry Demonstration
 - Live web demo: https://119-13-81-32.sslip.io (dashboard `/manager`, presenter console `/demo`)
 - LINE Official Account: @075bvvrs (Kreng-jai Bridge)
-- Video: [[TODO: link after recording]]
+- Video: https://youtu.be/f4Op2MmzrTY (2:16 demo recorded on the live server with a real LINE chat; also embedded as slide 5 of the deck)
 - Source code: https://github.com/JingKritsada/KrengjaiBridge

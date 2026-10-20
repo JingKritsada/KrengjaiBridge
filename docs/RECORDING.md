@@ -57,6 +57,27 @@ uv run scripts/record_demo.py --mock --out /tmp/dry.mp4
 | 7 | `/manager` | ติดตามผล 3 → 0 ที่หัวการ์ด | `followup` |
 | 8 | architecture | ภาพสถาปัตยกรรมบน Huawei Cloud และ LINE OA | `outro`, `line` |
 
+## 2.1 อัดจากหน้าจอจริง พร้อม LINE บน iPhone (`scripts/record_live.py`)
+
+สคริปต์นี้ใช้ได้เฉพาะ macOS มันเลื่อนเคอร์เซอร์จริง (เห็นในวิดีโอ) อ่านข้อความบน iPhone Mirroring ด้วย OCR ภาษาไทยของ Apple Vision
+และอัดทั้งจอด้วย ffmpeg ได้ภาพ 4K 16:9 (3840×2160) จากเฟรม 1920×1080 pt ที่ y = 100
+
+```bash
+uv run scripts/record_live.py web  --out ../LiveDemo_Videos/2026-10-20_take-web    # เว็บอย่างเดียว เต็มเฟรม
+uv run scripts/record_live.py line --out ../LiveDemo_Videos/2026-10-20_take-line   # เว็บซ้าย + LINE จริงบน iPhone ขวา
+uv run scripts/record_live.py line --dry                                           # ซ้อมโดยไม่อัดจอ
+```
+
+ก่อนอัด take `line`:
+- เปิด iPhone Mirroring ปลดล็อก และตั้ง Settings → **Authenticate Automatically** (ไม่งั้นจะล็อกกลางคลิป)
+- View → Actual Size แล้ว Zoom In 4 ครั้ง (หน้าต่าง 479×1049 pt) สคริปต์ย้ายหน้าต่างไปทางขวาเอง
+- ใน LINE เปิดแชต Kreng-jai Bridge ที่ผูกเป็น "มิ้น" แล้ว และ **ลบประวัติแชต** (☰ → Settings → Delete chat history)
+  สคริปต์ตรวจว่ามีข้อความใหม่โดยนับข้อความบนจอ
+- ห้ามแตะเมาส์ระหว่างอัด สคริปต์เลื่อนแชตเล็กน้อยทุก 50 วินาทีเพื่อไม่ให้ iPhone Mirroring หยุดเชื่อมต่อ
+
+ได้ไฟล์ `<out>.mp4` (ครอป 16:9), `<out>.raw.mp4` (ทั้งจอ), `<out>.srt` (คำบรรยาย EN/TH ตามเวลาวิดีโอ) และ `<out>.events.json`
+หน้า `/demo` แสดงประตูนิรนามของความเห็นที่ยืนยันใน LINE ด้วย (`GET /api/demo/gate`) จึงกดปุ่มเพื่อนร่วมทีมต่อจาก LINE ได้
+
 ## 3. แก้คลิปเมื่อ UI หรือเนื้อเรื่องเปลี่ยน
 
 ทุกอย่างอยู่ใน `scripts/record_demo.py`:

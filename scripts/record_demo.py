@@ -24,7 +24,7 @@ when available.
 
 Playwright's own video is the layout size (1536x864): it records CSS pixels and never scales up, so --scale
 only sharpens rendering. For the final cut, run --headed and capture the window with OBS (native Retina,
-no scale override); see docs/design/reference.html section 4.1.
+no scale override), or record the real screen with scripts/record_live.py.
 """
 
 import argparse
@@ -43,7 +43,7 @@ ARCHITECTURE = (ROOT / "docs/submission/assets/architecture.html").as_uri()
 FEEDBACK = "หนูไม่กล้าบอกพี่หัวหน้าค่ะ ว่าสั่งงานเย็นวันศุกร์ทำให้หนูต้องยกเลิกนัดตลอด"
 REPLY = "ขอบคุณที่สะท้อนเรื่องนี้ ตั้งแต่สัปดาห์หน้าจะตัดรอบงานด่วนวันศุกร์ที่ 15:00"
 
-# (english, thai) caption per scene, from the shot list in docs/design/reference.html section 4.4.
+# (english, thai) caption per scene.
 # One line each: EN <= 42 characters, TH <= 35. Edit here when the story changes.
 CAPTIONS = {
     "intro": ("Kreng-jai Bridge speaks up for Thai teams", "พูดแทนสิ่งที่คนทำงานเกรงใจจะพูด"),

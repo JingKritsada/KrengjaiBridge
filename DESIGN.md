@@ -3,8 +3,6 @@
 The locked design system for `app/static`. Every page change reads this file first.
 Extend or amend this file when the system needs to grow; do not invent per-page styles.
 
-- Visual reference with live mockups: `docs/design/reference.html` (open in a browser).
-- Implementation steps: `docs/design/IMPLEMENTATION_PLAN.md`.
 - Automated check: `uv run scripts/design_check.py` (font floor, contrast, overflow, full width, fold).
 
 ## 1. Direction
@@ -273,8 +271,6 @@ motion so it measures the final state.
 
 ## 9. Pages
 
-Reference mockups for all three pages are in `docs/design/reference.html` (section 5), drawn at 1536 × 864.
-
 ### `/` Home
 Z-path: H1 → pitch → primary CTA → journey card → its 3 → 0 result → 4-step loop.
 - Left: H1 "ให้ความเกรงใจ / ไม่ขวาง**การทำงาน**" (last word `--accent`), pitch 20/1.7 `--ink-2` max 30em, CTAs:
@@ -313,7 +309,7 @@ F-path: title + privacy promise → theme → voice → AI draft → reply; metr
 - Layout viewport for recording 1536 × 864, device scale 1.667 → 2560 × 1440 capture.
 - Critical content for each scene sits between y = 140 and y = 728; the bottom 136 px is the caption-safe band.
 - Captions: IBM Plex Sans Thai, EN 36 px / TH 32 px on a 1080p canvas, EN ≤ 42 chars, TH ≤ 35, one line each, 0.83–7 s per event, ≥ (EN + TH chars) ÷ 17 + 1 s.
-- Full video plan (phone takes, LINE OA, edit layouts, 14-shot list, export): `docs/design/reference.html` section 4.
+- Recording and editing: `docs/RECORDING.md`; the live take with LINE on iPhone Mirroring is `scripts/record_live.py`.
 
 ## 11. LINE Flex preview card
 

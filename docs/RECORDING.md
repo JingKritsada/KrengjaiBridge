@@ -36,7 +36,7 @@ uv run scripts/record_demo.py --mock --out /tmp/dry.mp4
 - คำบรรยายแบบฝังในวิดีโอใช้ซ้อมดูเท่านั้น ตัวจริงให้ใช้ `--no-captions` แล้วใส่ `.srt` ในโปรแกรมตัดต่อ
   (IBM Plex Sans Thai, EN 36 px / TH 32 px บน 1080p)
 - วิดีโอที่ Playwright อัดเองได้ขนาดเท่าหน้าจอ 1536×864 เสมอ (ขยายเป็น 2560×1440 ไม่ได้) ใช้ซ้อมและตรวจจังหวะ
-  ตัวจริงอัดด้วย OBS จับหน้าต่างของ `--headed` (Retina 2× ได้ 3072×1728, 30 fps คงที่) ดูแผนเต็มที่ `docs/design/reference.html` หัวข้อ 4
+  ตัวจริงอัดด้วย OBS จับหน้าต่างของ `--headed` (Retina 2× ได้ 3072×1728, 30 fps คงที่) หรืออัดจากหน้าจอจริงด้วย `scripts/record_live.py` (หัวข้อ 2.1)
 - เก็บไฟล์วิดีโอไว้นอก repo ที่ `../LiveDemo_Videos/` (โฟลเดอร์ข้าง repo) ตั้งชื่อตามวันที่ เช่น
   `uv run scripts/record_demo.py --out ../LiveDemo_Videos/2026-10-20_web_walkthrough.mp4`
   ไฟล์ `.mp4`/`.webm` ถูก ignore ใน git เพราะขนาดใหญ่
@@ -44,7 +44,7 @@ uv run scripts/record_demo.py --mock --out /tmp/dry.mp4
 - **สคริปต์จะกด "ล้างข้อมูลเดโม" บน server ที่ระบุ** อย่ารันระหว่างที่คนอื่นกำลัง demo อยู่บน server เดียวกัน
 - ถ้าหน้า `/demo` ขึ้นป้าย "โหมดสำรอง (ไม่มี LLM)" ในคลิปก็จะเห็นป้ายนั้นด้วย ตรวจ `https://<server>/api/health` ก่อนอัด ช่อง `llm_available` ต้องเป็น `true`
 
-ลำดับฉากในคลิป (คำบรรยายตาม shot list ใน `docs/design/reference.html` หัวข้อ 4.4):
+ลำดับฉากในคลิป (คำบรรยายอยู่ใน `CAPTIONS` ของ `scripts/record_demo.py`):
 
 | # | หน้า | สิ่งที่เกิด | คีย์คำบรรยาย |
 |---|---|---|---|

@@ -52,7 +52,7 @@ VS Code: install the recommended extensions (`.vscode/extensions.json`); Python 
   only changes `DATABASE_URL` and `REDIS_URL`.
 - LLM: any OpenAI-compatible endpoint (`LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`); ModelArts Studio MaaS
   (`https://api-ap-southeast-1.modelarts-maas.com/v2`, `deepseek-v4.1-flash`) once an API key is available.
-- Self-hosted: Ollama on a team GPU reached over Tailscale (`LLM_API_STYLE=ollama`): spec [docs/GPU_ENDPOINT_SPEC.md](docs/GPU_ENDPOINT_SPEC.md), guide [docs/OLLAMA_TAILSCALE.md](docs/OLLAMA_TAILSCALE.md) (Thai).
+- Self-hosted failover: LM Studio (`qwen/qwen3.5-9b`) on a team GPU behind Tailscale Funnel (`LLM_FALLBACK_*`, style `lmstudio`); Ollama (`LLM_API_STYLE=ollama`) also works. Spec: [docs/GPU_ENDPOINT_SPEC.md](docs/GPU_ENDPOINT_SPEC.md).
 - LINE OA setup: [docs/submission/LINE_SETUP.md](docs/submission/LINE_SETUP.md) (Thai).
 
 ## Demo video

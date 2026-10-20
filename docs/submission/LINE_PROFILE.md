@@ -82,5 +82,4 @@ Kreng-jai Bridge (เกรงใจบริดจ์) คือผู้ช่
 
 - Cover reviewed at 375 pixels wide: [mobile preview](assets/line-profile/cover-mobile-375x188.png).
 - The extra brand name, subtitle, feature list, secondary slogan and handle were removed from the cover.
-- Original artwork is retained under assets/line-profile/v1/.
 - Automated design hook reported no deterministic issues. No findings suppressed or left unresolved in the artwork.
